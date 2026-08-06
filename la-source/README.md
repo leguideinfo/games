@@ -48,7 +48,19 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   de production ×2 min. **C'est l'emplacement où se branchent les vrais
   mini-jeux** (affiché en jeu) : Ferme → Admin Rush, Extracteur → Regex Invaders,
   Baie réseau → The Flux, Console de commandement → PowerShell Hero.
-- **Missions guidées** (14 étapes) : elles SONT le système de déblocage.
+- **Missions guidées** (17 étapes) : elles SONT le système de déblocage.
+- **Forge d'assemblage & unités (v4)** : la Forge assemble les premières
+  unités (capacité = niveaux de Forge + 1) —
+  **Drone récolteur 🛸** (80 💠) : se pose sur un champ de cristaux et le
+  récolte (+36 💠/min) — les cristaux deviennent une ressource exploitable,
+  en plus du bonus d'adjacence des Extracteurs ;
+  **Chasseur 🚀** (120 💠 + 5 Eo) : patrouille au-dessus de la Forge.
+- **Parasites de données 🕷 (v4)** : ils apparaissent sur les cases aux
+  frontières du territoire (max 2), ralentissent l'extraction (−15 %) tant
+  qu'ils rôdent. Taper un parasite envoie un Chasseur au combat (vol animé,
+  récompense en 💠). Les expansions agrandissent la frontière… et le
+  terrain de chasse. En prod : premier pas vers le PvE/PvP cyber de la
+  vision (intrusion/défense).
 - **Persistance** locale (`localStorage`) + reprise hors-ligne.
 - **Expansion du territoire** (v1.2) — trois étages :
   1. **Déblayer** les éboulis rocheux (tap sur un rocher, 50 💠) ;

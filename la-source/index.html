@@ -76,6 +76,7 @@
   #missions {
     position: absolute; top: 58px; left: 10px;
     z-index: 9;
+    pointer-events: none;
     background: rgba(11, 17, 32, .88);
     border: 1px solid var(--line);
     border-radius: 10px;
@@ -111,7 +112,9 @@
     padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
     background: linear-gradient(0deg, rgba(6, 9, 19, .95), rgba(6, 9, 19, 0));
     z-index: 10;
+    pointer-events: none;
   }
+  #tabs button { pointer-events: auto; }
   #tabs button {
     flex: 1;
     padding: 10px 0;
@@ -175,6 +178,13 @@
   .actrow button.warn { border-color: #6b5320; color: var(--amber); background: #211a08; }
   .actrow button:disabled { opacity: .4; }
   .stat { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; }
+  .forge-asm {
+    display: block; width: 100%; margin-top: 8px;
+    border: 1px solid #234a75; background: #0c1a30; color: var(--blue);
+    border-radius: 10px; padding: 10px 12px; font-size: 13px; text-align: left;
+  }
+  .forge-asm:disabled { opacity: .4; }
+  .forge-asm .ds2 { color: var(--dim); font-size: 10.5px; margin-top: 3px; }
   .stat b { color: var(--cyan); font-weight: normal; }
 
   /* ---------- turbo (surcharge) ---------- */
@@ -308,6 +318,7 @@
     <h3 id="bl-name"></h3>
     <div class="sub" id="bl-desc"></div>
     <div id="bl-stats"></div>
+    <div id="bl-forge"></div>
     <div class="actrow">
       <button id="bl-up"></button>
       <button id="bl-turbo" class="warn"></button>
@@ -395,6 +406,7 @@ const sfx = {
   star: () => beep(1046, 0.1, "square", 0.045),
   mission: () => { beep(659, 0.1, "sine", 0.05); beep(988, 0.16, "sine", 0.05, 0.09); },
   ui: () => beep(500, 0.05, "sine", 0.02),
+  fireMob: () => { beep(700, 0.1, "sawtooth", 0.045); beep(950, 0.12, "sawtooth", 0.04, 0.09); },
 };
 
 /* ---------- définitions ---------- */
@@ -432,11 +444,22 @@ const BT = {
     ds: "Relie la colonie au réseau galactique : contrats de matériaux passifs.",
     game: "The Flux",
   },
+  forge: {
+    nm: "Forge d'assemblage", ic: "🔧", col: "#ff9a4d", base: 100, conso: 6, mAt: 13,
+    ds: "Vos premières unités sont assemblées ici.",
+    game: null,
+  },
   console: {
     nm: "Console de commandement", ic: "🖲", col: "#e6eef5", base: 120, eo: 10, conso: 5, mAt: 12,
     ds: "Administre la colonie à distance, en PowerShell : +4 % de production globale par niveau.",
     game: "PowerShell Hero",
   },
+};
+const UT = {
+  recolteur: { nm: "Drone récolteur", ic: "🛸", cost: 80, ceo: 0,
+    ds: "Se pose sur un champ de cristaux et le récolte (+36 💠/min)." },
+  chasseur: { nm: "Chasseur", ic: "🚀", cost: 120, ceo: 5,
+    ds: "Patrouille : tape un parasite pour l'envoyer au combat." },
 };
 const TECHS = {
   dhcp: { nm: "DHCP", col: "#38a9ff", eo: 15, ds: "Adressage automatique : les orbes de matériaux se collectent seules." },
@@ -458,6 +481,9 @@ const MISSIONS = [
   { t: "Pose une Baie réseau", rm: 100, k: "build_reseau" },
   { t: "Réussis une Surcharge ⚡ (tape un bâtiment)", rm: 120, k: "turbo" },
   { t: "Pose une Console de commandement", rm: 150, k: "build_console" },
+  { t: "Pose une Forge d'assemblage", rm: 150, k: "build_forge" },
+  { t: "Assemble un Drone récolteur, pose-le sur des cristaux", rm: 150, k: "unit_recolteur" },
+  { t: "Parasite en vue ! Assemble un Chasseur, puis tape le parasite", rm: 200, k: "mob_kill" },
   { t: "Étends le territoire (tape la Source)", rm: 200, k: "extend" },
 ];
 
@@ -467,23 +493,25 @@ function newSave() {
   return {
     v: 2, mat: 50, eo: 0, buildings: [], techs: [], seenIntro: false,
     mi: 0, orbsCollected: 0, lastSeen: Date.now(), buffLeft: 0, buffMult: 1,
-    ext: 0, cleared: [],
+    ext: 0, cleared: [], units: [],
   };
 }
 function load() {
   try {
-    const raw = localStorage.getItem("ls-save-v3");
+    const raw = localStorage.getItem("ls-save-v4");
     if (raw) return Object.assign(newSave(), JSON.parse(raw));
   } catch (e) {}
   return newSave();
 }
 function save() {
   S.lastSeen = Date.now();
-  try { localStorage.setItem("ls-save-v3", JSON.stringify(S)); } catch (e) {}
+  try { localStorage.setItem("ls-save-v4", JSON.stringify(S)); } catch (e) {}
 }
 S = load();
 if (!S.cleared) S.cleared = [];
 if (!S.ext) S.ext = 0;
+if (!S.units) S.units = [];
+S.units.forEach((u) => { delete u.busy; });
 window.__LS = () => S;
 
 /* ---------- économie ---------- */
@@ -494,7 +522,9 @@ function matRate() {
   const ex = S.buildings.filter((b) => b.t === "extracteur")
     .reduce((a, b) => a + 0.7 * Math.pow(b.l, 1.4) * (1 + 0.15 * crysAdj(b.x, b.y)), 0);
   const net = 0.35 * bsum("reseau");
-  return (ex + net) * globalMult();
+  const dr = 0.6 * S.units.filter((u) => u.t === "recolteur").length;
+  const malus = mobs.length ? 0.85 : 1;
+  return (ex + net + dr) * globalMult() * malus;
 }
 function eoRate() {
   return 0.05 * S.buildings.filter((b) => b.t === "ferme")
@@ -537,6 +567,8 @@ function offlineGains() {
 
 /* ---------- toasts / missions ---------- */
 function toast(html, gold) {
+  const box = $("#toasts");
+  while (box.children.length >= 3) box.firstChild.remove();
   const d = document.createElement("div");
   d.className = "toast" + (gold ? " gold" : "");
   d.innerHTML = html;
@@ -559,6 +591,10 @@ function missionDone(k) {
   S.mi++;
   sfx.mission();
   toast("Mission accomplie : <b>+" + (m.rm ? m.rm + " 💠" : m.re + " Eo") + "</b>", true);
+  if (S.mi === 15) {
+    spawnMob();
+    setTimeout(() => toast("🕷 Un <b>parasite de données</b> rôde à la frontière ! Il ralentit ton extraction (−15 %)."), 1500);
+  }
   const box = $("#missions");
   box.classList.remove("flash"); void box.offsetWidth; box.classList.add("flash");
   if (S.mi >= MISSIONS.length) {
@@ -641,7 +677,29 @@ function centerCam() {
 /* ---------- rendu colonie ---------- */
 let view = "col"; // col | map
 let selTile = null;
+let placing = null; // {t:"recolteur"} en attente d'un tap sur cristaux
 let orbs = []; // {x,y,val,born}
+let mobs = []; // {x,y,born,atk:{u,t0}|null,sx,sy}
+let mobT = 0;
+let fx = [];
+function burst(x, y, color) {
+  for (let i = 0; i < 10; i++) {
+    const a = Math.random() * Math.PI * 2, sp = 30 + Math.random() * 60;
+    fx.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 20, life: 0.6, color });
+  }
+}
+function spawnMob() {
+  if (mobs.length >= 2) return;
+  for (let i = 0; i < 40; i++) {
+    const side = rnd(4);
+    const a = bmin() + rnd(bmax() - bmin() + 1);
+    const x = side === 0 ? bmin() : side === 1 ? bmax() : a;
+    const y = side === 2 ? bmin() : side === 3 ? bmax() : a;
+    if (!buildable(x, y) || mobs.some((m) => m.x === x && m.y === y)) continue;
+    mobs.push({ x, y, born: performance.now(), atk: null });
+    return;
+  }
+}
 
 function diamond(c, sx, sy, w, h) {
   c.beginPath();
@@ -828,6 +886,75 @@ function drawOrb(o, t) {
   ctx.fill(); ctx.shadowBlur = 0;
 }
 
+function drawMob(m, t) {
+  let px, py;
+  if (m.atk) {
+    // le chasseur approche : le parasite tremble
+    const p = w2s(m.x, m.y);
+    px = p.x + Math.sin(t / 40) * 2; py = p.y;
+  } else {
+    const p = w2s(m.x, m.y);
+    px = p.x; py = p.y + Math.sin((t + m.born) / 300) * 2;
+  }
+  m.sx = px; m.sy = py;
+  const z = cam.z;
+  ctx.strokeStyle = "#7a1f3d"; ctx.lineWidth = 1.5 * z;
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2 + Math.sin(t / 200) * 0.2;
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px + Math.cos(a) * 13 * z, py + Math.sin(a) * 8 * z + 3 * z);
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.ellipse(px, py - 2 * z, 8 * z, 6 * z, 0, 0, Math.PI * 2);
+  ctx.fillStyle = "#3d0f22";
+  ctx.shadowColor = "#ff4d8a"; ctx.shadowBlur = 10 + 4 * Math.sin(t / 250);
+  ctx.fill(); ctx.shadowBlur = 0;
+  ctx.beginPath();
+  ctx.arc(px - 2.5 * z, py - 3 * z, 1.6 * z, 0, Math.PI * 2);
+  ctx.arc(px + 2.5 * z, py - 3 * z, 1.6 * z, 0, Math.PI * 2);
+  ctx.fillStyle = "#ff4d8a"; ctx.fill();
+}
+function drawUnit(u, t) {
+  const z = cam.z;
+  let px, py;
+  if (u.t === "chasseur" && u.anim) {
+    px = u.anim.x; py = u.anim.y;
+  } else {
+    const p = w2s(u.x, u.y);
+    px = p.x + (u.t === "chasseur" ? 18 * z : 0);
+    py = p.y - (u.t === "recolteur" ? 30 : 22) * z - Math.sin((t + (u.x + u.y) * 500) / 400) * 4 * z;
+  }
+  if (u.t === "recolteur") {
+    ctx.beginPath();
+    ctx.ellipse(px, py, 9 * z, 5 * z, 0, 0, Math.PI * 2);
+    ctx.fillStyle = "#e8e6e0"; ctx.fill();
+    ctx.strokeStyle = "#82878f"; ctx.lineWidth = 1; ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(px, py + 1 * z, 2.2 * z, 0, Math.PI * 2);
+    ctx.fillStyle = "#4ef2e0";
+    ctx.shadowColor = "#4ef2e0"; ctx.shadowBlur = 8;
+    ctx.fill(); ctx.shadowBlur = 0;
+    // rayon de récolte vers les cristaux
+    ctx.strokeStyle = "rgba(78,242,224,.4)"; ctx.lineWidth = 1.5 * z;
+    ctx.beginPath(); ctx.moveTo(px, py + 4 * z); ctx.lineTo(px, py + 22 * z); ctx.stroke();
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(px, py - 7 * z);
+    ctx.lineTo(px + 6 * z, py + 5 * z);
+    ctx.lineTo(px - 6 * z, py + 5 * z);
+    ctx.closePath();
+    ctx.fillStyle = "#e8e6e0"; ctx.fill();
+    ctx.strokeStyle = "#82878f"; ctx.lineWidth = 1; ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(px, py + 6.5 * z, 2 * z, 0, Math.PI * 2);
+    ctx.fillStyle = "#38a9ff";
+    ctx.shadowColor = "#38a9ff"; ctx.shadowBlur = 8;
+    ctx.fill(); ctx.shadowBlur = 0;
+  }
+}
+
 /* ---------- carte secteur ---------- */
 const NEIGH = [];
 {
@@ -912,6 +1039,31 @@ function frame(t) {
     }
     save();
   }
+  // parasites aux frontières (après la mission 15)
+  if (S.mi >= 15) {
+    mobT += dt;
+    if (mobT > 55 && mobs.length < 2) { mobT = 0; spawnMob(); }
+  }
+  // combats en cours
+  for (const m of [...mobs]) {
+    if (!m.atk) continue;
+    const el2 = (performance.now() - m.atk.t0) / 2200;
+    const u = m.atk.u;
+    const fp = w2s(u.x, u.y), tp = w2s(m.x, m.y);
+    if (el2 < 1) {
+      u.anim = { x: fp.x + (tp.x - fp.x) * el2, y: fp.y - 26 * cam.z + (tp.y - fp.y) * el2 };
+    } else {
+      const reward = 40 + 10 * colonyLevel();
+      burst(tp.x, tp.y, "#ff4d8a");
+      S.mat = Math.min(matCap(), S.mat + reward);
+      toast("🚀 Parasite éliminé : <b>+" + reward + " 💠</b>", true);
+      sfx.up();
+      mobs = mobs.filter((x) => x !== m);
+      u.anim = null; u.busy = false;
+      missionDone("mob_kill");
+      save();
+    }
+  }
   if (S.techs.includes("dhcp")) {
     for (const o of [...orbs]) {
       if (t - o.born > 3500) collectOrb(o, true);
@@ -937,6 +1089,17 @@ function frame(t) {
     }
     if (!srcDrawn) drawSource(t);
     for (const o of orbs) drawOrb(o, t);
+    for (const m of mobs) drawMob(m, t);
+    for (const u of S.units) drawUnit(u, t);
+    for (const f of [...fx]) {
+      f.life -= dt;
+      if (f.life <= 0) { fx = fx.filter((x) => x !== f); continue; }
+      f.x += f.vx * dt; f.y += f.vy * dt;
+      ctx.globalAlpha = Math.max(0, f.life / 0.6);
+      ctx.fillStyle = f.color;
+      ctx.fillRect(f.x, f.y, 3, 3);
+    }
+    ctx.globalAlpha = 1;
   } else {
     drawMap(t);
   }
@@ -948,7 +1111,9 @@ function frame(t) {
   $("#eocap").textContent = "/ " + fmt(eoCap());
   $("#eorate").textContent = "+" + (eoRate() * 60).toFixed(1) + "/min";
   $("#en").textContent = fmt(enUse()) + "/" + fmt(enCap());
-  $("#buff").textContent = S.buffLeft > 0 ? "SURCHARGE ×" + S.buffMult.toFixed(2) + " · " + Math.ceil(S.buffLeft) + "s" : "";
+  $("#buff").textContent = S.buffLeft > 0
+    ? "SURCHARGE ×" + S.buffMult.toFixed(2) + " · " + Math.ceil(S.buffLeft) + "s"
+    : (mobs.length ? "🕷 parasite : −15 %" : "");
   $("#clevel").textContent = "niveau " + colonyLevel();
   refreshGates();
   requestAnimationFrame(frame);
@@ -994,6 +1159,33 @@ cv.addEventListener("pointerup", (e) => {
       }
     }
     return;
+  }
+  // placement d'un drone récolteur
+  if (placing) {
+    const tp0 = s2w(sx, sy);
+    if (inB(tp0.x, tp0.y) && tileAt(tp0.x, tp0.y).kind === "crystal" &&
+        !S.units.some((u) => u.x === tp0.x && u.y === tp0.y)) {
+      S.units.push({ t: placing.t, x: tp0.x, y: tp0.y });
+      placing = null;
+      sfx.build();
+      toast("🛸 Drone en place : il récolte le champ de cristaux.");
+      missionDone("unit_recolteur");
+      save();
+    } else {
+      toast("Pose le drone sur un <b>champ de cristaux</b> ✨ libre.");
+    }
+    return;
+  }
+  // parasites
+  for (const m of mobs) {
+    if (m.sx != null && !m.atk && Math.hypot(sx - m.sx, sy - m.sy) < 26) {
+      const u = S.units.find((v) => v.t === "chasseur" && !v.busy);
+      if (!u) { toast("Il te faut un <b>Chasseur</b> — assemble-le à la Forge."); sfx.deny(); return; }
+      u.busy = true;
+      m.atk = { u, t0: performance.now() };
+      sfx.fireMob();
+      return;
+    }
   }
   // orbes d'abord
   for (const o of orbs) {
@@ -1118,6 +1310,21 @@ function openBld(b) {
   if (b.t === "console") stats += "<div class='stat'><span>Production globale</span><b>+" + (4 * b.l) + " %</b></div>";
   if (BT[b.t].conso) stats += "<div class='stat'><span>Consommation</span><b style='color:var(--amber)'>−" + (BT[b.t].conso * b.l) + " ⚡</b></div>";
   $("#bl-stats").innerHTML = stats;
+  const fa = $("#bl-forge");
+  fa.innerHTML = "";
+  if (b.t === "forge") {
+    const cap = bsum("forge") + 1;
+    fa.innerHTML = "<div class='stat'><span>Unités assemblées</span><b>" + S.units.length + " / " + cap + "</b></div>";
+    for (const [k, u] of Object.entries(UT)) {
+      const row = document.createElement("button");
+      row.className = "forge-asm";
+      row.innerHTML = u.ic + " " + u.nm + " · " + u.cost + " 💠" + (u.ceo ? " + " + u.ceo + " Eo" : "") +
+        "<div class='ds2'>" + u.ds + "</div>";
+      row.disabled = S.units.length >= cap || S.mat < u.cost || S.eo < u.ceo;
+      row.onclick = () => assemble(k, b);
+      fa.appendChild(row);
+    }
+  }
   const uc = upCost(b);
   const upBtn = $("#bl-up");
   if (b.l >= 10) { upBtn.textContent = "NIV MAX"; upBtn.disabled = true; }
@@ -1142,6 +1349,24 @@ function openBld(b) {
   $("#sh-bld").hidden = false;
 }
 
+function assemble(k, fb) {
+  const u = UT[k];
+  const cap = bsum("forge") + 1;
+  if (S.units.length >= cap || S.mat < u.cost || S.eo < u.ceo) { sfx.deny(); return; }
+  S.mat -= u.cost; S.eo -= u.ceo;
+  sfx.build();
+  if (k === "recolteur") {
+    placing = { t: k };
+    closeSheets();
+    toast("🛸 Drone assemblé — <b>tape un champ de cristaux</b> pour le poser.");
+  } else {
+    S.units.push({ t: k, x: fb.x, y: fb.y });
+    closeSheets();
+    toast("🚀 Chasseur en patrouille au-dessus de la Forge.");
+  }
+  save();
+}
+
 function openSource() {
   closeSheets();
   const side = GRID + 2 * S.ext;
@@ -1155,7 +1380,7 @@ function openSource() {
     "<div class='stat'><span>Technologies</span><b>" + (S.techs.length ? S.techs.map((t) => TECHS[t].nm).join(" · ") : "aucune") + "</b></div>";
   const act = $("#src-act");
   act.innerHTML = "";
-  if (S.mi < 13) {
+  if (S.mi < 16) {
     act.innerHTML = "<div class='sub' style='margin:0'>L'Étincelle grandit avec ta colonie…</div>";
     $("#sh-source").hidden = false;
     return;
@@ -1451,6 +1676,17 @@ window.__api = {
   },
   giveMat(n) { S.mat = Math.min(matCap(), S.mat + n); },
   orbsPos() { return orbs.filter((o) => o.sx != null).map((o) => ({ sx: o.sx, sy: o.sy })); },
+  mobsPos() { return mobs.filter((m) => m.sx != null && !m.atk).map((m) => ({ sx: m.sx, sy: m.sy })); },
+  assemble(k) { const f = S.buildings.find((b) => b.t === "forge"); if (f) assemble(k, f); },
+  crystalsAll() {
+    const out = [];
+    for (let y = bmin(); y <= bmax(); y++) for (let x = bmin(); x <= bmax(); x++) {
+      if (tileAt(x, y).kind === "crystal" && !S.units.some((u) => u.x === x && u.y === y)) {
+        out.push(Object.assign({ tx: x, ty: y }, w2s(x, y)));
+      }
+    }
+    return out;
+  },
   turboWin() { S.buffMult = 1.5; S.buffLeft = 120; missionDone("turbo"); },
   giveEo(n) { S.eo = Math.min(eoCap(), S.eo + n); },
   research(k) { if (!S.techs.includes(k)) { S.techs.push(k); if (k === "dns") unlockMap(); missionDone("tech_" + k); save(); } },
