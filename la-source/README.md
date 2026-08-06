@@ -14,9 +14,18 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   progressifs — hauteur, antennes, balises).
 - **La Source** au centre : faisceau bleu, cœur pulsant, tout bâtiment s'y
   relie par un conduit d'énergie animé.
-- **6 bâtiments** : Extracteur de Flux, Baie de stockage, Ferme de serveurs,
-  Tour de résolution (DNS), Baie réseau, Bastion pare-feu — coûts croissants,
-  améliorations NIV 1→10.
+- **Économie du vrai jeu (v2)** — alignée sur console.awoui.com :
+  **Matériaux 💠** extraits, **Énergie ⚡** en capacité (Centrale) consommée
+  par chaque bâtiment, **Données Eo 💾** calculées (Fermes) et stockées
+  (Datacenter). Coût ×1,6 par niveau, comme en prod.
+- **7 bâtiments du roster réel** : Extracteur de matériaux, Centrale
+  énergétique, Entrepôt de matériaux, Ferme de serveurs, Datacenter,
+  Baie réseau (contrats, requiert DNS), Console de commandement
+  (+4 %/niv de production globale, PowerShell) — améliorations NIV 1→10.
+- **Chaînes de progression émergentes** : construire coûte de l'énergie →
+  il faut des Centrales ; DNS coûte 40 Eo > soute (20) → il faut Ferme puis
+  Datacenter avant la recherche ; étendre coûte 450 💠 > soute (300) →
+  il faut un Entrepôt.
 - **Moteur idle** : production continue, orbes de Flux à collecter au doigt
   (couche « bambin »), gains hors-ligne calculés au retour (cap 2 h, 24 h
   avec BACKUP).
@@ -27,12 +36,12 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   (placeholder du multi asynchrone v1 : visites & fédérations à venir).
 - **Surcharge (⚡)** : mini-défi de synchronisation sur les bâtiments → buff
   de production ×2 min. **C'est l'emplacement où se branchent les vrais
-  mini-jeux** (affiché en jeu) : Ferme → Admin Rush, Bastion → Regex
-  Invaders, Baie réseau → The Flux, Extracteur → PowerShell Hero.
+  mini-jeux** (affiché en jeu) : Ferme → Admin Rush, Extracteur → Regex Invaders,
+  Baie réseau → The Flux, Console de commandement → PowerShell Hero.
 - **Missions guidées** (8 étapes) : le tutoriel de la boucle complète.
 - **Persistance** locale (`localStorage`) + reprise hors-ligne.
 - **Expansion du territoire** (v1.2) — trois étages :
-  1. **Déblayer** les éboulis rocheux (tap sur un rocher, 50 ⚡) ;
+  1. **Déblayer** les éboulis rocheux (tap sur un rocher, 50 💠) ;
   2. **Étendre le territoire** depuis la Source : le plateau gagne un anneau
      complet (9×9 → 11×11 → … → 17×17), coût exponentiel (450/1350/4050/12150 ⚡ — la capacité de stockage doit suivre),
      terrain procédural stable par coordonnée ;

@@ -25,7 +25,23 @@ avec les précisions ci-dessous.*
   rouge, vert, violet ; environnements désert/cristaux/plateau/canyon/
   cratère/ruines ; routes & conduits NIV 1-5.
 - ✅ **V1 multijoueur asynchrone** (recommandation acceptée implicitement).
-- 🔨 **Vertical slice « La Source » en cours dans ce repo** (`/la-source/`).
+- ✅ **Économie réelle du jeu existant** (capture `assets/console-batiments-reference.png`,
+  prise sur console.awoui.com — le jeu actuel tourne déjà sur mobile web) :
+  - **3 ressources** : Matériaux 💠 (extraits), Énergie ⚡ (capacité fournie par
+    la Centrale, consommée par chaque bâtiment), Données Eo 💾 (calculées par
+    les Fermes, stockées en Datacenter) + Connaissances 🧠 (académie) et
+    Réputation 🛡 en périphérie.
+  - **Bâtiments réels** : Extracteur de matériaux, Centrale énergétique,
+    Entrepôt de matériaux, Datacenter, Ferme de serveurs, Baie réseau
+    (contrats), Forge d'assemblage (unités), Console de commandement
+    (« administre la colonie en PowerShell », +% production globale).
+  - **Règles** : coût ×1,6 par niveau, timers d'amélioration (~3 min), limites
+    de niveau relevées par palier (« Volet 3 · La Citadelle » = progression
+    par volets).
+- 🔨 **Vertical slice « La Source »** (`/la-source/`) : alignée sur cette
+  économie depuis la v2 (mécaniques slice conservées : orbes, expansion,
+  cristaux, surcharges, missions, carte). Hors slice pour l'instant : timers,
+  paliers/volets, Forge/unités, Connaissances, Réputation.
 
 ## Le constat (propriétaire — confirmé)
 

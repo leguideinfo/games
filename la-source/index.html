@@ -60,10 +60,10 @@
     pointer-events: none;
   }
   #hud > * { pointer-events: auto; }
-  .hud-label { color: var(--dim); font-size: 9px; letter-spacing: .14em; text-transform: uppercase; }
+  .hud-label { color: var(--dim); font-size: 9px; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
   .hud-val { font-size: 15px; color: var(--cyan); }
-  #rate { font-size: 10px; color: var(--dim); }
-  #buff { font-size: 10px; color: var(--amber); min-height: 12px; }
+  .hud-rate { font-size: 9.5px; color: var(--dim); min-height: 11px; white-space: nowrap; }
+  #buff { color: var(--amber); }
   #hud .grow { flex: 1; }
   #colname { text-align: right; }
   #colname .hud-val { color: var(--amber); font-size: 13px; }
@@ -255,10 +255,19 @@
 
   <div id="hud">
     <div>
-      <div class="hud-label">Flux</div>
-      <div class="hud-val"><span id="flux">0</span> <span id="cap" style="font-size:10px;color:var(--dim)"></span></div>
-      <div id="rate">+0/s</div>
-      <div id="buff"></div>
+      <div class="hud-label">💠 Matériaux</div>
+      <div class="hud-val"><span id="mat">0</span> <span id="matcap" style="font-size:10px;color:var(--dim)"></span></div>
+      <div id="matrate" class="hud-rate">+0/min</div>
+    </div>
+    <div>
+      <div class="hud-label">💾 Données</div>
+      <div class="hud-val" style="color:var(--blue)"><span id="eo">0</span> <span id="eocap" style="font-size:10px;color:var(--dim)"></span></div>
+      <div id="eorate" class="hud-rate">+0/min</div>
+    </div>
+    <div>
+      <div class="hud-label">⚡ Énergie</div>
+      <div class="hud-val" style="color:var(--amber)"><span id="en">0</span></div>
+      <div id="buff" class="hud-rate"></div>
     </div>
     <div class="grow"></div>
     <div id="colname">
@@ -393,72 +402,78 @@ const TW = 92, TH = 46;
 
 const BT = {
   extracteur: {
-    nm: "Extracteur de Flux", ic: "⛏", col: "#4ef2e0", base: 15,
-    ds: "Puise le Flux du sol cristallin. Production continue, même hors-ligne.",
-    game: "PowerShell Hero",
+    nm: "Extracteur de matériaux", ic: "⛏", col: "#4ef2e0", base: 15, conso: 5,
+    ds: "Fore la croûte de la planète mère. Production continue, même hors-ligne.",
+    game: "Regex Invaders",
   },
-  stockage: {
-    nm: "Baie de stockage", ic: "🗄", col: "#ff7a1a", base: 25,
-    ds: "Augmente la réserve maximale de Flux de la colonie.",
+  centrale: {
+    nm: "Centrale énergétique", ic: "⚡", col: "#ffc857", base: 40, conso: 0,
+    ds: "Alimente toute l'infrastructure : chaque bâtiment consomme de l'énergie.",
+    game: null,
+  },
+  entrepot: {
+    nm: "Entrepôt de matériaux", ic: "🗄", col: "#ff7a1a", base: 30, conso: 4,
+    ds: "Stocke les matériaux au-delà des soutes de la colonie.",
     game: null,
   },
   ferme: {
-    nm: "Ferme de serveurs", ic: "🖥", col: "#38a9ff", base: 60,
-    ds: "Amplifie toute la production (+15 % par niveau total).",
+    nm: "Ferme de serveurs", ic: "🖥", col: "#38a9ff", base: 60, conso: 8,
+    ds: "Calcule les données (Eo) de la colonie.",
     game: "Admin Rush",
   },
-  tour: {
-    nm: "Tour de résolution", ic: "📡", col: "#e6eef5", base: 120, uniq: true, tech: "dns",
-    ds: "DNS de la colonie : résout les routes du secteur. Requise pour la Baie réseau.",
+  datacenter: {
+    nm: "Datacenter", ic: "💾", col: "#a06bff", base: 50, conso: 6,
+    ds: "Conserve les données de la colonie au-delà des soutes.",
     game: null,
   },
   reseau: {
-    nm: "Baie réseau", ic: "🔗", col: "#57e389", base: 90, tech: "dns", needs: "tour",
-    ds: "Revenus de trafic inter-colonies (+0,4 Flux/s par niveau).",
+    nm: "Baie réseau", ic: "📡", col: "#57e389", base: 90, eo: 15, conso: 5, tech: "dns",
+    ds: "Relie la colonie au réseau galactique : contrats de matériaux passifs.",
     game: "The Flux",
   },
-  bastion: {
-    nm: "Bastion pare-feu", ic: "🛡", col: "#ff5c5c", base: 150, tech: "firewall",
-    ds: "Filtre le trafic entrant. En prod : défense contre les intrusions PvP.",
-    game: "Regex Invaders",
+  console: {
+    nm: "Console de commandement", ic: "🖲", col: "#e6eef5", base: 120, eo: 10, conso: 5,
+    ds: "Administre la colonie à distance, en PowerShell : +4 % de production globale par niveau.",
+    game: "PowerShell Hero",
   },
 };
 const TECHS = {
-  dhcp: { nm: "DHCP", col: "#38a9ff", cost: 100, ds: "Adressage automatique : les orbes de Flux se collectent seules." },
-  dns: { nm: "DNS", col: "#4ef2e0", cost: 250, ds: "Résolution du secteur : débloque la Carte, la Tour de résolution et la Baie réseau." },
-  firewall: { nm: "FIREWALL", col: "#ff5c5c", cost: 400, needs: "dns", ds: "Filtrage : débloque le Bastion pare-feu." },
-  backup: { nm: "BACKUP", col: "#a06bff", cost: 300, ds: "Sauvegarde longue : production hors-ligne comptée sur 24 h (au lieu de 2 h)." },
+  dhcp: { nm: "DHCP", col: "#38a9ff", eo: 15, ds: "Adressage automatique : les orbes de matériaux se collectent seules." },
+  dns: { nm: "DNS", col: "#4ef2e0", eo: 40, ds: "Résolution du secteur : débloque la Carte et la Baie réseau." },
+  firewall: { nm: "FIREWALL", col: "#ff5c5c", eo: 90, needs: "dns", ds: "Filtrage optimisé : −15 % de consommation ⚡ de toute la colonie." },
+  backup: { nm: "BACKUP", col: "#a06bff", eo: 60, ds: "Sauvegarde longue : production hors-ligne comptée sur 24 h (au lieu de 2 h)." },
 };
 const MISSIONS = [
-  { t: "Pose un Extracteur de Flux", r: 20, k: "build_extracteur" },
-  { t: "Collecte 3 orbes de Flux", r: 20, k: "orbs3" },
-  { t: "Pose une Baie de stockage", r: 30, k: "build_stockage" },
-  { t: "Améliore un bâtiment", r: 30, k: "upgrade" },
-  { t: "Réussis une Surcharge (⚡ sur un bâtiment)", r: 40, k: "turbo" },
-  { t: "Recherche la technologie DNS", r: 60, k: "tech_dns" },
-  { t: "Ouvre la Carte du secteur", r: 80, k: "map" },
-  { t: "Étends le territoire (tape la Source)", r: 100, k: "extend" },
+  { t: "Pose un Extracteur de matériaux", rm: 30, k: "build_extracteur" },
+  { t: "Collecte 3 orbes de matériaux", rm: 30, k: "orbs3" },
+  { t: "Pose une Centrale énergétique", rm: 40, k: "build_centrale" },
+  { t: "Pose une Ferme de serveurs (calcule des Eo)", re: 5, k: "build_ferme" },
+  { t: "Améliore un bâtiment", rm: 40, k: "upgrade" },
+  { t: "Réussis une Surcharge (⚡ sur un bâtiment)", rm: 60, k: "turbo" },
+  { t: "Recherche la technologie DNS", re: 10, k: "tech_dns" },
+  { t: "Ouvre la Carte du secteur", rm: 100, k: "map" },
+  { t: "Étends le territoire (tape la Source)", rm: 150, k: "extend" },
 ];
 
 /* ---------- état ---------- */
 let S = null;
 function newSave() {
   return {
-    v: 1, flux: 20, buildings: [], techs: [], seenIntro: false,
+    v: 2, mat: 50, eo: 0, buildings: [], techs: [], seenIntro: false,
     mi: 0, orbsCollected: 0, lastSeen: Date.now(), buffLeft: 0, buffMult: 1,
     ext: 0, cleared: [],
   };
 }
 function load() {
   try {
-    const raw = localStorage.getItem("ls-save-v1");
+    const raw = localStorage.getItem("ls-save-v2");
     if (raw) return Object.assign(newSave(), JSON.parse(raw));
   } catch (e) {}
   return newSave();
 }
 function save() {
   S.lastSeen = Date.now();
-  try { localStorage.setItem("ls-save-v1", JSON.stringify(S)); } catch (e) {}
+  try { localStorage.setItem("ls-save-v2", JSON.stringify(S)); } catch (e) {}
 }
 S = load();
 if (!S.cleared) S.cleared = [];
@@ -468,16 +483,28 @@ window.__LS = () => S;
 /* ---------- économie ---------- */
 const bcount = (t) => S.buildings.filter((b) => b.t === t).length;
 const bsum = (t) => S.buildings.filter((b) => b.t === t).reduce((a, b) => a + b.l, 0);
-function prodRate() {
+function globalMult() { return (1 + 0.04 * bsum("console")) * S.buffMult; }
+function matRate() {
   const ex = S.buildings.filter((b) => b.t === "extracteur")
-    .reduce((a, b) => a + 0.6 * Math.pow(b.l, 1.4) * (1 + 0.15 * crysAdj(b.x, b.y)), 0);
-  const multi = 1 + 0.15 * bsum("ferme");
-  const net = 0.4 * bsum("reseau");
-  return (ex * multi + net) * S.buffMult;
+    .reduce((a, b) => a + 0.7 * Math.pow(b.l, 1.4) * (1 + 0.15 * crysAdj(b.x, b.y)), 0);
+  const net = 0.35 * bsum("reseau");
+  return (ex + net) * globalMult();
 }
-function capMax() { return 80 + S.buildings.filter((b) => b.t === "stockage").reduce((a, b) => a + 120 * Math.pow(b.l, 1.2), 0); }
-function buildCost(t) { return Math.round(BT[t].base * Math.pow(1.7, bcount(t))); }
-function upCost(b) { return Math.round(BT[b.t].base * 0.8 * Math.pow(1.55, b.l)); }
+function eoRate() {
+  return 0.05 * S.buildings.filter((b) => b.t === "ferme")
+    .reduce((a, b) => a + Math.pow(b.l, 1.3), 0) * globalMult();
+}
+function matCap() { return 300 + S.buildings.filter((b) => b.t === "entrepot").reduce((a, b) => a + 250 * Math.pow(b.l, 1.2), 0); }
+function eoCap() { return 20 + S.buildings.filter((b) => b.t === "datacenter").reduce((a, b) => a + 40 * Math.pow(b.l, 1.2), 0); }
+function enCap() { return 100 + S.buildings.filter((b) => b.t === "centrale").reduce((a, b) => a + 80 * Math.pow(b.l, 1.15), 0); }
+function enUse(extra) {
+  let u = S.buildings.reduce((a, b) => a + BT[b.t].conso * b.l, 0) + (extra || 0);
+  if (S.techs.includes("firewall")) u *= 0.85;
+  return u;
+}
+function buildCost(t) { return Math.round(BT[t].base * Math.pow(1.6, bcount(t))); }
+function buildCostEo(t) { return BT[t].eo ? Math.round(BT[t].eo * Math.pow(1.6, bcount(t))) : 0; }
+function upCost(b) { return Math.round(BT[b.t].base * 0.8 * Math.pow(1.6, b.l)); }
 function colonyLevel() { return 1 + Math.floor(bsum("extracteur") / 2 + S.buildings.length / 2 + S.techs.length); }
 function fmt(n) {
   if (n >= 1e6) return (n / 1e6).toFixed(2) + "M";
@@ -492,11 +519,12 @@ function offlineGains() {
   if (el < 30 || !S.buildings.length) return;
   const capT = S.techs.includes("backup") ? 24 * 3600 : 2 * 3600;
   const b0 = S.buffMult; S.buffMult = 1;
-  const gain = Math.min(prodRate() * Math.min(el, capT), capMax() - S.flux);
+  const gm = Math.max(0, Math.min(matRate() * Math.min(el, capT), matCap() - S.mat));
+  const ge = Math.max(0, Math.min(eoRate() * Math.min(el, capT), eoCap() - S.eo));
   S.buffMult = b0;
-  if (gain > 1) {
-    S.flux += gain;
-    setTimeout(() => toast("Pendant ton absence, la colonie a produit <b>+" + fmt(gain) + " Flux</b>"), 1200);
+  if (gm > 1 || ge > 0.5) {
+    S.mat += gm; S.eo += ge;
+    setTimeout(() => toast("Pendant ton absence : <b>+" + fmt(gm) + " 💠</b>" + (ge > 0.5 ? " et <b>+" + fmt(ge) + " Eo</b>" : "")), 1200);
   }
   S.buffLeft = 0; S.buffMult = 1;
 }
@@ -514,16 +542,17 @@ function missionUI() {
   if (S.mi >= MISSIONS.length) { box.hidden = true; return; }
   box.hidden = false;
   const m = MISSIONS[S.mi];
-  $("#m-text").innerHTML = m.t + " <span class='m-reward'>+" + m.r + "⚡</span>";
+  $("#m-text").innerHTML = m.t + " <span class='m-reward'>" + (m.rm ? "+" + m.rm + " 💠" : "+" + m.re + " Eo") + "</span>";
 }
 function missionDone(k) {
   if (S.mi >= MISSIONS.length) return;
   const m = MISSIONS[S.mi];
   if (m.k !== k) return;
-  S.flux = Math.min(capMax(), S.flux + m.r);
+  if (m.rm) S.mat = Math.min(matCap(), S.mat + m.rm);
+  if (m.re) S.eo = Math.min(eoCap(), S.eo + m.re);
   S.mi++;
   sfx.mission();
-  toast("Mission accomplie : <b>+" + m.r + " Flux</b>", true);
+  toast("Mission accomplie : <b>+" + (m.rm ? m.rm + " 💠" : m.re + " Eo") + "</b>", true);
   const box = $("#missions");
   box.classList.remove("flash"); void box.offsetWidth; box.classList.add("flash");
   if (S.mi >= MISSIONS.length) {
@@ -853,7 +882,8 @@ function frame(t) {
   const dt = Math.min((t - lastT) / 1000, 0.1);
   lastT = t;
   // économie
-  S.flux = Math.min(capMax(), S.flux + prodRate() * dt);
+  S.mat = Math.min(matCap(), S.mat + matRate() * dt);
+  S.eo = Math.min(eoCap(), S.eo + eoRate() * dt);
   if (S.buffLeft > 0) {
     S.buffLeft -= dt;
     if (S.buffLeft <= 0) { S.buffLeft = 0; S.buffMult = 1; }
@@ -898,10 +928,14 @@ function frame(t) {
     drawMap(t);
   }
   // HUD
-  $("#flux").textContent = fmt(S.flux);
-  $("#cap").textContent = "/ " + fmt(capMax());
-  $("#rate").textContent = "+" + prodRate().toFixed(1) + "/s";
-  $("#buff").textContent = S.buffLeft > 0 ? "⚡ SURCHARGE ×" + S.buffMult.toFixed(2) + " · " + Math.ceil(S.buffLeft) + "s" : "";
+  $("#mat").textContent = fmt(S.mat);
+  $("#matcap").textContent = "/ " + fmt(matCap());
+  $("#matrate").textContent = "+" + fmt(matRate() * 60) + "/min";
+  $("#eo").textContent = fmt(S.eo);
+  $("#eocap").textContent = "/ " + fmt(eoCap());
+  $("#eorate").textContent = "+" + (eoRate() * 60).toFixed(1) + "/min";
+  $("#en").textContent = fmt(enUse()) + "/" + fmt(enCap());
+  $("#buff").textContent = S.buffLeft > 0 ? "SURCHARGE ×" + S.buffMult.toFixed(2) + " · " + Math.ceil(S.buffLeft) + "s" : "";
   $("#clevel").textContent = "niveau " + colonyLevel();
   requestAnimationFrame(frame);
 }
@@ -909,7 +943,7 @@ function frame(t) {
 /* ---------- orbes ---------- */
 function collectOrb(o, auto) {
   orbs = orbs.filter((x) => x !== o);
-  S.flux = Math.min(capMax(), S.flux + o.val);
+  S.mat = Math.min(matCap(), S.mat + o.val);
   if (!auto) sfx.collect();
   S.orbsCollected++;
   if (S.orbsCollected >= 3) missionDone("orbs3");
@@ -1008,26 +1042,24 @@ function openBuild(tile) {
   list.innerHTML = "";
   const sel = tile;
   for (const [key, def] of Object.entries(BT)) {
-    const locked = (def.tech && !S.techs.includes(def.tech)) ||
-      (def.needs && !bcount(def.needs)) ||
-      (def.uniq && bcount(key) >= 1);
-    const cost = buildCost(key);
+    const locked = def.tech && !S.techs.includes(def.tech);
+    const cost = buildCost(key), ceo = buildCostEo(key);
+    const enOk = enUse(def.conso) <= enCap();
     const card = document.createElement("div");
-    card.className = "bcard" + (locked ? " locked" : "");
+    card.className = "bcard" + (locked || !enOk ? " locked" : "");
     let lockTxt = "";
-    if (def.uniq && bcount(key) >= 1) lockTxt = "Unique — déjà construite.";
-    else if (def.tech && !S.techs.includes(def.tech)) lockTxt = "Requiert la technologie " + TECHS[def.tech].nm + ".";
-    else if (def.needs && !bcount(def.needs)) lockTxt = "Requiert : " + BT[def.needs].nm + ".";
+    if (locked) lockTxt = "Requiert la technologie " + TECHS[def.tech].nm + ".";
+    else if (!enOk) lockTxt = "⚡ insuffisante — améliore la Centrale énergétique.";
     card.innerHTML =
       "<div class='ic'>" + def.ic + "</div>" +
       "<div class='grow'><div class='nm' style='color:" + def.col + "'>" + def.nm + "</div>" +
-      "<div class='ds'>" + (lockTxt || def.ds) + "</div></div>";
+      "<div class='ds'>" + (lockTxt || def.ds + (def.conso ? " · −" + def.conso + " ⚡/niv" : "")) + "</div></div>";
     const btn = document.createElement("button");
-    btn.textContent = fmt(cost) + " ⚡";
-    btn.disabled = locked || S.flux < cost;
+    btn.textContent = fmt(cost) + " 💠" + (ceo ? " + " + ceo + " Eo" : "");
+    btn.disabled = locked || !enOk || S.mat < cost || S.eo < ceo;
     btn.onclick = () => {
-      if (S.flux < cost || !sel || !buildable(sel.x, sel.y)) { sfx.deny(); return; }
-      S.flux -= cost;
+      if (S.mat < cost || S.eo < ceo || !sel || !buildable(sel.x, sel.y) || enUse(def.conso) > enCap()) { sfx.deny(); return; }
+      S.mat -= cost; S.eo -= ceo;
       S.buildings.push({ t: key, x: sel.x, y: sel.y, l: 1 });
       sfx.build();
       missionDone("build_" + key);
@@ -1050,22 +1082,28 @@ function openBld(b) {
   let stats = "";
   if (b.t === "extracteur") {
     const cb = crysAdj(b.x, b.y);
-    stats += "<div class='stat'><span>Production</span><b>+" + (0.6 * Math.pow(b.l, 1.4) * (1 + 0.15 * cb)).toFixed(1) + " Flux/s</b></div>";
+    stats += "<div class='stat'><span>Extraction</span><b>+" + fmt(0.7 * Math.pow(b.l, 1.4) * (1 + 0.15 * cb) * 60) + " 💠/min</b></div>";
     if (cb) stats += "<div class='stat'><span>Bonus cristaux adjacents</span><b>+" + (15 * cb) + " %</b></div>";
   }
-  if (b.t === "stockage") stats += "<div class='stat'><span>Capacité apportée</span><b>+" + fmt(120 * Math.pow(b.l, 1.2)) + "</b></div>";
-  if (b.t === "ferme") stats += "<div class='stat'><span>Amplification globale</span><b>+" + (15 * b.l) + " %</b></div>";
-  if (b.t === "reseau") stats += "<div class='stat'><span>Trafic</span><b>+" + (0.4 * b.l).toFixed(1) + " Flux/s</b></div>";
+  if (b.t === "centrale") stats += "<div class='stat'><span>Capacité ⚡ apportée</span><b>+" + fmt(80 * Math.pow(b.l, 1.15)) + "</b></div>";
+  if (b.t === "entrepot") stats += "<div class='stat'><span>Capacité 💠 apportée</span><b>+" + fmt(250 * Math.pow(b.l, 1.2)) + "</b></div>";
+  if (b.t === "ferme") stats += "<div class='stat'><span>Calcul</span><b>+" + (0.05 * Math.pow(b.l, 1.3) * 60).toFixed(1) + " Eo/min</b></div>";
+  if (b.t === "datacenter") stats += "<div class='stat'><span>Capacité Eo apportée</span><b>+" + fmt(40 * Math.pow(b.l, 1.2)) + "</b></div>";
+  if (b.t === "reseau") stats += "<div class='stat'><span>Contrats</span><b>+" + fmt(0.35 * b.l * 60) + " 💠/min</b></div>";
+  if (b.t === "console") stats += "<div class='stat'><span>Production globale</span><b>+" + (4 * b.l) + " %</b></div>";
+  if (BT[b.t].conso) stats += "<div class='stat'><span>Consommation</span><b style='color:var(--amber)'>−" + (BT[b.t].conso * b.l) + " ⚡</b></div>";
   $("#bl-stats").innerHTML = stats;
   const uc = upCost(b);
   const upBtn = $("#bl-up");
   if (b.l >= 10) { upBtn.textContent = "NIV MAX"; upBtn.disabled = true; }
   else {
-    upBtn.textContent = "AMÉLIORER · " + fmt(uc) + " ⚡";
-    upBtn.disabled = S.flux < uc;
+    upBtn.textContent = "AMÉLIORER · " + fmt(uc) + " 💠";
+    const enOkUp = enUse(BT[b.t].conso) <= enCap();
+    upBtn.disabled = S.mat < uc || !enOkUp;
     upBtn.onclick = () => {
-      if (S.flux < uc) { sfx.deny(); return; }
-      S.flux -= uc; b.l++;
+      if (S.mat < uc) { sfx.deny(); return; }
+      if (enUse(BT[b.t].conso) > enCap()) { sfx.deny(); toast("⚡ insuffisante — améliore la <b>Centrale énergétique</b>."); return; }
+      S.mat -= uc; b.l++;
       sfx.up(); missionDone("upgrade"); save();
       openBld(b);
     };
@@ -1085,7 +1123,9 @@ function openSource() {
   $("#src-stats").innerHTML =
     "<div class='stat'><span>Niveau de colonie</span><b>" + colonyLevel() + "</b></div>" +
     "<div class='stat'><span>Bâtiments reliés</span><b>" + S.buildings.length + "</b></div>" +
-    "<div class='stat'><span>Production totale</span><b>+" + prodRate().toFixed(1) + " Flux/s</b></div>" +
+    "<div class='stat'><span>Extraction totale</span><b>+" + fmt(matRate() * 60) + " 💠/min</b></div>" +
+    "<div class='stat'><span>Calcul total</span><b>+" + (eoRate() * 60).toFixed(1) + " Eo/min</b></div>" +
+    "<div class='stat'><span>Énergie</span><b>" + fmt(enUse()) + " / " + fmt(enCap()) + " ⚡</b></div>" +
     "<div class='stat'><span>Territoire</span><b>" + side + " × " + side + "</b></div>" +
     "<div class='stat'><span>Technologies</span><b>" + (S.techs.length ? S.techs.map((t) => TECHS[t].nm).join(" · ") : "aucune") + "</b></div>";
   const act = $("#src-act");
@@ -1097,11 +1137,11 @@ function openSource() {
   } else {
     const cost = EXP_COSTS[S.ext];
     const ns = GRID + 2 * (S.ext + 1);
-    btn.textContent = "ÉTENDRE LE TERRITOIRE → " + ns + "×" + ns + " · " + fmt(cost) + " ⚡";
-    btn.disabled = S.flux < cost;
+    btn.textContent = "ÉTENDRE LE TERRITOIRE → " + ns + "×" + ns + " · " + fmt(cost) + " 💠";
+    btn.disabled = S.mat < cost;
     btn.onclick = () => {
-      if (S.flux < cost) { sfx.deny(); return; }
-      S.flux -= cost;
+      if (S.mat < cost) { sfx.deny(); return; }
+      S.mat -= cost;
       S.ext++;
       sfx.tech();
       toast("🌍 Territoire étendu : <b>" + (GRID + 2 * S.ext) + "×" + (GRID + 2 * S.ext) + "</b> — de nouvelles terres émergent !", true);
@@ -1122,11 +1162,11 @@ function openClear(tp) {
   $("#bl-desc").textContent = "Un amas de roches bloque cette case. Déblaie-le pour construire ici.";
   $("#bl-stats").innerHTML = "";
   const upBtn = $("#bl-up");
-  upBtn.textContent = "DÉBLAYER · " + CLEAR_COST + " ⚡";
-  upBtn.disabled = S.flux < CLEAR_COST;
+  upBtn.textContent = "DÉBLAYER · " + CLEAR_COST + " 💠";
+  upBtn.disabled = S.mat < CLEAR_COST;
   upBtn.onclick = () => {
-    if (S.flux < CLEAR_COST) { sfx.deny(); return; }
-    S.flux -= CLEAR_COST;
+    if (S.mat < CLEAR_COST) { sfx.deny(); return; }
+    S.mat -= CLEAR_COST;
     clearedSet.add(tp.x + "," + tp.y);
     S.cleared = [...clearedSet];
     sfx.build();
@@ -1211,11 +1251,11 @@ function openTech() {
     const btn = document.createElement("button");
     if (done) { btn.textContent = "ACQUISE"; btn.disabled = true; }
     else {
-      btn.textContent = fmt(def.cost) + " ⚡";
-      btn.disabled = locked || S.flux < def.cost;
+      btn.textContent = fmt(def.eo) + " Eo";
+      btn.disabled = locked || S.eo < def.eo;
       btn.onclick = () => {
-        if (S.flux < def.cost) { sfx.deny(); return; }
-        S.flux -= def.cost;
+        if (S.eo < def.eo) { sfx.deny(); return; }
+        S.eo -= def.eo;
         S.techs.push(key);
         sfx.tech();
         toast("Technologie <b>" + def.nm + "</b> acquise !", true);
@@ -1356,7 +1396,7 @@ function endIntro() {
   S.seenIntro = true;
   $("#intro").hidden = true;
   save();
-  toast("Bienvenue, Aurore. Pose ton premier <b>Extracteur</b> près de la Source.");
+  toast("Bienvenue, Aurore. La soute fournit 100 ⚡ et 300 💠 de stockage. Pose ton premier <b>Extracteur</b> près de la Source.");
 }
 $("#inext").onclick = () => { audioInit(); sfx.ui(); scene >= SCENES.length - 1 ? endIntro() : setScene(scene + 1); };
 $("#iskip").onclick = () => { audioInit(); endIntro(); };
@@ -1368,12 +1408,13 @@ window.__api = {
   tileKind(x, y) { return tileAt(x, y).kind; },
   build(t, x, y) {
     if (!buildable(x, y)) return false;
-    S.flux -= buildCost(t);
+    S.mat -= buildCost(t);
     S.buildings.push({ t, x, y, l: 1 });
     missionDone("build_" + t);
     save(); return true;
   },
-  give(n) { S.flux = Math.min(capMax(), S.flux + n); },
+  giveMat(n) { S.mat = Math.min(matCap(), S.mat + n); },
+  giveEo(n) { S.eo = Math.min(eoCap(), S.eo + n); },
   research(k) { if (!S.techs.includes(k)) { S.techs.push(k); if (k === "dns") unlockMap(); missionDone("tech_" + k); save(); } },
   reset() { localStorage.removeItem("ls-save-v1"); location.reload(); },
 };
