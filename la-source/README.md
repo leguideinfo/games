@@ -95,7 +95,7 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
 |---|---|
 | `localStorage` | PostgreSQL (backend existant) + calcul serveur des gains idle |
 | Voisins placeholder | Vraies colonies des joueurs (multi asynchrone v1) |
-| Surcharge QTE | Les mini-jeux réels de la salle d'arcade |
+| Surcharge QTE | Conservée telle quelle (décision 2026-08-06) |
 | Formes canvas | Assets définitifs de la charte (sprites iso) |
 | Intro canvas | Cinématique existante du site |
 | Missions 7 étapes | Onboarding complet + académie |
@@ -109,8 +109,8 @@ terrain seedé stable, `window.__api` pour les tests automatisés
 
 ## Backlog immédiat (après feedback)
 
-- Brancher réellement un mini-jeu dans la Surcharge (Admin Rush, même fichier).
-- Extension de la grille (défricher les cases cristal/rocher).
-- Console de commandement & Forge d'assemblage (charte) : file de production
-  d'unités (drone, véhicule, sonde…).
+- Concevoir le système dédié d'intégration des mini-jeux (voir décision
+  Surcharge ci-dessus) — salle d'arcade en jeu ? contrats ? terminaux ?
+- Unités supplémentaires de la charte (véhicule, cargo, sonde d'exploration).
 - Sprites définitifs à partir des assets du propriétaire.
+- Pont vers la prod : PostgreSQL + universe.awoui.com (depuis la maison).
