@@ -49,6 +49,13 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   mini-jeux** (affiché en jeu) : Ferme → Admin Rush, Extracteur → Regex Invaders,
   Baie réseau → The Flux, Console de commandement → PowerShell Hero.
 - **Missions guidées** (17 étapes) : elles SONT le système de déblocage.
+- **Guidage visuel (v4.2)** : la mission en cours pointe sa cible — losange
+  ambre pulsant + chevron ▼ dans le monde (case à construire près de la
+  Source, bâtiment à améliorer, Forge, parasite, la Source pour
+  l'expansion, cristaux en mode placement) et surbrillance pulsante du bon
+  bouton dans l'interface (carte du menu Construire, onglets TECHNOS/CARTE,
+  AMÉLIORER, SURCHARGE, assemblage, technologie, ÉTENDRE). Un enfant suit
+  la lumière.
 - **Forge d'assemblage & unités (v4)** : la Forge assemble les premières
   unités (capacité = niveaux de Forge + 1) —
   **Drone récolteur 🛸** (80 💠) : se pose sur un champ de cristaux et le
