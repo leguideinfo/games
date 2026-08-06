@@ -72,8 +72,16 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   terrain de chasse. En prod : premier pas vers le PvE/PvP cyber de la
   vision (intrusion/défense).
 - **Persistance** locale (`localStorage`) + reprise hors-ligne.
+- **Crevasses & sonde souterraine (v4.4)** : les anciennes cases rocheuses
+  sont des **crevasses** (faille sombre, lueur des profondeurs). Tap →
+  mini-jeu de sonde : 8 s sous terre, tape les 💠 (et parfois des 💾) qui
+  remontent dans le halo de la sonde ; récompense proportionnelle, puis la
+  crevasse est comblée et la case constructible. Gratuit : le jeu EST
+  l'effort.
+- **Drone ouvrier (v4.4)** : renommage du drone récolteur ; textes de tous
+  les bâtiments/techs raccourcis au strict utile.
 - **Expansion du territoire** (v1.2) — trois étages :
-  1. **Déblayer** les éboulis rocheux (tap sur un rocher, 50 💠) ;
+  1. **Sonder** les crevasses (mini-jeu ci-dessus) libère des cases ;
   2. **Étendre le territoire** depuis la Source : le plateau gagne un anneau
      complet (9×9 → 11×11 → … → 17×17), coût exponentiel (450/1350/4050/12150 ⚡ — la capacité de stockage doit suivre),
      terrain procédural stable par coordonnée ;

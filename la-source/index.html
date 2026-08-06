@@ -212,6 +212,36 @@
   }
   #tz-stars { text-align: center; font-size: 18px; letter-spacing: .3em; margin: 8px 0 2px; color: var(--amber); min-height: 24px; }
 
+  /* ---------- crevasse (sonde souterraine) ---------- */
+  #cave-zone {
+    position: relative; height: 240px; margin: 10px 0;
+    border-radius: 12px; overflow: hidden;
+    background: linear-gradient(180deg, #170d07 0%, #0a0510 55%, #04020a 100%);
+    border: 1px solid #2a1d10;
+  }
+  #cave-zone[hidden] { display: none; }
+  #cave-probe {
+    position: absolute; left: 50%; top: -30px;
+    width: 150px; height: 150px; margin-left: -75px;
+    background: radial-gradient(circle, rgba(255, 214, 140, .28), transparent 62%);
+    animation: probe 3.6s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+  @keyframes probe { from { transform: translateY(0); } to { transform: translateY(150px); } }
+  .gem {
+    position: absolute; width: 44px; height: 44px;
+    border: none; background: none; padding: 0;
+    font-size: 27px; line-height: 44px;
+    filter: drop-shadow(0 0 6px rgba(120, 220, 255, .8));
+    animation: gempop 1.15s forwards;
+  }
+  @keyframes gempop {
+    0% { transform: scale(.2); opacity: 0; }
+    15%, 80% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(.4); opacity: 0; }
+  }
+  #cave-score { text-align: center; color: var(--amber); font-size: 15px; min-height: 20px; }
+
   /* ---------- toasts ---------- */
   #toasts {
     position: absolute; left: 0; right: 0; bottom: 76px;
@@ -316,7 +346,7 @@
   <div class="sheet" id="sh-build" hidden>
     <button class="close">✕</button>
     <h3>Construire</h3>
-    <div class="sub">Case libre — chaque bâtiment se relie à la Source.</div>
+    <div class="sub">Case libre.</div>
     <div id="buildlist"></div>
   </div>
 
@@ -342,18 +372,26 @@
     <div class="actrow"><button id="tz-tap">SYNCHRONISER</button></div>
   </div>
 
+  <div class="sheet" id="sh-cave" hidden>
+    <button class="close">✕</button>
+    <h3>🕳 Crevasse</h3>
+    <div class="sub" id="cave-sub"></div>
+    <div id="cave-zone" hidden><div id="cave-probe"></div></div>
+    <div id="cave-score"></div>
+    <div class="actrow"><button id="cave-go">ENVOYER LA SONDE</button></div>
+  </div>
+
   <div class="sheet" id="sh-tech" hidden>
     <button class="close">✕</button>
     <h3>Technologies</h3>
-    <div class="sub">L'arbre tech = le savoir IT. En prod : relié à l'académie.</div>
+    <div class="sub">Le savoir débloque le reste.</div>
     <div id="techlist"></div>
   </div>
 
   <div class="sheet" id="sh-source" hidden>
     <button class="close">✕</button>
     <h3>La Source</h3>
-    <div class="sub">L'Étincelle qui t'a fait naître. Cœur de la colonie : tout
-      bâtiment s'y relie. Elle grandit avec ta colonie.</div>
+    <div class="sub">L'Étincelle qui a fait naître la colonie. Tout s'y relie.</div>
     <div id="src-stats"></div>
     <div class="actrow" id="src-act"></div>
   </div>
@@ -423,56 +461,56 @@ const TW = 92, TH = 46;
 const BT = {
   extracteur: {
     nm: "Extracteur de matériaux", ic: "⛏", col: "#4ef2e0", base: 15, conso: 5, mAt: 1,
-    ds: "Fore la croûte de la planète mère. Production continue, même hors-ligne.",
+    ds: "Fore la croûte de la planète mère.",
     game: "Regex Invaders",
   },
   centrale: {
     nm: "Centrale énergétique", ic: "⚡", col: "#ffc857", base: 40, conso: 0, mAt: 4,
-    ds: "Alimente toute l'infrastructure : chaque bâtiment consomme de l'énergie.",
+    ds: "Alimente l'infrastructure.",
     game: null,
   },
   entrepot: {
     nm: "Entrepôt de matériaux", ic: "🗄", col: "#ff7a1a", base: 30, conso: 4, mAt: 3,
-    ds: "Stocke les matériaux au-delà des soutes de la colonie.",
+    ds: "Stocke les matériaux.",
     game: null,
   },
   ferme: {
     nm: "Ferme de serveurs", ic: "🖥", col: "#38a9ff", base: 60, conso: 8, mAt: 5,
-    ds: "Calcule les données (Eo) de la colonie.",
+    ds: "Calcule les données (Eo).",
     game: "Admin Rush",
   },
   datacenter: {
     nm: "Datacenter", ic: "💾", col: "#a06bff", base: 50, conso: 6, mAt: 6,
-    ds: "Conserve les données de la colonie au-delà des soutes.",
+    ds: "Conserve les données.",
     game: null,
   },
   reseau: {
     nm: "Baie réseau", ic: "📡", col: "#57e389", base: 90, eo: 15, conso: 5, tech: "dns", mAt: 10,
-    ds: "Relie la colonie au réseau galactique : contrats de matériaux passifs.",
+    ds: "Contrats de matériaux du réseau galactique.",
     game: "The Flux",
   },
   forge: {
     nm: "Forge d'assemblage", ic: "🔧", col: "#ff9a4d", base: 100, conso: 6, mAt: 13,
-    ds: "Vos premières unités sont assemblées ici.",
+    ds: "Assemble les unités.",
     game: null,
   },
   console: {
     nm: "Console de commandement", ic: "🖲", col: "#e6eef5", base: 120, eo: 10, conso: 5, mAt: 12,
-    ds: "Administre la colonie à distance, en PowerShell : +4 % de production globale par niveau.",
+    ds: "PowerShell : +4 % de production par niveau.",
     game: "PowerShell Hero",
   },
 };
 const UT = {
-  recolteur: { nm: "Drone récolteur", ic: "🛸", cost: 80, ceo: 0,
-    ds: "Se pose sur un champ de cristaux et le récolte (+36 💠/min)." },
+  recolteur: { nm: "Drone ouvrier", ic: "🛸", cost: 80, ceo: 0,
+    ds: "Récolte un champ de cristaux (+36 💠/min)." },
   chasseur: { nm: "Chasseur", ic: "🚀", cost: 120, ceo: 5,
-    ds: "Patrouille : tape un parasite pour l'envoyer au combat." },
+    ds: "Élimine les parasites (tape-les)." },
 };
 const TECHS = {
-  dhcp: { nm: "DHCP", col: "#38a9ff", eo: 15, ds: "Adressage automatique : les orbes de matériaux se collectent seules." },
-  dns: { nm: "DNS", col: "#4ef2e0", eo: 40, ds: "Résolution du secteur : débloque la Carte et la Baie réseau." },
-  firewall: { nm: "FIREWALL", col: "#ff5c5c", eo: 90, needs: "dns", ds: "Filtrage optimisé : −15 % de consommation ⚡ de toute la colonie." },
-  backup: { nm: "BACKUP", col: "#a06bff", eo: 60, ds: "Sauvegarde longue : production hors-ligne comptée sur 24 h (au lieu de 2 h)." },
+  dhcp: { nm: "DHCP", col: "#38a9ff", eo: 15, ds: "Les éclats se collectent seuls." },
+  dns: { nm: "DNS", col: "#4ef2e0", eo: 40, ds: "Débloque la Carte et la Baie réseau." },
+  firewall: { nm: "FIREWALL", col: "#ff5c5c", eo: 90, needs: "dns", ds: "−15 % de consommation ⚡." },
+  backup: { nm: "BACKUP", col: "#a06bff", eo: 60, ds: "Hors-ligne compté sur 24 h." },
 };
 const MISSIONS = [
   { t: "Récolte 3 éclats de matériaux ✨ (tape-les)", rm: 20, k: "orbs3" },
@@ -489,7 +527,7 @@ const MISSIONS = [
   { t: "Réussis une Surcharge ⚡ (tape un bâtiment)", rm: 120, k: "turbo" },
   { t: "Pose une Console de commandement", rm: 150, k: "build_console" },
   { t: "Pose une Forge d'assemblage", rm: 150, k: "build_forge" },
-  { t: "Assemble un Drone récolteur, pose-le sur des cristaux", rm: 150, k: "unit_recolteur" },
+  { t: "Assemble un Drone ouvrier, pose-le sur des cristaux", rm: 150, k: "unit_recolteur" },
   { t: "Parasite en vue ! Assemble un Chasseur, puis tape le parasite", rm: 200, k: "mob_kill" },
   { t: "Étends le territoire (tape la Source)", rm: 200, k: "extend" },
 ];
@@ -770,9 +808,17 @@ function drawTile(x, y, t) {
       ctx.shadowBlur = 0;
     }
   } else if (info.kind === "rock") {
+    // crevasse : faille sombre, lueur des profondeurs
+    const cxp = p.x + (info.j - 0.5) * 12 * z, cyp = p.y + 2 * z;
     ctx.beginPath();
-    ctx.ellipse(p.x + (info.j - 0.5) * 20 * z, p.y + 2 * z, 11 * z, 6 * z, 0, 0, Math.PI * 2);
-    ctx.fillStyle = "hsl(24 30% 30%)"; ctx.fill();
+    ctx.ellipse(cxp, cyp, 17 * z, 7 * z, (info.j - 0.5) * 0.5, 0, Math.PI * 2);
+    ctx.fillStyle = "#100608"; ctx.fill();
+    ctx.strokeStyle = "rgba(90,55,25,.8)"; ctx.lineWidth = 1.2 * z; ctx.stroke();
+    const gg = ctx.createRadialGradient(cxp, cyp, 1, cxp, cyp, 13 * z);
+    gg.addColorStop(0, "rgba(255,170,80," + (0.28 + 0.16 * Math.sin(t / 480 + info.j * 9)).toFixed(2) + ")");
+    gg.addColorStop(1, "rgba(255,170,80,0)");
+    ctx.fillStyle = gg;
+    ctx.beginPath(); ctx.ellipse(cxp, cyp, 13 * z, 5.5 * z, 0, 0, Math.PI * 2); ctx.fill();
   }
   // sélection
   if (selTile && selTile.x === x && selTile.y === y) {
@@ -1229,7 +1275,7 @@ cv.addEventListener("pointerup", (e) => {
       S.units.push({ t: placing.t, x: tp0.x, y: tp0.y });
       placing = null;
       sfx.build();
-      toast("🛸 Drone en place : il récolte le champ de cristaux.");
+      toast("🛸 Drone ouvrier en place.");
       missionDone("unit_recolteur");
       save();
     } else {
@@ -1262,7 +1308,7 @@ cv.addEventListener("pointerup", (e) => {
   if (buildable(tp.x, tp.y)) {
     openBuild(tp);
   } else if (inB(tp.x, tp.y) && tileAt(tp.x, tp.y).kind === "rock") {
-    openClear(tp);
+    openCrevasse(tp);
   } else {
     closeSheets();
     selTile = null;
@@ -1301,6 +1347,7 @@ $("#z-out").onclick = () => zoomAt(0.8);
 function closeSheets() {
   for (const s of document.querySelectorAll(".sheet")) s.hidden = true;
   selTile = null;
+  cave = null;
 }
 for (const b of document.querySelectorAll(".sheet .close")) b.onclick = closeSheets;
 
@@ -1429,7 +1476,7 @@ function assemble(k, fb) {
   } else {
     S.units.push({ t: k, x: fb.x, y: fb.y });
     closeSheets();
-    toast("🚀 Chasseur en patrouille au-dessus de la Forge.");
+    toast("🚀 Chasseur en patrouille.");
   }
   save();
 }
@@ -1478,29 +1525,60 @@ function openSource() {
   $("#sh-source").hidden = false;
 }
 
-function openClear(tp) {
-  if (S.mi < 3) { toast("Des éboulis… tu pourras les déblayer bientôt."); return; }
+let cave = null;
+function openCrevasse(tp) {
+  if (S.mi < 3) { toast("Cette crevasse t'attend… bientôt."); return; }
   closeSheets();
-  selTile = tp;
-  $("#bl-name").textContent = "🪨 Éboulis rocheux";
-  $("#bl-desc").textContent = "Un amas de roches bloque cette case. Déblaie-le pour construire ici.";
-  $("#bl-stats").innerHTML = "";
-  const upBtn = $("#bl-up");
-  upBtn.textContent = "DÉBLAYER · " + CLEAR_COST + " 💠";
-  upBtn.disabled = S.mat < CLEAR_COST;
-  upBtn.onclick = () => {
-    if (S.mat < CLEAR_COST) { sfx.deny(); return; }
-    S.mat -= CLEAR_COST;
+  cave = { tp, score: 0, eo: 0, running: false };
+  $("#cave-sub").textContent = "Quelque chose brille au fond. Envoie la sonde et tape ce qui remonte !";
+  $("#cave-zone").hidden = true;
+  $("#cave-score").textContent = "";
+  $("#cave-go").hidden = false;
+  $("#sh-cave").hidden = false;
+}
+$("#cave-go").onclick = () => {
+  if (!cave || cave.running) return;
+  audioInit();
+  sfx.ui();
+  cave.running = true;
+  $("#cave-zone").hidden = false;
+  $("#cave-go").hidden = true;
+  const zone = $("#cave-zone");
+  const myCave = cave;
+  const spawn = setInterval(() => {
+    if (cave !== myCave) { clearInterval(spawn); return; }
+    if (zone.querySelectorAll(".gem").length >= 3) return;
+    const isEo = Math.random() < 0.15;
+    const b = document.createElement("button");
+    b.className = "gem";
+    b.textContent = isEo ? "💾" : "💠";
+    b.style.left = (8 + Math.random() * (zone.clientWidth - 56)) + "px";
+    b.style.top = (8 + Math.random() * (zone.clientHeight - 56)) + "px";
+    b.onclick = () => {
+      if (cave !== myCave) return;
+      if (isEo) cave.eo += 2; else cave.score += 8 + 2 * colonyLevel();
+      sfx.collect();
+      b.remove();
+      $("#cave-score").textContent = "+" + cave.score + " 💠" + (cave.eo ? " · +" + cave.eo + " Eo" : "");
+    };
+    zone.appendChild(b);
+    setTimeout(() => b.remove(), 1180);
+  }, 430);
+  setTimeout(() => {
+    clearInterval(spawn);
+    if (cave !== myCave) return;
+    const { tp, score, eo } = cave;
+    cave = null;
     clearedSet.add(tp.x + "," + tp.y);
     S.cleared = [...clearedSet];
-    sfx.build();
-    toast("Case déblayée — prête à construire.");
-    save();
+    S.mat = Math.min(matCap(), S.mat + score);
+    S.eo = Math.min(eoCap(), S.eo + eo);
+    sfx.tech();
     closeSheets();
-  };
-  $("#bl-turbo").hidden = true;
-  $("#sh-bld").hidden = false;
-}
+    toast("🕳 Crevasse comblée : <b>+" + score + " 💠</b>" + (eo ? " et <b>+" + eo + " Eo</b>" : "") + " — case libre !", true);
+    save();
+  }, 8000);
+};
 
 /* ---------- turbo / surcharge ---------- */
 let tz = null;
