@@ -17,6 +17,7 @@ Les jeux d'arcade sont considérés comme **la clef du succès et de l'adhérenc
 | `docs/univers-awoui.md` | L'écosystème Awoui dans son ensemble (Awoui, LeGuideInfo, Universe) |
 | `docs/universe-mmo.md` | Le MMO : académie IT, gestion de civilisation, technologies |
 | `docs/salle-arcade.md` | Vision et principes de design de la salle d'arcade |
+| `docs/jeu-principal-vision.md` | Proposition « La Source » : le jeu principal unifié (builder + carte-réseau + idle + mini-jeux comme verbes) — à trancher avant prod |
 | `docs/jeux/admin-rush.md` | Suivi d'Admin Rush (produit ici, validé, en attente du contenu de formation pour passage en prod) |
 | `docs/jeux/powershell-hero.md` | Fiche du jeu existant PowerShell Hero |
 | `docs/jeux/the-flux.md` | Fiche du jeu existant The Flux |
