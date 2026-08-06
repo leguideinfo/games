@@ -34,7 +34,7 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
 - **Expansion du territoire** (v1.2) — trois étages :
   1. **Déblayer** les éboulis rocheux (tap sur un rocher, 50 ⚡) ;
   2. **Étendre le territoire** depuis la Source : le plateau gagne un anneau
-     complet (9×9 → 11×11 → … → 17×17), coût exponentiel (150/450/1350/4050 ⚡),
+     complet (9×9 → 11×11 → … → 17×17), coût exponentiel (450/1350/4050/12150 ⚡ — la capacité de stockage doit suivre),
      terrain procédural stable par coordonnée ;
   3. **Cristaux stratégiques** : indéblayables, mais +15 % de production par
      cristal adjacent à un Extracteur — l'expansion révèle des emplacements
