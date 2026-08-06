@@ -42,8 +42,17 @@ vers le MMO, l'académie IT et l'écosystème Awoui.
 |---|---|---|---|
 | PowerShell Hero | Rythme (Guitar Hero) | Commandes PowerShell | ✅ Existant sur universe.awoui.com (code chez le propriétaire, intégration ici plus tard) |
 | The Flux | Runner (Subway Surfers) | Un bit traverse le réseau | ✅ Existant sur universe.awoui.com (idem) |
-| **Regex Invaders** | Shoot'em up (Space Invaders) | Expressions régulières | 🔨 Prototype jouable dans ce repo (`/regex-invaders/`) |
+| **Regex Invaders** | Shoot'em up (Space Invaders) | Expressions régulières | 🔨 Prototype jouable (`/regex-invaders/`) — validé fun par le propriétaire, à polir « encore + fun » |
+| **Admin Rush** | Gestion de tickets sous pression (Overcooked solo) | Windows Server avancé : pre-setup, DC/AD/DNS, PKI AD CS, VPN, IIS/HTTPS, auth | 🔨 Prototype jouable (`/admin-rush/`) — aligné sur la formation en cours du propriétaire |
 | *(suivants)* | — | — | Voir `jeux/backlog-idees.md` |
+
+## Lien avec les formations (nouveau, confirmé)
+
+Le propriétaire suit une **formation Windows Server avancé** (pre-setup,
+sécurité, DC AD DNS, PKI AD CS, VPN multi-serveur, IIS HTTPS, auth Windows).
+Les jeux peuvent être conçus pour **accompagner une formation précise** :
+Admin Rush en est le premier exemple. Son contenu (modules/tickets) est
+data-driven et doit être affiné avec le vrai plan de cours.
 
 ## Contraintes techniques (confirmées par le propriétaire)
 
