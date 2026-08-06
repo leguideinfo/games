@@ -151,6 +151,55 @@ await page.waitForTimeout(400);
 const done = await page.evaluate(() => ({ mi: window.__LS().mi, ext: window.__LS().ext, missionBoxHidden: document.querySelector("#missions").hidden }));
 console.log("fin de chaîne:", JSON.stringify(done));
 
+// ---- ARC ARCHIVES (v5) ----
+// M17 : sonder une crevasse → Fragment 001
+let rk = null;
+for (let tries = 0; tries < 6 && !rk; tries++) {
+  rk = await page.evaluate(() => {
+    for (let y = -1; y <= 9; y++) for (let x = -1; x <= 9; x++) {
+      if (window.__api.tileKind(x, y) === "rock" && window.__api.buildableAt ? true : true) {
+        const S = window.__LS();
+        if (x >= -S.ext && y >= -S.ext && x <= 8 + S.ext && y <= 8 + S.ext && window.__api.tileKind(x, y) === "rock") {
+          const s = window.__api.screenOf(x, y);
+          if (s.x > 30 && s.x < 350 && s.y > 150 && s.y < 600) return { x: s.x, y: s.y };
+        }
+      }
+    }
+    return null;
+  });
+  if (!rk) { await page.click("#z-out"); await page.waitForTimeout(200); }
+}
+await page.mouse.click(rk.x, rk.y);
+await page.waitForTimeout(300);
+await page.click("#cave-go");
+await page.waitForTimeout(9800);
+const arch1 = await page.evaluate(() => ({ mi: window.__LS().mi, frags: window.__LS().archives.length, tab: !document.querySelector("#tab-arch").hidden }));
+console.log("fragment remonté (mission 18):", JSON.stringify(arch1));
+
+// M18 : assembler le système d'époque
+await page.evaluate(() => { window.__LS().mat = 500; window.__api.giveEo(60); });
+await page.click("#tab-arch");
+await page.waitForTimeout(300);
+await page.click("#arch-reader .forge-asm");
+await page.waitForTimeout(300);
+const okIdx = await page.evaluate(() => window.__api.asmOk());
+for (let si = 0; si < okIdx.length; si++) {
+  await page.click('.asm-opt[data-slot="' + si + '"][data-opt="' + okIdx[si] + '"]');
+  await page.waitForTimeout(120);
+}
+await page.click("#asm-boot");
+await page.waitForTimeout(3600);
+const arch2 = await page.evaluate(() => ({ mi: window.__LS().mi, reader: window.__LS().reader }));
+console.log("système d'époque en ligne (mission 19):", JSON.stringify(arch2));
+
+// M19 : décrypter le Fragment 001
+await page.waitForTimeout(1200); // openArch auto après boot
+await page.locator("#arch-list button", { hasText: "DÉCRYPTER" }).click();
+await page.waitForTimeout(400);
+const arch3 = await page.evaluate(() => ({ mi: window.__LS().mi, dec: window.__LS().archives[0].dec, done: document.querySelector("#missions").hidden }));
+console.log("fragment décrypté (fin, 20 missions):", JSON.stringify(arch3));
+await page.evaluate(() => { for (const s of document.querySelectorAll(".sheet")) s.hidden = true; });
+
 // persistance
 await page.reload();
 await page.waitForTimeout(800);
@@ -158,6 +207,7 @@ console.log("après reload:", await page.evaluate(() => ({
   introHidden: document.querySelector("#intro").hidden,
   n: window.__LS().buildings.length, units: window.__LS().units.length,
   ext: window.__LS().ext, mi: window.__LS().mi,
+  reader: window.__LS().reader, frags: window.__LS().archives.length,
 })));
 await page.screenshot({ path: shots + "/e2e-final.png" });
 

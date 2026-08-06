@@ -212,6 +212,35 @@
   }
   #tz-stars { text-align: center; font-size: 18px; letter-spacing: .3em; margin: 8px 0 2px; color: var(--amber); min-height: 24px; }
 
+  /* ---------- archives / assemblage ---------- */
+  .asm-slot { margin-bottom: 10px; }
+  .asm-slot .sl-nm { font-size: 11px; color: var(--dim); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 5px; }
+  .asm-opt {
+    display: block; width: 100%;
+    border: 1px solid var(--line); background: var(--panel2); color: var(--txt);
+    border-radius: 9px; padding: 8px 10px; font-size: 12px; text-align: left;
+    margin-bottom: 5px;
+  }
+  .asm-opt.sel { border-color: var(--blue); color: var(--blue); background: #0c1a30; }
+  #asm-log {
+    font-size: 11.5px; line-height: 1.7; min-height: 20px;
+    padding: 4px 2px; font-variant-numeric: tabular-nums;
+  }
+  #asm-log .ok { color: var(--green); }
+  #asm-log .err { color: var(--red); }
+  .frag-txt {
+    border: 1px solid #3a3050;
+    background: #120f1e;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: #d8d2ea;
+    margin-bottom: 8px;
+  }
+  .frag-txt .hd { color: var(--violet); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 6px; }
+  .frag-txt .cy { color: var(--cyan); }
+
   /* ---------- crevasse (sonde souterraine) ---------- */
   #cave-zone {
     position: relative; height: 240px; margin: 10px 0;
@@ -339,6 +368,7 @@
   <div id="tabs">
     <button id="tab-col" class="on">COLONIE</button>
     <button id="tab-map" disabled>CARTE 🔒</button>
+    <button id="tab-arch" hidden>ARCHIVES</button>
     <button id="tab-tech">TECHNOS</button>
   </div>
 
@@ -378,6 +408,24 @@
     <div id="cave-zone" hidden><div id="cave-probe"></div></div>
     <div id="cave-score"></div>
     <div class="actrow"><button id="cave-go">ENVOYER LA SONDE</button></div>
+  </div>
+
+  <div class="sheet" id="sh-arch" hidden>
+    <button class="close">✕</button>
+    <h3>📼 Archives de l'humanité</h3>
+    <div class="sub" id="arch-sub"></div>
+    <div id="arch-reader"></div>
+    <div id="arch-list"></div>
+  </div>
+
+  <div class="sheet" id="sh-asm" hidden>
+    <button class="close">✕</button>
+    <h3>🔩 Système d'époque</h3>
+    <div class="sub">Ces données demandent une machine d'un autre temps.
+      Choisis des composants compatibles.</div>
+    <div id="asm-slots"></div>
+    <div id="asm-log"></div>
+    <div class="actrow"><button id="asm-boot">DÉMARRER · 200 💠 + 20 Eo</button></div>
   </div>
 
   <div class="sheet" id="sh-tech" hidden>
@@ -530,6 +578,9 @@ const MISSIONS = [
   { t: "Assemble un Drone ouvrier, pose-le sur des cristaux", rm: 150, k: "unit_recolteur" },
   { t: "Parasite en vue ! Assemble un Chasseur, puis tape le parasite", rm: 200, k: "mob_kill" },
   { t: "Étends le territoire (tape la Source)", rm: 200, k: "extend" },
+  { t: "Un signal ancien émane des crevasses : sonde-en une", rm: 100, k: "archive_found" },
+  { t: "Assemble un système d'époque (onglet ARCHIVES)", re: 15, k: "server_built" },
+  { t: "Décrypte le Fragment 001", rm: 250, k: "archive_read" },
 ];
 
 /* ---------- état ---------- */
@@ -538,7 +589,7 @@ function newSave() {
   return {
     v: 2, mat: 50, eo: 0, buildings: [], techs: [], seenIntro: false,
     mi: 0, orbsCollected: 0, lastSeen: Date.now(), buffLeft: 0, buffMult: 1,
-    ext: 0, cleared: [], units: [],
+    ext: 0, cleared: [], units: [], archives: [], reader: false,
   };
 }
 function load() {
@@ -556,6 +607,8 @@ S = load();
 if (!S.cleared) S.cleared = [];
 if (!S.ext) S.ext = 0;
 if (!S.units) S.units = [];
+if (!S.archives) S.archives = [];
+if (S.reader == null) S.reader = false;
 S.units.forEach((u) => { delete u.busy; });
 window.__LS = () => S;
 
@@ -1047,6 +1100,10 @@ function guideWorldTarget() {
     return m && { x: m.x, y: m.y, kind: "mob" };
   }
   if (mi === 16) return { x: SRC.x, y: SRC.y, kind: "src" };
+  if (mi === 17) {
+    const c = nearestTile((x, y) => tileAt(x, y).kind === "rock");
+    return c && { x: c.x, y: c.y, kind: "tile" };
+  }
   return null;
 }
 function drawCrevasseHint(t) {
@@ -1604,6 +1661,13 @@ $("#cave-go").onclick = () => {
     sfx.tech();
     closeSheets();
     toast("🕳 Crevasse comblée : <b>+" + score + " 💠</b>" + (eo ? " et <b>+" + eo + " Eo</b>" : "") + " — case libre !", true);
+    if (S.mi === 17 && !S.archives.length) {
+      S.archives.push({ id: 1, dec: false });
+      setTimeout(() => {
+        toast("📼 La sonde remonte un <b>Fragment d'Archive</b> — format ancien, illisible…", true);
+        missionDone("archive_found");
+      }, 1200);
+    }
     save();
   }, 8000);
 };
@@ -1663,6 +1727,170 @@ $("#tz-tap").onclick = () => {
   }
 };
 
+/* ---------- archives de l'humanité ---------- */
+const FRAG_TXT = {
+  1: "<div class='hd'>Archive 001 · journal de bord — jour 4 812 de l'Exode</div>" +
+     "« Nous avons scellé la mémoire de l'humanité dans un format que seules " +
+     "nos machines d'époque savent lire. Pas par nostalgie — par prudence. " +
+     "Si tu lis ceci, tu as reconstruit l'une d'elles. Alors écoute bien : " +
+     "<span class='cy'>l'humanité n'a pas disparu. Elle a choisi de…</span> »" +
+     "<br><br><span style='color:var(--dim)'>[suite chiffrée — d'autres Fragments dorment sous la surface]</span>",
+};
+const ASM = [
+  { nm: "Carte mère", opts: [
+    { l: "ATX · socket AM4 · 4 slots DDR4 · 2 × M.2 NVMe", ok: true },
+    { l: "Mini-ITX · socket LGA775 · DDR2", why: "chipset d'une autre ère : rien de compatible ne s'y monte" },
+    { l: "Carte serveur SP3 · ECC uniquement", why: "prévue pour des CPU 64 cœurs — hors budget ⚡" },
+  ]},
+  { nm: "Processeur", opts: [
+    { l: "6 cœurs / 12 threads · 3,6 GHz · socket AM4", ok: true },
+    { l: "2 cœurs · 1,6 GHz · basse consommation", why: "trop faible pour décoder les Archives" },
+    { l: "64 cœurs · socket SP3", why: "socket SP3 ≠ AM4 : il n'entre pas dans la carte mère" },
+  ]},
+  { nm: "Mémoire", opts: [
+    { l: "64 Go DDR4 (4 × 16 Go)", ok: true },
+    { l: "8 Go DDR3", why: "la DDR3 n'entre physiquement pas dans un slot DDR4" },
+    { l: "16 Go DDR4", why: "insuffisant : le décodage réclame 64 Go" },
+  ]},
+  { nm: "Stockage", opts: [
+    { l: "2 × 512 Go NVMe · RAID 1 (miroir)", ok: true },
+    { l: "1 disque 500 Go · 5 400 tr/min", why: "un seul disque : aucune tolérance de panne, et trop lent" },
+    { l: "Lecteur de bandes magnétiques", why: "accès séquentiel : impossible d'y faire tourner un système" },
+  ]},
+  { nm: "Réseau", opts: [
+    { l: "Ethernet 1 Gbit/s", ok: true },
+    { l: "Modem 56k", why: "les Archives mettraient 40 ans à transiter" },
+    { l: "Optique 100 Gbit/s", why: "consommation ⚡ au-delà de la Centrale" },
+  ]},
+];
+const asmSel = [null, null, null, null, null];
+const ASM_COST = { m: 200, e: 20 };
+
+function openArch() {
+  closeSheets();
+  $("#arch-sub").textContent = S.archives.length
+    ? "Des données du passé. Illisibles… sauf pour un système d'époque."
+    : "Aucun fragment. Des signaux anciens dorment sous la surface…";
+  const rd = $("#arch-reader");
+  if (S.reader) {
+    rd.innerHTML = "<div class='bcard'><div class='ic'>🖥</div><div class='grow'>" +
+      "<div class='nm' style='color:var(--green)'>Lecteur d'Archives — EN LIGNE</div>" +
+      "<div class='ds'>Système d'époque opérationnel.</div></div></div>";
+  } else {
+    rd.innerHTML = "<div class='bcard'><div class='ic'>🖥</div><div class='grow'>" +
+      "<div class='nm' style='color:var(--red)'>Lecteur d'Archives — hors ligne</div>" +
+      "<div class='ds'>Aucun système compatible avec ce format ancien.</div></div></div>";
+    const b = document.createElement("button");
+    b.className = "forge-asm" + (S.mi === 18 ? " guide" : "");
+    b.textContent = "🔩 ASSEMBLER LE SYSTÈME D'ÉPOQUE";
+    b.onclick = openAsm;
+    rd.appendChild(b);
+  }
+  const list = $("#arch-list");
+  list.innerHTML = "";
+  for (const f of S.archives) {
+    if (f.dec) {
+      const d = document.createElement("div");
+      d.className = "frag-txt";
+      d.innerHTML = FRAG_TXT[f.id] || "…";
+      list.appendChild(d);
+    } else {
+      const card = document.createElement("div");
+      card.className = "bcard";
+      card.innerHTML = "<div class='ic'>📼</div><div class='grow'>" +
+        "<div class='nm'>Fragment 00" + f.id + "</div>" +
+        "<div class='ds'>" + (S.reader ? "Prêt à décrypter." : "Chiffré — format ancien.") + "</div></div>";
+      const b = document.createElement("button");
+      b.textContent = "DÉCRYPTER";
+      b.disabled = !S.reader;
+      if (S.mi === 19 && S.reader) b.classList.add("guide");
+      b.onclick = () => {
+        f.dec = true;
+        sfx.tech();
+        missionDone("archive_read");
+        save();
+        openArch();
+      };
+      card.appendChild(b);
+      list.appendChild(card);
+    }
+  }
+  $("#sh-arch").hidden = false;
+}
+
+function openAsm() {
+  closeSheets();
+  const zone = $("#asm-slots");
+  zone.innerHTML = "";
+  ASM.forEach((slot, si) => {
+    const d = document.createElement("div");
+    d.className = "asm-slot";
+    d.innerHTML = "<div class='sl-nm'>" + slot.nm + "</div>";
+    const order = [si % 3, (si + 1) % 3, (si + 2) % 3];
+    order.forEach((oi) => {
+      const o = slot.opts[oi];
+      const b = document.createElement("button");
+      b.className = "asm-opt" + (asmSel[si] === oi ? " sel" : "");
+      b.textContent = o.l;
+      b.dataset.slot = si; b.dataset.opt = oi;
+      b.onclick = () => { asmSel[si] = oi; sfx.ui(); openAsm(); };
+      d.appendChild(b);
+    });
+    zone.appendChild(d);
+  });
+  $("#asm-log").innerHTML = "";
+  $("#sh-asm").hidden = false;
+}
+$("#asm-boot").onclick = () => {
+  audioInit();
+  const log = $("#asm-log");
+  // sélections complètes ?
+  for (let i = 0; i < ASM.length; i++) {
+    if (asmSel[i] == null) {
+      log.innerHTML = "<span class='err'>POST interrompu : aucun composant « " + ASM[i].nm + " » installé.</span>";
+      sfx.deny();
+      return;
+    }
+  }
+  // compatibilité (premier défaut, message pédagogique)
+  for (let i = 0; i < ASM.length; i++) {
+    const o = ASM[i].opts[asmSel[i]];
+    if (!o.ok) {
+      log.innerHTML = "<span class='err'>POST échoué — " + ASM[i].nm + " : " + o.why + ".</span>";
+      sfx.deny();
+      return;
+    }
+  }
+  if (S.mat < ASM_COST.m || S.eo < ASM_COST.e) {
+    log.innerHTML = "<span class='err'>Ressources insuffisantes (200 💠 + 20 Eo).</span>";
+    sfx.deny();
+    return;
+  }
+  S.mat -= ASM_COST.m; S.eo -= ASM_COST.e;
+  const lines = [
+    "POST… <span class='ok'>OK</span>",
+    "CPU 6c/12t @ 3,6 GHz… <span class='ok'>OK</span>",
+    "Mémoire 64 Go DDR4… <span class='ok'>OK</span>",
+    "RAID 1 NVMe synchronisé… <span class='ok'>OK</span>",
+    "Liaison 1 Gbit/s… <span class='ok'>OK</span>",
+    "<span class='ok'>SYSTÈME D'ÉPOQUE EN LIGNE.</span>",
+  ];
+  log.innerHTML = "";
+  lines.forEach((l, i) => {
+    setTimeout(() => {
+      log.innerHTML += l + "<br>";
+      beep(400 + i * 90, 0.06, "square", 0.03);
+      if (i === lines.length - 1) {
+        S.reader = true;
+        sfx.tech();
+        missionDone("server_built");
+        save();
+        setTimeout(() => { openArch(); }, 900);
+      }
+    }, 450 * i);
+  });
+};
+
 /* ---------- technologies ---------- */
 function openTech() {
   closeSheets();
@@ -1712,6 +1940,8 @@ function refreshGates() {
   $("#tab-map").disabled = !dns;
   $("#tab-map").textContent = "CARTE";
   $("#tab-map").classList.toggle("guide", S.mi === 9);
+  $("#tab-arch").hidden = !(S.archives.length || S.mi >= 18);
+  $("#tab-arch").classList.toggle("guide", S.mi === 18 || S.mi === 19);
 }
 
 /* ---------- onglets ---------- */
@@ -1722,6 +1952,7 @@ $("#tab-map").onclick = () => {
   missionDone("map");
 };
 $("#tab-tech").onclick = () => { setTab("col"); view = "col"; openTech(); };
+$("#tab-arch").onclick = () => { setTab("col"); view = "col"; openArch(); };
 function setTab(v) {
   $("#tab-col").classList.toggle("on", v === "col");
   $("#tab-map").classList.toggle("on", v === "map");
@@ -2046,6 +2277,7 @@ window.__api = {
   orbsPos() { return orbs.filter((o) => o.sx != null).map((o) => ({ sx: o.sx, sy: o.sy })); },
   mobsPos() { return mobs.filter((m) => m.sx != null && !m.atk).map((m) => ({ sx: m.sx, sy: m.sy })); },
   assemble(k) { const f = S.buildings.find((b) => b.t === "forge"); if (f) assemble(k, f); },
+  asmOk() { return ASM.map((sl) => sl.opts.findIndex((o) => o.ok)); },
   crystalsAll() {
     const out = [];
     for (let y = bmin(); y <= bmax(); y++) for (let x = bmin(); x <= bmax(); x++) {

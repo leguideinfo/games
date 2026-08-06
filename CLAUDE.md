@@ -18,6 +18,7 @@ Les jeux d'arcade sont considérés comme **la clef du succès et de l'adhérenc
 | `docs/universe-mmo.md` | Le MMO : académie IT, gestion de civilisation, technologies |
 | `docs/salle-arcade.md` | Vision et principes de design de la salle d'arcade |
 | `docs/jeu-principal-vision.md` | Vision « La Source » : le jeu principal unifié — **VALIDÉE**, décisions actées, charte graphique dans `docs/assets/` |
+| `docs/trame-narrative.md` | Trame narrative **CONFIRMÉE** : amnésie d'Aurore, Archives de l'humanité, systèmes d'époque, séquence serveur (config réelle du datacenter, fournisseur jamais cité en jeu) |
 | `docs/jeux/admin-rush.md` | Suivi d'Admin Rush (produit ici, validé, en attente du contenu de formation pour passage en prod) |
 | `docs/jeux/powershell-hero.md` | Fiche du jeu existant PowerShell Hero |
 | `docs/jeux/the-flux.md` | Fiche du jeu existant The Flux |
