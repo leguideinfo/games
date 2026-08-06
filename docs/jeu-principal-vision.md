@@ -1,7 +1,29 @@
 # Le jeu principal d'Awoui Universe — vision « La Source »
 
-*Proposition Claude (2026-08-06) suite à la demande du propriétaire. **À débattre
-et trancher ensemble avant la prod.** Rien ici n'est validé sauf mention contraire.*
+*Proposition Claude (2026-08-06). **✅ VALIDÉE par le propriétaire le 2026-08-06**,
+avec les précisions ci-dessous.*
+
+## Décisions actées (2026-08-06)
+
+- ✅ **Concept global validé** (« je valide », « tout le reste tient la route »).
+- ✅ **Lore existant à respecter** : le perso principal se réveille d'une
+  **cryogénisation sur un vaisseau-colonie** et atterrit sur une **planète
+  vierge** — déjà implémenté **avec cinématique** sur universe.awoui.com.
+  L'Étincelle/la Source s'y insère comme **concept abstrait de l'âme /
+  énergie initiatrice** du nouveau monde.
+- ✅ **Backend actuel : PostgreSQL** (pour la persistance à terme).
+- ✅ **Direction artistique reçue** (voir `assets/charte-graphique.png` et
+  `assets/terrain-reference.png`) : vue isométrique ; bâtiments titane blanc +
+  graphite + verre tech à énergie bleue ; désert ocre à cristaux cyan ;
+  niveaux visuels NIV 1/3/5/10 ; bâtiments IT nommés (Baie de stockage, Ferme
+  de serveurs, **Tour de résolution** (DNS), Baie réseau, Console de
+  commandement, Forge d'assemblage, Citadelle) ; unités (drone, véhicule,
+  cargo, sonde, chasseur, frégate, porte-nefs) ; effets réseaux DHCP / DNS /
+  AD / FIREWALL / BACKUP ; palette officielle blanc-gris-noirs + bleu, orange,
+  rouge, vert, violet ; environnements désert/cristaux/plateau/canyon/
+  cratère/ruines ; routes & conduits NIV 1-5.
+- ✅ **V1 multijoueur asynchrone** (recommandation acceptée implicitement).
+- 🔨 **Vertical slice « La Source » en cours dans ce repo** (`/la-source/`).
 
 ## Le constat (propriétaire — confirmé)
 
