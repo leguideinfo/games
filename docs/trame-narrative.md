@@ -36,12 +36,21 @@ réseau (« toute la cavalerie »).
 - **Suite prévue** : l'accès aux systèmes serveur (administration, services…)
   — à concevoir (pont naturel vers l'académie et les formations réelles).
 
-## Implémentation dans la slice (v5)
+## Implémentation dans la slice (v5.1)
 
-- Après la chaîne de missions de base : « un signal ancien émane des
-  crevasses » → la sonde remonte le **Fragment d'Archive 001** (illisible).
-- Nouvel onglet **ARCHIVES** : liste des fragments + état du **Lecteur
-  d'Archives** (hors ligne tant que le système d'époque n'est pas assemblé).
+- ⚠️ **Cohérence (correction du propriétaire)** : on vient d'arriver sur une
+  planète vierge — aucun fragment humain ne peut être enterré dans les
+  crevasses. **Le Fragment 001 vient de la soute** : les Archives ont voyagé
+  avec Aurore à bord de l'AWOUI-7 (c'est la raison d'être d'un
+  vaisseau-colonie). Les crevasses pourront cacher des fragments plus tard,
+  quand le lore le justifiera.
+- **Quête annexe, pas mission principale** : quand la colonie sait stocker
+  des données (premier Datacenter), un **compartiment scellé de la soute** se
+  déverrouille — signalé par un discret 📼 flottant près de la Source (la
+  « main tendue » : le curieux la suit, le bambin l'ignore sans rien bloquer).
+  L'ouvrir donne le Fragment 001 et fait apparaître l'onglet **ARCHIVES**
+  (fragments + état du **Lecteur d'Archives**, hors ligne tant que le système
+  d'époque n'est pas assemblé).
 - **Assemblage** : 5 emplacements (carte mère, processeur, mémoire, stockage,
   réseau), 3 options chacun ; le démarrage (POST) échoue avec un message
   pédagogique sur la première incompatibilité ; seule la config cible

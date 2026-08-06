@@ -578,9 +578,6 @@ const MISSIONS = [
   { t: "Assemble un Drone ouvrier, pose-le sur des cristaux", rm: 150, k: "unit_recolteur" },
   { t: "Parasite en vue ! Assemble un Chasseur, puis tape le parasite", rm: 200, k: "mob_kill" },
   { t: "Étends le territoire (tape la Source)", rm: 200, k: "extend" },
-  { t: "Un signal ancien émane des crevasses : sonde-en une", rm: 100, k: "archive_found" },
-  { t: "Assemble un système d'époque (onglet ARCHIVES)", re: 15, k: "server_built" },
-  { t: "Décrypte le Fragment 001", rm: 250, k: "archive_read" },
 ];
 
 /* ---------- état ---------- */
@@ -974,6 +971,16 @@ function drawSource(t) {
   ctx.fillStyle = "#eaffff";
   ctx.shadowColor = "#6fd8f2"; ctx.shadowBlur = 18;
   ctx.fill(); ctx.shadowBlur = 0;
+  // compartiment scellé : main tendue discrète (quête annexe)
+  if (soutePrete()) {
+    const bob = Math.sin(t / 500) * 4 * z;
+    ctx.font = Math.round(15 * z) + "px " + getComputedStyle(document.body).fontFamily;
+    ctx.textAlign = "center";
+    ctx.globalAlpha = 0.7 + 0.3 * Math.sin(t / 600);
+    ctx.shadowColor = "#a06bff"; ctx.shadowBlur = 10;
+    ctx.fillText("📼", p.x + TW * 0.34 * z, p.y - 46 * z + bob);
+    ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+  }
 }
 function drawLink(b, t) {
   const a = w2s(b.x, b.y), c = w2s(SRC.x, SRC.y);
@@ -1100,10 +1107,6 @@ function guideWorldTarget() {
     return m && { x: m.x, y: m.y, kind: "mob" };
   }
   if (mi === 16) return { x: SRC.x, y: SRC.y, kind: "src" };
-  if (mi === 17) {
-    const c = nearestTile((x, y) => tileAt(x, y).kind === "rock");
-    return c && { x: c.x, y: c.y, kind: "tile" };
-  }
   return null;
 }
 function drawCrevasseHint(t) {
@@ -1580,6 +1583,22 @@ function openSource() {
     "<div class='stat'><span>Technologies</span><b>" + (S.techs.length ? S.techs.map((t) => TECHS[t].nm).join(" · ") : "aucune") + "</b></div>";
   const act = $("#src-act");
   act.innerHTML = "";
+  if (soutePrete()) {
+    const cb = document.createElement("button");
+    cb.className = "forge-asm";
+    cb.style.borderColor = "#4a3a70";
+    cb.style.color = "var(--violet)";
+    cb.innerHTML = "📼 Compartiment scellé de la soute — <b>OUVRIR</b>" +
+      "<div class='ds2'>Il s'est déverrouillé quand la colonie a su stocker des données.</div>";
+    cb.onclick = () => {
+      S.archives.push({ id: 1, dec: false });
+      sfx.tech();
+      closeSheets();
+      toast("📼 <b>Fragment d'Archive 001</b> récupéré dans la soute — format ancien, illisible… (onglet ARCHIVES)", true);
+      save();
+    };
+    act.parentElement.insertBefore(cb, act);
+  }
   if (S.mi < 16) {
     act.innerHTML = "<div class='sub' style='margin:0'>L'Étincelle grandit avec ta colonie…</div>";
     $("#sh-source").hidden = false;
@@ -1661,13 +1680,6 @@ $("#cave-go").onclick = () => {
     sfx.tech();
     closeSheets();
     toast("🕳 Crevasse comblée : <b>+" + score + " 💠</b>" + (eo ? " et <b>+" + eo + " Eo</b>" : "") + " — case libre !", true);
-    if (S.mi === 17 && !S.archives.length) {
-      S.archives.push({ id: 1, dec: false });
-      setTimeout(() => {
-        toast("📼 La sonde remonte un <b>Fragment d'Archive</b> — format ancien, illisible…", true);
-        missionDone("archive_found");
-      }, 1200);
-    }
     save();
   }, 8000);
 };
@@ -1764,6 +1776,7 @@ const ASM = [
   ]},
 ];
 const asmSel = [null, null, null, null, null];
+const soutePrete = () => bcount("datacenter") > 0 && !S.archives.length;
 const ASM_COST = { m: 200, e: 20 };
 
 function openArch() {
@@ -1781,7 +1794,7 @@ function openArch() {
       "<div class='nm' style='color:var(--red)'>Lecteur d'Archives — hors ligne</div>" +
       "<div class='ds'>Aucun système compatible avec ce format ancien.</div></div></div>";
     const b = document.createElement("button");
-    b.className = "forge-asm" + (S.mi === 18 ? " guide" : "");
+    b.className = "forge-asm guide";
     b.textContent = "🔩 ASSEMBLER LE SYSTÈME D'ÉPOQUE";
     b.onclick = openAsm;
     rd.appendChild(b);
@@ -1803,11 +1816,11 @@ function openArch() {
       const b = document.createElement("button");
       b.textContent = "DÉCRYPTER";
       b.disabled = !S.reader;
-      if (S.mi === 19 && S.reader) b.classList.add("guide");
+      if (S.reader) b.classList.add("guide");
       b.onclick = () => {
         f.dec = true;
         sfx.tech();
-        missionDone("archive_read");
+        toast("📼 Premier fragment décrypté — <b>l'histoire commence</b>.", true);
         save();
         openArch();
       };
@@ -1883,7 +1896,7 @@ $("#asm-boot").onclick = () => {
       if (i === lines.length - 1) {
         S.reader = true;
         sfx.tech();
-        missionDone("server_built");
+        toast("🖥 <b>Système d'époque en ligne.</b> Les Archives attendent.", true);
         save();
         setTimeout(() => { openArch(); }, 900);
       }
@@ -1940,8 +1953,7 @@ function refreshGates() {
   $("#tab-map").disabled = !dns;
   $("#tab-map").textContent = "CARTE";
   $("#tab-map").classList.toggle("guide", S.mi === 9);
-  $("#tab-arch").hidden = !(S.archives.length || S.mi >= 18);
-  $("#tab-arch").classList.toggle("guide", S.mi === 18 || S.mi === 19);
+  $("#tab-arch").hidden = !S.archives.length;
 }
 
 /* ---------- onglets ---------- */
