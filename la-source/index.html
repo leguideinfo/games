@@ -241,34 +241,31 @@
   .frag-txt .hd { color: var(--violet); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 6px; }
   .frag-txt .cy { color: var(--cyan); }
 
-  /* ---------- crevasse (sonde souterraine) ---------- */
-  #cave-zone {
-    position: relative; height: 240px; margin: 10px 0;
-    border-radius: 12px; overflow: hidden;
-    background: linear-gradient(180deg, #170d07 0%, #0a0510 55%, #04020a 100%);
-    border: 1px solid #2a1d10;
-  }
+  /* ---------- crevasse (puzzle de colmatage) ---------- */
+  #cave-zone { margin: 10px 0; }
   #cave-zone[hidden] { display: none; }
-  #cave-probe {
-    position: absolute; left: 50%; top: -30px;
-    width: 150px; height: 150px; margin-left: -75px;
-    background: radial-gradient(circle, rgba(255, 214, 140, .28), transparent 62%);
-    animation: probe 3.6s ease-in-out infinite alternate;
-    pointer-events: none;
+  #pit-next { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  #pn-grid { display: grid; grid-template-columns: repeat(3, 15px); grid-auto-rows: 15px; gap: 2px; }
+  .pn-c { background: linear-gradient(180deg, #e8e6e0, #9aa0a8); border-radius: 3px; }
+  #pn-rot {
+    border: 1px solid var(--line); background: var(--panel2); color: var(--txt);
+    border-radius: 8px; padding: 8px 12px; font-size: 16px;
   }
-  @keyframes probe { from { transform: translateY(0); } to { transform: translateY(150px); } }
-  .gem {
-    position: absolute; width: 44px; height: 44px;
-    border: none; background: none; padding: 0;
-    font-size: 27px; line-height: 44px;
-    filter: drop-shadow(0 0 6px rgba(120, 220, 255, .8));
-    animation: gempop 1.15s forwards;
+  #pn-left { color: var(--dim); font-size: 11px; }
+  #pit {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px;
+    background: linear-gradient(180deg, #170d07, #0a0510);
+    border: 1px solid #2a1d10; border-radius: 12px; padding: 8px;
   }
-  @keyframes gempop {
-    0% { transform: scale(.2); opacity: 0; }
-    15%, 80% { transform: scale(1); opacity: 1; }
-    100% { transform: scale(.4); opacity: 0; }
+  .pcell { aspect-ratio: 1; border-radius: 4px; background: #150c08; border: 1px solid #221204; position: relative; }
+  .pcell.rock { background: #3a2413; border-color: #4a2f18; }
+  .pcell.fill { background: linear-gradient(180deg, #e8e6e0, #9aa0a8); border-color: #6c7178; }
+  .pcell.gem::after, .pcell.gemEo::after {
+    content: "💠"; position: absolute; inset: 0;
+    display: grid; place-items: center; font-size: 13px; opacity: .6;
+    filter: drop-shadow(0 0 4px #6fd8f2);
   }
+  .pcell.gemEo::after { content: "💾"; }
   #cave-score { text-align: center; color: var(--amber); font-size: 15px; min-height: 20px; }
 
   /* ---------- toasts ---------- */
@@ -368,7 +365,7 @@
   <div id="tabs">
     <button id="tab-col" class="on">COLONIE</button>
     <button id="tab-map" disabled>CARTE 🔒</button>
-    <button id="tab-arch" hidden>ARCHIVES</button>
+    <button id="tab-arch" hidden>QUÊTES</button>
     <button id="tab-tech">TECHNOS</button>
   </div>
 
@@ -405,14 +402,17 @@
     <button class="close">✕</button>
     <h3>🕳 Crevasse</h3>
     <div class="sub" id="cave-sub"></div>
-    <div id="cave-zone" hidden><div id="cave-probe"></div></div>
+    <div id="cave-zone" hidden>
+      <div id="pit-next"><div id="pn-grid"></div><button id="pn-rot" aria-label="Tourner la pièce">🔄</button><span id="pn-left"></span></div>
+      <div id="pit"></div>
+    </div>
     <div id="cave-score"></div>
-    <div class="actrow"><button id="cave-go">ENVOYER LA SONDE</button></div>
+    <div class="actrow"><button id="cave-go">COMBLER LA CREVASSE</button></div>
   </div>
 
   <div class="sheet" id="sh-arch" hidden>
     <button class="close">✕</button>
-    <h3>📼 Archives de l'humanité</h3>
+    <h3>🗺 Quêtes</h3>
     <div class="sub" id="arch-sub"></div>
     <div id="arch-reader"></div>
     <div id="arch-list"></div>
@@ -868,9 +868,9 @@ function drawTile(x, y, t) {
       return;
     }
     // crevasse : faille sombre, lueur des profondeurs
-    const cxp = p.x + (info.j - 0.5) * 12 * z, cyp = p.y + 2 * z;
+    const cxp = p.x, cyp = p.y + 2 * z;
     ctx.beginPath();
-    ctx.ellipse(cxp, cyp, 17 * z, 7 * z, (info.j - 0.5) * 0.5, 0, Math.PI * 2);
+    ctx.ellipse(cxp, cyp, 17 * z, 7 * z, 0, 0, Math.PI * 2);
     ctx.fillStyle = "#100608"; ctx.fill();
     ctx.strokeStyle = "rgba(90,55,25,.8)"; ctx.lineWidth = 1.2 * z; ctx.stroke();
     const gg = ctx.createRadialGradient(cxp, cyp, 1, cxp, cyp, 13 * z);
@@ -1594,7 +1594,7 @@ function openSource() {
       S.archives.push({ id: 1, dec: false });
       sfx.tech();
       closeSheets();
-      toast("📼 <b>Fragment d'Archive 001</b> récupéré dans la soute — format ancien, illisible… (onglet ARCHIVES)", true);
+      toast("📼 <b>Fragment d'Archive 001</b> récupéré dans la soute — format ancien, illisible… (onglet QUÊTES)", true);
       save();
     };
     act.parentElement.insertBefore(cb, act);
@@ -1631,58 +1631,148 @@ function openSource() {
 }
 
 let cave = null;
+const PIT_W = 6, PIT_H = 8;
+const PIECES = [
+  [[0, 0], [1, 0]],
+  [[0, 0], [0, 1]],
+  [[0, 0], [1, 0], [2, 0]],
+  [[0, 0], [0, 1], [0, 2]],
+  [[0, 0], [1, 0], [0, 1]],
+  [[0, 0], [1, 0], [1, 1]],
+];
+function rotP(cells) {
+  const r = cells.map(([x, y]) => [y, -x]);
+  const mx = Math.min(...r.map((v) => v[0])), my = Math.min(...r.map((v) => v[1]));
+  return r.map(([x, y]) => [x - mx, y - my]);
+}
 function openCrevasse(tp) {
   closeSheets();
-  cave = { tp, score: 0, eo: 0, running: false };
-  $("#cave-sub").textContent = "Quelque chose brille au fond. Envoie la sonde et tape ce qui remonte !";
+  cave = { tp, mat: 0, eo: 0, running: false };
+  $("#cave-sub").textContent = "La faille est instable. Comble-la bloc par bloc — et capture ce qui y brille.";
   $("#cave-zone").hidden = true;
   $("#cave-score").textContent = "";
   $("#cave-go").hidden = false;
   $("#sh-cave").hidden = false;
 }
+function pitRender() {
+  for (const cell of $("#pit").children) {
+    const x = +cell.dataset.x, y = +cell.dataset.y;
+    const v = cave.grid[y][x];
+    cell.className = "pcell" + (v === 1 ? " rock" : v === 2 ? " fill" : "");
+    const g = cave.gems[y * PIT_W + x];
+    if (g && v === 0) cell.classList.add(g === 2 ? "gemEo" : "gem");
+  }
+  const pn = $("#pn-grid");
+  pn.innerHTML = "";
+  for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) {
+    const d = document.createElement("div");
+    if (cave.piece.some(([px, py]) => px === x && py === y)) d.className = "pn-c";
+    pn.appendChild(d);
+  }
+  $("#pn-left").textContent = cave.left + " blocs";
+}
 $("#cave-go").onclick = () => {
   if (!cave || cave.running) return;
-  audioInit();
-  sfx.ui();
+  audioInit(); sfx.ui();
   cave.running = true;
-  $("#cave-zone").hidden = false;
   $("#cave-go").hidden = true;
-  const zone = $("#cave-zone");
-  const myCave = cave;
-  const spawn = setInterval(() => {
-    if (cave !== myCave) { clearInterval(spawn); return; }
-    if (zone.querySelectorAll(".gem").length >= 3) return;
-    const isEo = Math.random() < 0.15;
-    const b = document.createElement("button");
-    b.className = "gem";
-    b.textContent = isEo ? "💾" : "💠";
-    b.style.left = (8 + Math.random() * (zone.clientWidth - 56)) + "px";
-    b.style.top = (8 + Math.random() * (zone.clientHeight - 56)) + "px";
-    b.onclick = () => {
-      if (cave !== myCave) return;
-      if (isEo) cave.eo += 2; else cave.score += 8 + 2 * colonyLevel();
-      sfx.collect();
-      b.remove();
-      $("#cave-score").textContent = "+" + cave.score + " 💠" + (cave.eo ? " · +" + cave.eo + " Eo" : "");
-    };
-    zone.appendChild(b);
-    setTimeout(() => b.remove(), 1180);
-  }, 430);
-  setTimeout(() => {
-    clearInterval(spawn);
-    if (cave !== myCave) return;
-    const { tp, score, eo } = cave;
-    cave = null;
-    clearedSet.add(tp.x + "," + tp.y);
-    S.cleared = [...clearedSet];
-    S.mat = Math.min(matCap(), S.mat + score);
-    S.eo = Math.min(eoCap(), S.eo + eo);
-    sfx.tech();
-    closeSheets();
-    toast("🕳 Crevasse comblée : <b>+" + score + " 💠</b>" + (eo ? " et <b>+" + eo + " Eo</b>" : "") + " — case libre !", true);
-    save();
-  }, 8000);
+  const r = mulberry32(hash2(cave.tp.x, cave.tp.y) ^ 77);
+  cave.grid = Array.from({ length: PIT_H }, () => Array(PIT_W).fill(0));
+  for (let x = 0; x < PIT_W; x++) {
+    const fh = Math.floor(r() * 3);
+    for (let y = 0; y < fh; y++) cave.grid[PIT_H - 1 - y][x] = 1;
+  }
+  cave.gems = {};
+  let placed = 0, guard = 60;
+  while (placed < 5 && guard--) {
+    const x = Math.floor(r() * PIT_W), y = PIT_H - 1 - Math.floor(r() * 4);
+    if (cave.grid[y][x] === 0 && !cave.gems[y * PIT_W + x]) {
+      cave.gems[y * PIT_W + x] = r() < 0.2 ? 2 : 1;
+      placed++;
+    }
+  }
+  cave.left = 10;
+  cave.rng = r;
+  cave.piece = PIECES[Math.floor(r() * PIECES.length)].map((c) => [...c]);
+  const pitEl = $("#pit");
+  pitEl.innerHTML = "";
+  for (let y = 0; y < PIT_H; y++) for (let x = 0; x < PIT_W; x++) {
+    const d = document.createElement("div");
+    d.className = "pcell";
+    d.dataset.x = x; d.dataset.y = y;
+    d.onclick = () => pitDrop(x);
+    pitEl.appendChild(d);
+  }
+  $("#cave-zone").hidden = false;
+  pitRender();
 };
+$("#pn-rot").onclick = () => {
+  if (cave && cave.running) { cave.piece = rotP(cave.piece); sfx.ui(); pitRender(); }
+};
+function pitFits(c, y) {
+  return cave.piece.every(([dx, dy]) => {
+    const x = c + dx, yy = y + dy;
+    return x >= 0 && x < PIT_W && yy >= 0 && yy < PIT_H && cave.grid[yy][x] === 0;
+  });
+}
+function fitsAnywhere(piece) {
+  const keep = cave.piece;
+  cave.piece = piece;
+  let ok = false;
+  for (let c = 0; c < PIT_W && !ok; c++) for (let y = 0; y < PIT_H && !ok; y++) if (pitFits(c, y)) ok = true;
+  cave.piece = keep;
+  return ok;
+}
+function pitDrop(col) {
+  if (!cave || !cave.running) return;
+  const pw = Math.max(...cave.piece.map((c) => c[0])) + 1;
+  const c = clamp(col, 0, PIT_W - pw);
+  let land = -1;
+  for (let y = 0; y < PIT_H; y++) if (pitFits(c, y)) land = y;
+  if (land < 0) { sfx.deny(); return; }
+  for (const [dx, dy] of cave.piece) {
+    const x = c + dx, y = land + dy;
+    cave.grid[y][x] = 2;
+    const g = cave.gems[y * PIT_W + x];
+    if (g) {
+      delete cave.gems[y * PIT_W + x];
+      if (g === 2) cave.eo += 2; else cave.mat += 10 + 2 * colonyLevel();
+      sfx.collect();
+    }
+  }
+  beep(280 + land * 20, 0.07, "square", 0.035);
+  cave.left--;
+  $("#cave-score").textContent = (cave.mat ? "+" + cave.mat + " 💠" : "") + (cave.eo ? " · +" + cave.eo + " Eo" : "");
+  cave.piece = PIECES[Math.floor(cave.rng() * PIECES.length)].map((cc) => [...cc]);
+  pitRender();
+  let can = false, test = cave.piece;
+  for (let rr = 0; rr < 4 && !can; rr++) { if (fitsAnywhere(test)) can = true; test = rotP(test); }
+  if (cave.left <= 0 || !can) pitEnd();
+}
+function pitEnd() {
+  const { tp } = cave;
+  let holes = 0;
+  for (let x = 0; x < PIT_W; x++) {
+    let covered = false;
+    for (let y = 0; y < PIT_H; y++) {
+      const v = cave.grid[y][x];
+      if (v === 2) covered = true;
+      else if (v === 0 && covered) holes++;
+    }
+  }
+  const bonus = Math.max(0, 40 + 10 * colonyLevel() - holes * 8);
+  const mat = cave.mat + bonus, eo = cave.eo;
+  cave = null;
+  clearedSet.add(tp.x + "," + tp.y);
+  S.cleared = [...clearedSet];
+  S.mat = Math.min(matCap(), S.mat + mat);
+  S.eo = Math.min(eoCap(), S.eo + eo);
+  sfx.tech();
+  closeSheets();
+  toast("🕳 Crevasse comblée : <b>+" + mat + " 💠</b>" + (eo ? " et <b>+" + eo + " Eo</b>" : "") +
+    (holes === 0 ? " · <b>colmatage parfait !</b>" : "") + " — case libre !", true);
+  save();
+}
 
 /* ---------- turbo / surcharge ---------- */
 let tz = null;
@@ -1781,16 +1871,15 @@ const ASM_COST = { m: 200, e: 20 };
 
 function openArch() {
   closeSheets();
-  $("#arch-sub").textContent = S.archives.length
-    ? "Des données du passé. Illisibles… sauf pour un système d'époque."
-    : "Aucun fragment. Des signaux anciens dorment sous la surface…";
+  $("#arch-sub").textContent = "Les fils à tirer, à ton rythme.";
   const rd = $("#arch-reader");
+  const qhead = "<div class='sl-nm' style='margin-bottom:6px'>📼 QUÊTE · LES ARCHIVES DE L'HUMANITÉ</div>";
   if (S.reader) {
-    rd.innerHTML = "<div class='bcard'><div class='ic'>🖥</div><div class='grow'>" +
+    rd.innerHTML = qhead + "<div class='bcard'><div class='ic'>🖥</div><div class='grow'>" +
       "<div class='nm' style='color:var(--green)'>Lecteur d'Archives — EN LIGNE</div>" +
       "<div class='ds'>Système d'époque opérationnel.</div></div></div>";
   } else {
-    rd.innerHTML = "<div class='bcard'><div class='ic'>🖥</div><div class='grow'>" +
+    rd.innerHTML = qhead + "<div class='bcard'><div class='ic'>🖥</div><div class='grow'>" +
       "<div class='nm' style='color:var(--red)'>Lecteur d'Archives — hors ligne</div>" +
       "<div class='ds'>Aucun système compatible avec ce format ancien.</div></div></div>";
     const b = document.createElement("button");

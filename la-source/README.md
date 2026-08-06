@@ -72,20 +72,19 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   terrain de chasse. En prod : premier pas vers le PvE/PvP cyber de la
   vision (intrusion/défense).
 - **Persistance** locale (`localStorage`) + reprise hors-ligne.
-- **Crevasses & sonde souterraine (v4.4, révélation v4.5)** : avant la
-  mission 3, ces cases ne sont que du **sable légèrement assombri** (pas
-  d'effet gruyère au départ) ; à la mission 3, « le sol tremble » et les
-  **crevasses s'ouvrent** (faille sombre, lueur des profondeurs), la
-  première étant signalée par un halo orange + « ? » jusqu'à la première
-  sonde. Tap →
-  mini-jeu de sonde : 8 s sous terre, tape les 💠 (et parfois des 💾) qui
-  remontent dans le halo de la sonde ; récompense proportionnelle, puis la
-  crevasse est comblée et la case constructible. Gratuit : le jeu EST
-  l'effort.
+- **Crevasses & puzzle de colmatage (v5.2)** : avant la mission 3, simples
+  cases de sable assombri ; à la mission 3, « le sol tremble » et les
+  **crevasses s'ouvrent** (failles uniformes, lueur des profondeurs), la
+  première signalée par un halo orange + « ? ». Tap → **mini-jeu de
+  colmatage façon Tetris tactile** : une fosse 6×8 au sol irrégulier, des
+  pièces de 2-3 blocs (tap sur une colonne = chute, bouton 🔄 = rotation),
+  des 💠/💾 enfouis capturés en les recouvrant, 10 blocs maximum. Bonus
+  « colmatage parfait » si aucun trou n'est enterré, puis la case devient
+  constructible. Calme, sans chrono, gratuit : le jeu EST l'effort.
 - **Drone ouvrier (v4.4)** : renommage du drone récolteur ; textes de tous
   les bâtiments/techs raccourcis au strict utile.
 - **Expansion du territoire** (v1.2) — trois étages :
-  1. **Sonder** les crevasses (mini-jeu ci-dessus) libère des cases ;
+  1. **Colmater** les crevasses (puzzle ci-dessus) libère des cases ;
   2. **Étendre le territoire** depuis la Source : le plateau gagne un anneau
      complet (9×9 → 11×11 → … → 17×17), coût exponentiel (450/1350/4050/12150 ⚡ — la capacité de stockage doit suivre),
      terrain procédural stable par coordonnée ;
