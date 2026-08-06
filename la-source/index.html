@@ -931,8 +931,7 @@ cv.addEventListener("pointerup", (e) => {
   const b = S.buildings.find((b) => b.x === tp.x && b.y === tp.y);
   if (b) { openBld(b); return; }
   if (buildable(tp.x, tp.y)) {
-    selTile = tp;
-    openBuild();
+    openBuild(tp);
   } else {
     closeSheets();
     selTile = null;
@@ -974,12 +973,12 @@ function closeSheets() {
 }
 for (const b of document.querySelectorAll(".sheet .close")) b.onclick = closeSheets;
 
-function openBuild() {
+function openBuild(tile) {
   closeSheets();
-  selTile = selTile || null;
+  selTile = tile; // après closeSheets, qui remet selTile à null
   const list = $("#buildlist");
   list.innerHTML = "";
-  const sel = selTile;
+  const sel = tile;
   for (const [key, def] of Object.entries(BT)) {
     const locked = (def.tech && !S.techs.includes(def.tech)) ||
       (def.needs && !bcount(def.needs)) ||
@@ -1184,9 +1183,9 @@ $("#mute").textContent = muted ? "∅" : "♪";
 /* ---------- intro ---------- */
 const icv = $("#icv"), ictx = icv.getContext("2d");
 const SCENES = [
-  "An 2847. Vaisseau-colonie <span class='y'>AWOUI-7</span>.<br>Sortie de cryogénisation… signes vitaux stables.",
-  "Sous toi : une planète <span class='y'>vierge</span>.<br>Personne. Rien. Tout est à écrire.",
-  "Tu n'emportes qu'une chose : <span class='y'>l'Étincelle</span>.<br>L'énergie initiatrice — la <span class='y'>Source</span> de ton nouveau monde.",
+  "An 2847. Vaisseau-colonie <span class='y'>AWOUI-7</span>.<br>Sortie de cryogénisation… Bonjour, <span class='y'>Aurore</span>.",
+  "Sous toi : une planète <span class='y'>vierge</span>.<br>Dans la soute : ta base — les matériaux du premier jour.",
+  "Et au cœur du module : <span class='y'>l'Étincelle</span>.<br>La <span class='y'>Source</span> — l'énergie initiatrice de ton nouveau monde.",
 ];
 let scene = 0, introOn = !S.seenIntro;
 function drawIntro(t) {
@@ -1276,13 +1275,15 @@ function endIntro() {
   S.seenIntro = true;
   $("#intro").hidden = true;
   save();
-  toast("Bienvenue. Pose ton premier <b>Extracteur</b> près de la Source.");
+  toast("Bienvenue, Aurore. Pose ton premier <b>Extracteur</b> près de la Source.");
 }
 $("#inext").onclick = () => { audioInit(); sfx.ui(); scene >= SCENES.length - 1 ? endIntro() : setScene(scene + 1); };
 $("#iskip").onclick = () => { audioInit(); endIntro(); };
 
 /* ---------- API debug/tests ---------- */
 window.__api = {
+  screenOf(x, y) { return w2s(x, y); },
+  buildableAt(x, y) { return buildable(x, y); },
   build(t, x, y) {
     if (!buildable(x, y)) return false;
     S.flux -= buildCost(t);

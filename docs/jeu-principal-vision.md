@@ -6,11 +6,13 @@ avec les précisions ci-dessous.*
 ## Décisions actées (2026-08-06)
 
 - ✅ **Concept global validé** (« je valide », « tout le reste tient la route »).
-- ✅ **Lore existant à respecter** : le perso principal se réveille d'une
-  **cryogénisation sur un vaisseau-colonie** et atterrit sur une **planète
-  vierge** — déjà implémenté **avec cinématique** sur universe.awoui.com.
-  L'Étincelle/la Source s'y insère comme **concept abstrait de l'âme /
-  énergie initiatrice** du nouveau monde.
+- ✅ **Lore existant à respecter** : le personnage principal s'appelle
+  **Aurore** ; elle se réveille d'une **cryogénisation sur un vaisseau-colonie**
+  et descend sur une **planète vierge** — déjà implémenté **avec cinématique**
+  sur universe.awoui.com. Précision importante : **on descend avec une base
+  dans la soute (matériaux)** — on ne part pas de zéro absolu. L'Étincelle/la
+  Source s'insère comme **concept abstrait de l'âme / énergie initiatrice**
+  (le cœur du monde), en complément de la base matérielle.
 - ✅ **Backend actuel : PostgreSQL** (pour la persistance à terme).
 - ✅ **Direction artistique reçue** (voir `assets/charte-graphique.png` et
   `assets/terrain-reference.png`) : vue isométrique ; bâtiments titane blanc +
