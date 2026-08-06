@@ -45,9 +45,12 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
 - **Carte du secteur** : starfield, ta colonie au centre, 8 colonies voisines
   (placeholder du multi asynchrone v1 : visites & fédérations à venir).
 - **Surcharge (⚡)** : mini-défi de synchronisation sur les bâtiments → buff
-  de production ×2 min. **C'est l'emplacement où se branchent les vrais
-  mini-jeux** (affiché en jeu) : Ferme → Admin Rush, Extracteur → Regex Invaders,
-  Baie réseau → The Flux, Console de commandement → PowerShell Hero.
+  de production ×2 min. **Mécanique validée telle quelle par le propriétaire
+  (2026-08-06)** : elle reste une action native de la colonie. L'intégration
+  des mini-jeux d'arcade (Admin Rush, Regex Invaders, The Flux, PowerShell
+  Hero) se fera via **un autre système, à concevoir plus tard** — pistes en
+  vrac (hypothèses) : bâtiment « Salle d'arcade » dans la colonie, contrats
+  de la Baie réseau qui lancent un mini-jeu, terminaux dédiés.
 - **Missions guidées** (17 étapes) : elles SONT le système de déblocage.
 - **Guidage visuel (v4.2)** : la mission en cours pointe sa cible — losange
   ambre pulsant + chevron ▼ dans le monde (case à construire près de la

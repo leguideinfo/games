@@ -1508,8 +1508,7 @@ function openTurbo(b) {
   closeSheets();
   const def = BT[b.t];
   $("#tz-title").textContent = "⚡ SURCHARGE — " + def.nm;
-  $("#tz-sub").innerHTML = "Synchronise 3 impulsions dans la zone verte.<br>" +
-    "<span style='color:var(--amber)'>En prod : c'est le mini-jeu « " + def.game + " » qui se branche ici.</span>";
+  $("#tz-sub").innerHTML = "Synchronise 3 impulsions dans la zone verte pour surcharger la production.";
   $("#tz-stars").textContent = "";
   tz = { round: 0, stars: 0, t0: performance.now(), speed: 1.6 + Math.random() * 0.6, gpos: 0.3 + Math.random() * 0.4 };
   layoutTz();

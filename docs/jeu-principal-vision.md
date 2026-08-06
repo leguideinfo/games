@@ -105,6 +105,13 @@ Le joueur qui ne veut PAS jouer à un mini-jeu ne bloque jamais : l'action se
 fait automatiquement en mode idle, juste plus lentement / moins bien. Le
 mini-jeu est le **turbo skill-based**, pas un péage.
 
+> **Décision (2026-08-06)** : la « Surcharge » de la slice (QTE de
+> synchronisation) est **validée comme mécanique à part entière** et ne sera
+> PAS remplacée par les mini-jeux. L'intégration des mini-jeux d'arcade dans
+> le monde passera par **un système dédié à concevoir plus tard** (le principe
+> des « verbes » ci-dessus reste la boussole ; la forme exacte — salle
+> d'arcade en jeu, contrats, terminaux — est à trancher avec le propriétaire).
+
 ### 5. Profondeur par couches (du bambin au grand-père)
 Pas de « mode enfant » : **un seul monde, plusieurs façons valides d'y
 contribuer**, révélées progressivement (progressive disclosure) :
