@@ -1,10 +1,15 @@
 # games
 
-A collection of games and game-related projects.
+Jeux de la salle d'arcade d'**Awoui Universe** (universe.awoui.com) — le MMO
+persistant d'apprentissage IT de l'écosystème [Awoui](https://awoui.com).
 
 ## Overview
 
-This repository contains small games, prototypes, and utilities related to game development. It's a starting point — add individual projects inside their own folders with self-contained README and build/run instructions.
+Ce repo sert à concevoir et produire les mini-jeux d'arcade de l'univers
+(formule : *concept IT × mécanique d'arcade culte*, comme PowerShell Hero et
+The Flux). Le contexte complet est documenté dans [`docs/`](docs/) et
+[`CLAUDE.md`](CLAUDE.md). Chaque jeu vit dans son propre dossier avec un README
+autonome et ses instructions de build/run.
 
 ## Repository structure
 
