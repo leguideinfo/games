@@ -72,8 +72,12 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   terrain de chasse. En prod : premier pas vers le PvE/PvP cyber de la
   vision (intrusion/défense).
 - **Persistance** locale (`localStorage`) + reprise hors-ligne.
-- **Crevasses & sonde souterraine (v4.4)** : les anciennes cases rocheuses
-  sont des **crevasses** (faille sombre, lueur des profondeurs). Tap →
+- **Crevasses & sonde souterraine (v4.4, révélation v4.5)** : avant la
+  mission 3, ces cases ne sont que du **sable légèrement assombri** (pas
+  d'effet gruyère au départ) ; à la mission 3, « le sol tremble » et les
+  **crevasses s'ouvrent** (faille sombre, lueur des profondeurs), la
+  première étant signalée par un halo orange + « ? » jusqu'à la première
+  sonde. Tap →
   mini-jeu de sonde : 8 s sous terre, tape les 💠 (et parfois des 💾) qui
   remontent dans le halo de la sonde ; récompense proportionnelle, puis la
   crevasse est comblée et la case constructible. Gratuit : le jeu EST

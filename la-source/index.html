@@ -636,6 +636,9 @@ function missionDone(k) {
   S.mi++;
   sfx.mission();
   toast("Mission accomplie : <b>+" + (m.rm ? m.rm + " 💠" : m.re + " Eo") + "</b>", true);
+  if (S.mi === 3) {
+    setTimeout(() => toast("🕳 Le sol tremble… des <b>crevasses</b> se sont ouvertes ! Tape-en une pour sonder."), 1500);
+  }
   if (S.mi === 15) {
     spawnMob();
     setTimeout(() => toast("🕷 Un <b>parasite de données</b> rôde à la frontière ! Il ralentit ton extraction (−15 %)."), 1500);
@@ -808,6 +811,12 @@ function drawTile(x, y, t) {
       ctx.shadowBlur = 0;
     }
   } else if (info.kind === "rock") {
+    if (S.mi < 3) {
+      // pas encore révélée : sol légèrement plus sombre, c'est tout
+      diamond(ctx, p.x, p.y, TW * z, TH * z);
+      ctx.fillStyle = "rgba(30, 15, 5, .18)"; ctx.fill();
+      return;
+    }
     // crevasse : faille sombre, lueur des profondeurs
     const cxp = p.x + (info.j - 0.5) * 12 * z, cyp = p.y + 2 * z;
     ctx.beginPath();
@@ -1040,6 +1049,25 @@ function guideWorldTarget() {
   if (mi === 16) return { x: SRC.x, y: SRC.y, kind: "src" };
   return null;
 }
+function drawCrevasseHint(t) {
+  if (view !== "col" || S.mi < 3 || S.cleared.length > 0) return;
+  const c = nearestTile((x, y) => tileAt(x, y).kind === "rock");
+  if (!c) return;
+  const p = w2s(c.x, c.y), z = cam.z;
+  const pulse = 0.5 + 0.5 * Math.sin(t / 300);
+  ctx.beginPath();
+  ctx.ellipse(p.x, p.y + 2 * z, (20 + 4 * pulse) * z, (9 + 2 * pulse) * z, 0, 0, Math.PI * 2);
+  ctx.strokeStyle = "rgba(255,154,77," + (0.35 + 0.4 * pulse).toFixed(2) + ")";
+  ctx.lineWidth = 2;
+  ctx.shadowColor = "#ff9a4d"; ctx.shadowBlur = 8;
+  ctx.stroke(); ctx.shadowBlur = 0;
+  ctx.font = Math.round(15 * z) + "px " + getComputedStyle(document.body).fontFamily;
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#ff9a4d";
+  ctx.shadowColor = "#ff9a4d"; ctx.shadowBlur = 10;
+  ctx.fillText("?", p.x, p.y - 18 * z - pulse * 5 * z);
+  ctx.shadowBlur = 0;
+}
 function drawGuide(t) {
   const gt = guideWorldTarget();
   if (!gt || gt.x == null) return;
@@ -1198,6 +1226,7 @@ function frame(t) {
     for (const m of mobs) drawMob(m, t);
     for (const u of S.units) drawUnit(u, t);
     drawGuide(t);
+    drawCrevasseHint(t);
     for (const f of [...fx]) {
       f.life -= dt;
       if (f.life <= 0) { fx = fx.filter((x) => x !== f); continue; }
@@ -1307,7 +1336,7 @@ cv.addEventListener("pointerup", (e) => {
   if (b) { openBld(b); return; }
   if (buildable(tp.x, tp.y)) {
     openBuild(tp);
-  } else if (inB(tp.x, tp.y) && tileAt(tp.x, tp.y).kind === "rock") {
+  } else if (inB(tp.x, tp.y) && tileAt(tp.x, tp.y).kind === "rock" && S.mi >= 3) {
     openCrevasse(tp);
   } else {
     closeSheets();
@@ -1527,7 +1556,6 @@ function openSource() {
 
 let cave = null;
 function openCrevasse(tp) {
-  if (S.mi < 3) { toast("Cette crevasse t'attend… bientôt."); return; }
   closeSheets();
   cave = { tp, score: 0, eo: 0, running: false };
   $("#cave-sub").textContent = "Quelque chose brille au fond. Envoie la sonde et tape ce qui remonte !";
