@@ -259,12 +259,12 @@
       <div class="hud-val"><span id="mat">0</span> <span id="matcap" style="font-size:10px;color:var(--dim)"></span></div>
       <div id="matrate" class="hud-rate">+0/min</div>
     </div>
-    <div>
+    <div id="hud-eo" style="display:none">
       <div class="hud-label">💾 Données</div>
       <div class="hud-val" style="color:var(--blue)"><span id="eo">0</span> <span id="eocap" style="font-size:10px;color:var(--dim)"></span></div>
       <div id="eorate" class="hud-rate">+0/min</div>
     </div>
-    <div>
+    <div id="hud-en" style="display:none">
       <div class="hud-label">⚡ Énergie</div>
       <div class="hud-val" style="color:var(--amber)"><span id="en">0</span></div>
       <div id="buff" class="hud-rate"></div>
@@ -358,6 +358,7 @@
 
 const $ = (s) => document.querySelector(s);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const rnd = (n) => Math.floor(Math.random() * n);
 
 /* ---------- rng terrain (seedé, stable) ---------- */
 function mulberry32(a) {
@@ -402,37 +403,37 @@ const TW = 92, TH = 46;
 
 const BT = {
   extracteur: {
-    nm: "Extracteur de matériaux", ic: "⛏", col: "#4ef2e0", base: 15, conso: 5,
+    nm: "Extracteur de matériaux", ic: "⛏", col: "#4ef2e0", base: 15, conso: 5, mAt: 1,
     ds: "Fore la croûte de la planète mère. Production continue, même hors-ligne.",
     game: "Regex Invaders",
   },
   centrale: {
-    nm: "Centrale énergétique", ic: "⚡", col: "#ffc857", base: 40, conso: 0,
+    nm: "Centrale énergétique", ic: "⚡", col: "#ffc857", base: 40, conso: 0, mAt: 4,
     ds: "Alimente toute l'infrastructure : chaque bâtiment consomme de l'énergie.",
     game: null,
   },
   entrepot: {
-    nm: "Entrepôt de matériaux", ic: "🗄", col: "#ff7a1a", base: 30, conso: 4,
+    nm: "Entrepôt de matériaux", ic: "🗄", col: "#ff7a1a", base: 30, conso: 4, mAt: 3,
     ds: "Stocke les matériaux au-delà des soutes de la colonie.",
     game: null,
   },
   ferme: {
-    nm: "Ferme de serveurs", ic: "🖥", col: "#38a9ff", base: 60, conso: 8,
+    nm: "Ferme de serveurs", ic: "🖥", col: "#38a9ff", base: 60, conso: 8, mAt: 5,
     ds: "Calcule les données (Eo) de la colonie.",
     game: "Admin Rush",
   },
   datacenter: {
-    nm: "Datacenter", ic: "💾", col: "#a06bff", base: 50, conso: 6,
+    nm: "Datacenter", ic: "💾", col: "#a06bff", base: 50, conso: 6, mAt: 6,
     ds: "Conserve les données de la colonie au-delà des soutes.",
     game: null,
   },
   reseau: {
-    nm: "Baie réseau", ic: "📡", col: "#57e389", base: 90, eo: 15, conso: 5, tech: "dns",
+    nm: "Baie réseau", ic: "📡", col: "#57e389", base: 90, eo: 15, conso: 5, tech: "dns", mAt: 10,
     ds: "Relie la colonie au réseau galactique : contrats de matériaux passifs.",
     game: "The Flux",
   },
   console: {
-    nm: "Console de commandement", ic: "🖲", col: "#e6eef5", base: 120, eo: 10, conso: 5,
+    nm: "Console de commandement", ic: "🖲", col: "#e6eef5", base: 120, eo: 10, conso: 5, mAt: 12,
     ds: "Administre la colonie à distance, en PowerShell : +4 % de production globale par niveau.",
     game: "PowerShell Hero",
   },
@@ -444,15 +445,20 @@ const TECHS = {
   backup: { nm: "BACKUP", col: "#a06bff", eo: 60, ds: "Sauvegarde longue : production hors-ligne comptée sur 24 h (au lieu de 2 h)." },
 };
 const MISSIONS = [
-  { t: "Pose un Extracteur de matériaux", rm: 30, k: "build_extracteur" },
-  { t: "Collecte 3 orbes de matériaux", rm: 30, k: "orbs3" },
-  { t: "Pose une Centrale énergétique", rm: 40, k: "build_centrale" },
-  { t: "Pose une Ferme de serveurs (calcule des Eo)", re: 5, k: "build_ferme" },
-  { t: "Améliore un bâtiment", rm: 40, k: "upgrade" },
-  { t: "Réussis une Surcharge (⚡ sur un bâtiment)", rm: 60, k: "turbo" },
-  { t: "Recherche la technologie DNS", re: 10, k: "tech_dns" },
+  { t: "Récolte 3 éclats de matériaux ✨ (tape-les)", rm: 20, k: "orbs3" },
+  { t: "Pose ton premier Extracteur de matériaux", rm: 30, k: "build_extracteur" },
+  { t: "Améliore ton Extracteur", rm: 40, k: "upgrade" },
+  { t: "Pose un Entrepôt de matériaux", rm: 40, k: "build_entrepot" },
+  { t: "Pose une Centrale énergétique", rm: 50, k: "build_centrale" },
+  { t: "Pose une Ferme de serveurs", re: 5, k: "build_ferme" },
+  { t: "Pose un Datacenter", re: 10, k: "build_datacenter" },
+  { t: "Recherche DHCP (onglet TECHNOS)", rm: 60, k: "tech_dhcp" },
+  { t: "Recherche DNS", rm: 80, k: "tech_dns" },
   { t: "Ouvre la Carte du secteur", rm: 100, k: "map" },
-  { t: "Étends le territoire (tape la Source)", rm: 150, k: "extend" },
+  { t: "Pose une Baie réseau", rm: 100, k: "build_reseau" },
+  { t: "Réussis une Surcharge ⚡ (tape un bâtiment)", rm: 120, k: "turbo" },
+  { t: "Pose une Console de commandement", rm: 150, k: "build_console" },
+  { t: "Étends le territoire (tape la Source)", rm: 200, k: "extend" },
 ];
 
 /* ---------- état ---------- */
@@ -466,14 +472,14 @@ function newSave() {
 }
 function load() {
   try {
-    const raw = localStorage.getItem("ls-save-v2");
+    const raw = localStorage.getItem("ls-save-v3");
     if (raw) return Object.assign(newSave(), JSON.parse(raw));
   } catch (e) {}
   return newSave();
 }
 function save() {
   S.lastSeen = Date.now();
-  try { localStorage.setItem("ls-save-v2", JSON.stringify(S)); } catch (e) {}
+  try { localStorage.setItem("ls-save-v3", JSON.stringify(S)); } catch (e) {}
 }
 S = load();
 if (!S.cleared) S.cleared = [];
@@ -890,12 +896,19 @@ function frame(t) {
   }
   // orbes
   acc += dt;
-  if (acc > 4) {
+  const orbEvery = S.mi < 2 ? 2.2 : 7;
+  if (acc > orbEvery) {
     acc = 0;
-    for (const b of S.buildings) {
-      if (b.t !== "extracteur") continue;
-      if (orbs.filter((o) => o.x === b.x && o.y === b.y).length >= 2) continue;
-      if (Math.random() < 0.4) orbs.push({ x: b.x, y: b.y, val: 8 * b.l, born: t });
+    if (orbs.length < (S.mi < 2 ? 4 : 3)) {
+      // éclats de matériaux : la planète les fait émerger, surtout près des cristaux
+      let spot = null;
+      for (let i = 0; i < 24; i++) {
+        const x = bmin() + rnd(bmax() - bmin() + 1), y = bmin() + rnd(bmax() - bmin() + 1);
+        if (!buildable(x, y) || orbs.some((o) => o.x === x && o.y === y)) continue;
+        if (crysAdj(x, y) > 0) { spot = { x, y }; break; }
+        if (!spot) spot = { x, y };
+      }
+      if (spot) orbs.push({ x: spot.x, y: spot.y, val: 6 + 2 * colonyLevel(), born: t });
     }
     save();
   }
@@ -937,6 +950,7 @@ function frame(t) {
   $("#en").textContent = fmt(enUse()) + "/" + fmt(enCap());
   $("#buff").textContent = S.buffLeft > 0 ? "SURCHARGE ×" + S.buffMult.toFixed(2) + " · " + Math.ceil(S.buffLeft) + "s" : "";
   $("#clevel").textContent = "niveau " + colonyLevel();
+  refreshGates();
   requestAnimationFrame(frame);
 }
 
@@ -946,6 +960,8 @@ function collectOrb(o, auto) {
   S.mat = Math.min(matCap(), S.mat + o.val);
   if (!auto) sfx.collect();
   S.orbsCollected++;
+  if (S.orbsCollected === 1)
+    toast("✨ Éclat récolté ! La planète en fait émerger, surtout <b>près des cristaux</b>.");
   if (S.orbsCollected >= 3) missionDone("orbs3");
 }
 
@@ -1042,6 +1058,7 @@ function openBuild(tile) {
   list.innerHTML = "";
   const sel = tile;
   for (const [key, def] of Object.entries(BT)) {
+    if ((def.mAt || 0) > S.mi) continue; // pas encore découvert
     const locked = def.tech && !S.techs.includes(def.tech);
     const cost = buildCost(key), ceo = buildCostEo(key);
     const enOk = enUse(def.conso) <= enCap();
@@ -1062,7 +1079,7 @@ function openBuild(tile) {
       S.mat -= cost; S.eo -= ceo;
       S.buildings.push({ t: key, x: sel.x, y: sel.y, l: 1 });
       sfx.build();
-      missionDone("build_" + key);
+      postBuild(key);
       save();
       closeSheets();
     };
@@ -1070,6 +1087,14 @@ function openBuild(tile) {
     list.appendChild(card);
   }
   $("#sh-build").hidden = false;
+}
+
+function postBuild(key) {
+  if (key === "extracteur" && bcount("extracteur") === 1)
+    setTimeout(() => toast("⚡ <b>Énergie</b> découverte : la base de la soute alimente tes bâtiments (100 ⚡)."), 700);
+  if (key === "ferme" && bcount("ferme") === 1)
+    setTimeout(() => toast("💾 <b>Données</b> découvertes : tes serveurs calculent des Eo."), 700);
+  missionDone("build_" + key);
 }
 
 let curBld = null;
@@ -1109,7 +1134,7 @@ function openBld(b) {
     };
   }
   const tb = $("#bl-turbo");
-  if (def.game) {
+  if (def.game && S.mi >= 11) {
     tb.hidden = false;
     tb.textContent = "⚡ SURCHARGE";
     tb.onclick = () => openTurbo(b);
@@ -1130,6 +1155,11 @@ function openSource() {
     "<div class='stat'><span>Technologies</span><b>" + (S.techs.length ? S.techs.map((t) => TECHS[t].nm).join(" · ") : "aucune") + "</b></div>";
   const act = $("#src-act");
   act.innerHTML = "";
+  if (S.mi < 13) {
+    act.innerHTML = "<div class='sub' style='margin:0'>L'Étincelle grandit avec ta colonie…</div>";
+    $("#sh-source").hidden = false;
+    return;
+  }
   const btn = document.createElement("button");
   if (S.ext >= EXP_COSTS.length) {
     btn.textContent = "TERRITOIRE MAX (slice)";
@@ -1156,6 +1186,7 @@ function openSource() {
 }
 
 function openClear(tp) {
+  if (S.mi < 3) { toast("Des éboulis… tu pourras les déblayer bientôt."); return; }
   closeSheets();
   selTile = tp;
   $("#bl-name").textContent = "🪨 Éboulis rocheux";
@@ -1270,10 +1301,15 @@ function openTech() {
   }
   $("#sh-tech").hidden = false;
 }
-function unlockMap() {
-  const tm = $("#tab-map");
-  tm.disabled = false;
-  tm.textContent = "CARTE";
+function unlockMap() { refreshGates(); }
+function refreshGates() {
+  $("#hud-eo").style.display = (bcount("ferme") || S.eo > 0.5) ? "" : "none";
+  $("#hud-en").style.display = enUse() > 0 ? "" : "none";
+  $("#tab-tech").hidden = S.mi < 7;
+  const dns = S.techs.includes("dns");
+  $("#tab-map").hidden = !dns;
+  $("#tab-map").disabled = !dns;
+  $("#tab-map").textContent = "CARTE";
 }
 
 /* ---------- onglets ---------- */
@@ -1396,7 +1432,7 @@ function endIntro() {
   S.seenIntro = true;
   $("#intro").hidden = true;
   save();
-  toast("Bienvenue, Aurore. La soute fournit 100 ⚡ et 300 💠 de stockage. Pose ton premier <b>Extracteur</b> près de la Source.");
+  toast("Bienvenue, Aurore. Des <b>✨ éclats de matériaux</b> scintillent sur le sol — tape-les pour les récolter.");
 }
 $("#inext").onclick = () => { audioInit(); sfx.ui(); scene >= SCENES.length - 1 ? endIntro() : setScene(scene + 1); };
 $("#iskip").onclick = () => { audioInit(); endIntro(); };
@@ -1410,10 +1446,12 @@ window.__api = {
     if (!buildable(x, y)) return false;
     S.mat -= buildCost(t);
     S.buildings.push({ t, x, y, l: 1 });
-    missionDone("build_" + t);
+    postBuild(t);
     save(); return true;
   },
   giveMat(n) { S.mat = Math.min(matCap(), S.mat + n); },
+  orbsPos() { return orbs.filter((o) => o.sx != null).map((o) => ({ sx: o.sx, sy: o.sy })); },
+  turboWin() { S.buffMult = 1.5; S.buffLeft = 120; missionDone("turbo"); },
   giveEo(n) { S.eo = Math.min(eoCap(), S.eo + n); },
   research(k) { if (!S.techs.includes(k)) { S.techs.push(k); if (k === "dns") unlockMap(); missionDone("tech_" + k); save(); } },
   reset() { localStorage.removeItem("ls-save-v1"); location.reload(); },

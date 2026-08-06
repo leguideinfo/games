@@ -26,9 +26,19 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   il faut des Centrales ; DNS coûte 40 Eo > soute (20) → il faut Ferme puis
   Datacenter avant la recherche ; étendre coûte 450 💠 > soute (300) →
   il faut un Entrepôt.
-- **Moteur idle** : production continue, orbes de Flux à collecter au doigt
-  (couche « bambin »), gains hors-ligne calculés au retour (cap 2 h, 24 h
-  avec BACKUP).
+- **Moteur idle** : production continue, gains hors-ligne calculés au retour
+  (cap 2 h, 24 h avec BACKUP).
+- **Éclats de matériaux ✨ (v3)** : la planète fait émerger des éclats à
+  récolter au doigt, surtout près des cristaux — la toute première activité
+  d'Aurore, avant tout bâtiment (couche « bambin »). Découplés de
+  l'Extracteur, qui est l'automatisation.
+- **Découverte pas-à-pas (v3)** : au départ, l'écran ne montre que le terrain,
+  la Source et le compteur de matériaux. Les 14 missions déroulent la
+  découverte dans un ordre logique : éclats → Extracteur (⚡ apparaît) →
+  amélioration → Entrepôt → Centrale → Ferme (💾 apparaît) → Datacenter →
+  onglet TECHNOS (DHCP, DNS) → onglet CARTE → Baie réseau → Surcharge →
+  Console → expansion. Chaque bâtiment, ressource, onglet et mécanique
+  n'apparaît qu'au moment où sa mission le rend évident.
 - **Technologies** : DHCP (auto-collecte), DNS (débloque la Carte + Tour +
   Baie réseau), FIREWALL (débloque le Bastion), BACKUP — reprises des
   « effets réseaux » de la charte.
@@ -38,7 +48,7 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   de production ×2 min. **C'est l'emplacement où se branchent les vrais
   mini-jeux** (affiché en jeu) : Ferme → Admin Rush, Extracteur → Regex Invaders,
   Baie réseau → The Flux, Console de commandement → PowerShell Hero.
-- **Missions guidées** (8 étapes) : le tutoriel de la boucle complète.
+- **Missions guidées** (14 étapes) : elles SONT le système de déblocage.
 - **Persistance** locale (`localStorage`) + reprise hors-ligne.
 - **Expansion du territoire** (v1.2) — trois étages :
   1. **Déblayer** les éboulis rocheux (tap sur un rocher, 50 💠) ;
