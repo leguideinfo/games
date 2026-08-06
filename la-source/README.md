@@ -29,8 +29,17 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   de production ×2 min. **C'est l'emplacement où se branchent les vrais
   mini-jeux** (affiché en jeu) : Ferme → Admin Rush, Bastion → Regex
   Invaders, Baie réseau → The Flux, Extracteur → PowerShell Hero.
-- **Missions guidées** (7 étapes) : le tutoriel de la boucle complète.
+- **Missions guidées** (8 étapes) : le tutoriel de la boucle complète.
 - **Persistance** locale (`localStorage`) + reprise hors-ligne.
+- **Expansion du territoire** (v1.2) — trois étages :
+  1. **Déblayer** les éboulis rocheux (tap sur un rocher, 50 ⚡) ;
+  2. **Étendre le territoire** depuis la Source : le plateau gagne un anneau
+     complet (9×9 → 11×11 → … → 17×17), coût exponentiel (150/450/1350/4050 ⚡),
+     terrain procédural stable par coordonnée ;
+  3. **Cristaux stratégiques** : indéblayables, mais +15 % de production par
+     cristal adjacent à un Extracteur — l'expansion révèle des emplacements
+     convoités. (Étage 4 en prod : coloniser d'autres nœuds via la Sonde
+     d'exploration.)
 
 ## Contrôles
 

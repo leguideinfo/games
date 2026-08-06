@@ -328,6 +328,7 @@
     <div class="sub">L'Étincelle qui t'a fait naître. Cœur de la colonie : tout
       bâtiment s'y relie. Elle grandit avec ta colonie.</div>
     <div id="src-stats"></div>
+    <div class="actrow" id="src-act"></div>
   </div>
 
   <div id="toasts"></div>
@@ -436,6 +437,7 @@ const MISSIONS = [
   { t: "Réussis une Surcharge (⚡ sur un bâtiment)", r: 40, k: "turbo" },
   { t: "Recherche la technologie DNS", r: 60, k: "tech_dns" },
   { t: "Ouvre la Carte du secteur", r: 80, k: "map" },
+  { t: "Étends le territoire (tape la Source)", r: 100, k: "extend" },
 ];
 
 /* ---------- état ---------- */
@@ -444,6 +446,7 @@ function newSave() {
   return {
     v: 1, flux: 20, buildings: [], techs: [], seenIntro: false,
     mi: 0, orbsCollected: 0, lastSeen: Date.now(), buffLeft: 0, buffMult: 1,
+    ext: 0, cleared: [],
   };
 }
 function load() {
@@ -458,6 +461,8 @@ function save() {
   try { localStorage.setItem("ls-save-v1", JSON.stringify(S)); } catch (e) {}
 }
 S = load();
+if (!S.cleared) S.cleared = [];
+if (!S.ext) S.ext = 0;
 window.__LS = () => S;
 
 /* ---------- économie ---------- */
@@ -465,7 +470,7 @@ const bcount = (t) => S.buildings.filter((b) => b.t === t).length;
 const bsum = (t) => S.buildings.filter((b) => b.t === t).reduce((a, b) => a + b.l, 0);
 function prodRate() {
   const ex = S.buildings.filter((b) => b.t === "extracteur")
-    .reduce((a, b) => a + 0.6 * Math.pow(b.l, 1.4), 0);
+    .reduce((a, b) => a + 0.6 * Math.pow(b.l, 1.4) * (1 + 0.15 * crysAdj(b.x, b.y)), 0);
   const multi = 1 + 0.15 * bsum("ferme");
   const net = 0.4 * bsum("reseau");
   return (ex * multi + net) * S.buffMult;
@@ -481,8 +486,8 @@ function fmt(n) {
   return String(Math.floor(n));
 }
 
-/* ---------- hors-ligne ---------- */
-(function offline() {
+/* ---------- hors-ligne (appelé au démarrage, après init complète) ---------- */
+function offlineGains() {
   const el = (Date.now() - (S.lastSeen || Date.now())) / 1000;
   if (el < 30 || !S.buildings.length) return;
   const capT = S.techs.includes("backup") ? 24 * 3600 : 2 * 3600;
@@ -494,7 +499,7 @@ function fmt(n) {
     setTimeout(() => toast("Pendant ton absence, la colonie a produit <b>+" + fmt(gain) + " Flux</b>"), 1200);
   }
   S.buffLeft = 0; S.buffMult = 1;
-})();
+}
 
 /* ---------- toasts / missions ---------- */
 function toast(html, gold) {
@@ -527,26 +532,47 @@ function missionDone(k) {
   missionUI(); save();
 }
 
-/* ---------- terrain ---------- */
-const terrain = [];
-{
-  const r = mulberry32(1337);
-  for (let y = 0; y < GRID; y++) {
-    terrain[y] = [];
-    for (let x = 0; x < GRID; x++) {
-      const v = r();
-      let kind = "sand";
-      if (v > 0.86 && !(x === SRC.x && y === SRC.y)) kind = "crystal";
-      else if (v > 0.78) kind = "rock";
-      terrain[y][x] = { kind, j: r() };
-    }
-  }
+/* ---------- terrain (procédural infini, stable par coordonnée) ---------- */
+const tcache = new Map();
+let clearedSet = new Set(S.cleared || []);
+function hash2(x, y) {
+  let h = (x * 374761393 + y * 668265263) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return (h ^ (h >>> 16)) >>> 0;
 }
+function tileAt(x, y) {
+  const k = x + "," + y;
+  let t = tcache.get(k);
+  if (!t) {
+    const r = mulberry32(hash2(x, y) ^ 1337);
+    const v = r();
+    let kind = "sand";
+    if (!(x === SRC.x && y === SRC.y)) {
+      if (v > 0.87) kind = "crystal";
+      else if (v > 0.78) kind = "rock";
+    }
+    t = { kind, j: r() };
+    tcache.set(k, t);
+  }
+  if (t.kind === "rock" && clearedSet.has(k)) return { kind: "sand", j: t.j };
+  return t;
+}
+const bmin = () => -S.ext;
+const bmax = () => GRID - 1 + S.ext;
+const inB = (x, y) => x >= bmin() && y >= bmin() && x <= bmax() && y <= bmax();
 const buildable = (x, y) =>
-  x >= 0 && y >= 0 && x < GRID && y < GRID &&
-  terrain[y][x].kind === "sand" &&
+  inB(x, y) &&
+  tileAt(x, y).kind === "sand" &&
   !(x === SRC.x && y === SRC.y) &&
   !S.buildings.some((b) => b.x === x && b.y === y);
+function crysAdj(x, y) {
+  let n = 0;
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]])
+    if (inB(x + dx, y + dy) && tileAt(x + dx, y + dy).kind === "crystal") n++;
+  return n;
+}
+const EXP_COSTS = [150, 450, 1350, 4050];
+const CLEAR_COST = 50;
 
 /* ---------- caméra / canvas ---------- */
 const cv = $("#cv"), ctx = cv.getContext("2d");
@@ -592,7 +618,7 @@ function diamond(c, sx, sy, w, h) {
 }
 function drawTile(x, y, t) {
   const p = w2s(x, y), z = cam.z;
-  const info = terrain[y][x];
+  const info = tileAt(x, y);
   const jitter = info.j * 14 - 7;
   // sol
   const g = ctx.createLinearGradient(p.x, p.y - TH / 2 * z, p.x, p.y + TH / 2 * z);
@@ -602,10 +628,10 @@ function drawTile(x, y, t) {
   ctx.fillStyle = g; ctx.fill();
   ctx.strokeStyle = "rgba(60,35,15,.25)"; ctx.lineWidth = 1; ctx.stroke();
   // falaises du plateau (bordure)
-  if (y === GRID - 1 || x === GRID - 1) {
+  if (y === bmax() || x === bmax()) {
     ctx.beginPath();
-    ctx.moveTo(p.x - (y === GRID - 1 ? TW / 2 * z : 0), p.y + (y === GRID - 1 ? 0 : 0));
-    if (y === GRID - 1) {
+    ctx.moveTo(p.x - (y === bmax() ? TW / 2 * z : 0), p.y);
+    if (y === bmax()) {
       ctx.moveTo(p.x - TW / 2 * z, p.y);
       ctx.lineTo(p.x, p.y + TH / 2 * z);
       ctx.lineTo(p.x, p.y + TH / 2 * z + 26 * z);
@@ -613,7 +639,7 @@ function drawTile(x, y, t) {
     }
     ctx.closePath();
     ctx.fillStyle = "hsl(25 45% 24%)"; ctx.fill();
-    if (x === GRID - 1) {
+    if (x === bmax()) {
       ctx.beginPath();
       ctx.moveTo(p.x + TW / 2 * z, p.y);
       ctx.lineTo(p.x, p.y + TH / 2 * z);
@@ -858,7 +884,7 @@ function frame(t) {
       ctx.fillStyle = "#cfe6ff"; ctx.fillRect(s.x * W, s.y * H * 0.35, s.s, s.s);
     }
     ctx.globalAlpha = 1;
-    for (let y = 0; y < GRID; y++) for (let x = 0; x < GRID; x++) drawTile(x, y, t);
+    for (let y = bmin(); y <= bmax(); y++) for (let x = bmin(); x <= bmax(); x++) drawTile(x, y, t);
     for (const b of S.buildings) drawLink(b, t);
     const drawables = [...S.buildings].sort((a, b) => (a.x + a.y) - (b.x + b.y));
     let srcDrawn = false;
@@ -932,6 +958,8 @@ cv.addEventListener("pointerup", (e) => {
   if (b) { openBld(b); return; }
   if (buildable(tp.x, tp.y)) {
     openBuild(tp);
+  } else if (inB(tp.x, tp.y) && tileAt(tp.x, tp.y).kind === "rock") {
+    openClear(tp);
   } else {
     closeSheets();
     selTile = null;
@@ -1020,7 +1048,11 @@ function openBld(b) {
   $("#bl-name").innerHTML = def.ic + " " + def.nm + " <span style='color:var(--dim);font-size:12px'>· NIV " + b.l + "</span>";
   $("#bl-desc").textContent = def.ds;
   let stats = "";
-  if (b.t === "extracteur") stats += "<div class='stat'><span>Production</span><b>+" + (0.6 * Math.pow(b.l, 1.4)).toFixed(1) + " Flux/s</b></div>";
+  if (b.t === "extracteur") {
+    const cb = crysAdj(b.x, b.y);
+    stats += "<div class='stat'><span>Production</span><b>+" + (0.6 * Math.pow(b.l, 1.4) * (1 + 0.15 * cb)).toFixed(1) + " Flux/s</b></div>";
+    if (cb) stats += "<div class='stat'><span>Bonus cristaux adjacents</span><b>+" + (15 * cb) + " %</b></div>";
+  }
   if (b.t === "stockage") stats += "<div class='stat'><span>Capacité apportée</span><b>+" + fmt(120 * Math.pow(b.l, 1.2)) + "</b></div>";
   if (b.t === "ferme") stats += "<div class='stat'><span>Amplification globale</span><b>+" + (15 * b.l) + " %</b></div>";
   if (b.t === "reseau") stats += "<div class='stat'><span>Trafic</span><b>+" + (0.4 * b.l).toFixed(1) + " Flux/s</b></div>";
@@ -1049,12 +1081,61 @@ function openBld(b) {
 
 function openSource() {
   closeSheets();
+  const side = GRID + 2 * S.ext;
   $("#src-stats").innerHTML =
     "<div class='stat'><span>Niveau de colonie</span><b>" + colonyLevel() + "</b></div>" +
     "<div class='stat'><span>Bâtiments reliés</span><b>" + S.buildings.length + "</b></div>" +
     "<div class='stat'><span>Production totale</span><b>+" + prodRate().toFixed(1) + " Flux/s</b></div>" +
+    "<div class='stat'><span>Territoire</span><b>" + side + " × " + side + "</b></div>" +
     "<div class='stat'><span>Technologies</span><b>" + (S.techs.length ? S.techs.map((t) => TECHS[t].nm).join(" · ") : "aucune") + "</b></div>";
+  const act = $("#src-act");
+  act.innerHTML = "";
+  const btn = document.createElement("button");
+  if (S.ext >= EXP_COSTS.length) {
+    btn.textContent = "TERRITOIRE MAX (slice)";
+    btn.disabled = true;
+  } else {
+    const cost = EXP_COSTS[S.ext];
+    const ns = GRID + 2 * (S.ext + 1);
+    btn.textContent = "ÉTENDRE LE TERRITOIRE → " + ns + "×" + ns + " · " + fmt(cost) + " ⚡";
+    btn.disabled = S.flux < cost;
+    btn.onclick = () => {
+      if (S.flux < cost) { sfx.deny(); return; }
+      S.flux -= cost;
+      S.ext++;
+      sfx.tech();
+      toast("🌍 Territoire étendu : <b>" + (GRID + 2 * S.ext) + "×" + (GRID + 2 * S.ext) + "</b> — de nouvelles terres émergent !", true);
+      missionDone("extend");
+      zoomAt(0.85);
+      save();
+      openSource();
+    };
+  }
+  act.appendChild(btn);
   $("#sh-source").hidden = false;
+}
+
+function openClear(tp) {
+  closeSheets();
+  selTile = tp;
+  $("#bl-name").textContent = "🪨 Éboulis rocheux";
+  $("#bl-desc").textContent = "Un amas de roches bloque cette case. Déblaie-le pour construire ici.";
+  $("#bl-stats").innerHTML = "";
+  const upBtn = $("#bl-up");
+  upBtn.textContent = "DÉBLAYER · " + CLEAR_COST + " ⚡";
+  upBtn.disabled = S.flux < CLEAR_COST;
+  upBtn.onclick = () => {
+    if (S.flux < CLEAR_COST) { sfx.deny(); return; }
+    S.flux -= CLEAR_COST;
+    clearedSet.add(tp.x + "," + tp.y);
+    S.cleared = [...clearedSet];
+    sfx.build();
+    toast("Case déblayée — prête à construire.");
+    save();
+    closeSheets();
+  };
+  $("#bl-turbo").hidden = true;
+  $("#sh-bld").hidden = false;
 }
 
 /* ---------- turbo / surcharge ---------- */
@@ -1284,6 +1365,7 @@ $("#iskip").onclick = () => { audioInit(); endIntro(); };
 window.__api = {
   screenOf(x, y) { return w2s(x, y); },
   buildableAt(x, y) { return buildable(x, y); },
+  tileKind(x, y) { return tileAt(x, y).kind; },
   build(t, x, y) {
     if (!buildable(x, y)) return false;
     S.flux -= buildCost(t);
@@ -1299,6 +1381,7 @@ window.__api = {
 /* ---------- démarrage ---------- */
 resize();
 centerCam();
+offlineGains();
 if (S.techs.includes("dns")) unlockMap();
 missionUI();
 if (!introOn) $("#intro").hidden = true;
