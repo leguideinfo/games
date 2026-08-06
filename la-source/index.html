@@ -65,7 +65,9 @@
   .hud-rate { font-size: 9.5px; color: var(--dim); min-height: 11px; white-space: nowrap; }
   #buff { color: var(--amber); }
   #hud .grow { flex: 1; }
-  #colname { text-align: right; }
+  #colname { text-align: right; min-width: 0; overflow: hidden; }
+  #colname div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hud-val { white-space: nowrap; }
   #colname .hud-val { color: var(--amber); font-size: 13px; }
   #mute {
     background: none; border: 1px solid var(--line); color: var(--dim);
@@ -266,13 +268,13 @@
   <div id="hud">
     <div>
       <div class="hud-label">💠 Matériaux</div>
-      <div class="hud-val"><span id="mat">0</span> <span id="matcap" style="font-size:10px;color:var(--dim)"></span></div>
-      <div id="matrate" class="hud-rate">+0/min</div>
+      <div class="hud-val"><span id="mat">0</span></div>
+      <div class="hud-rate"><span id="matcap"></span> · <span id="matrate">+0/min</span></div>
     </div>
     <div id="hud-eo" style="display:none">
       <div class="hud-label">💾 Données</div>
-      <div class="hud-val" style="color:var(--blue)"><span id="eo">0</span> <span id="eocap" style="font-size:10px;color:var(--dim)"></span></div>
-      <div id="eorate" class="hud-rate">+0/min</div>
+      <div class="hud-val" style="color:var(--blue)"><span id="eo">0</span></div>
+      <div class="hud-rate"><span id="eocap"></span> · <span id="eorate">+0/min</span></div>
     </div>
     <div id="hud-en" style="display:none">
       <div class="hud-label">⚡ Énergie</div>
@@ -1703,6 +1705,5 @@ if (!introOn) $("#intro").hidden = true;
 else { setScene(0); requestAnimationFrame(drawIntro); }
 document.addEventListener("visibilitychange", () => { if (document.hidden) save(); });
 requestAnimationFrame(frame);
-</script>
-</body>
+</script></body>
 </html>
