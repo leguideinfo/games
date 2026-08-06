@@ -733,7 +733,9 @@ function fire() {
   }
   $("#score").textContent = S.score;
   S.enemies = S.enemies.filter((e) => !e.dead);
-  updateTargets();
+  // tir validé → le motif se vide tout seul pour enchaîner sans friction
+  S.tokens = [];
+  compile();
   checkClear();
 }
 function burst(x, y, color) {
