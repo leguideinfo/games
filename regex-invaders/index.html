@@ -1,0 +1,907 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Regex Invaders — Awoui Universe</title>
+</head>
+<body>
+<style>
+  /* ========== REGEX INVADERS — écran d'arcade Awoui Universe ==========
+     Thème unique assumé : écran CRT sombre (cabinet d'arcade). */
+  :root {
+    --bg: #060913;
+    --bg-panel: #0b1120;
+    --line: #1b2740;
+    --txt: #d9e6ef;
+    --dim: #8ba0b5;
+    --cyan: #4ef2e0;
+    --magenta: #ff4d8a;
+    --green: #57e389;
+    --amber: #ffc857;
+    --red: #ff5c5c;
+    --mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--txt);
+    font-family: var(--mono);
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+  button { font-family: var(--mono); touch-action: manipulation; }
+  button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+  #app {
+    height: 100dvh;
+    max-width: 540px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background:
+      radial-gradient(120% 60% at 50% 0%, #0d1730 0%, var(--bg) 55%);
+  }
+  /* scanlines CRT discrètes */
+  #app::after {
+    content: "";
+    position: absolute; inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(0deg, rgba(255,255,255,.022) 0 1px, transparent 1px 3px);
+    z-index: 40;
+  }
+
+  /* ---------- barre de statut ---------- */
+  #hud {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    flex: none;
+  }
+  #hud .grow { flex: 1; }
+  .hud-label { color: var(--dim); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
+  .hud-val { font-size: 15px; color: var(--amber); }
+  #hud-wave .hud-val { color: var(--cyan); }
+  #shields { font-size: 14px; letter-spacing: 2px; color: var(--magenta); }
+  #mute {
+    background: none; border: 1px solid var(--line); color: var(--dim);
+    border-radius: 6px; padding: 4px 8px; font-size: 13px; cursor: pointer;
+  }
+
+  /* ---------- champ de bataille ---------- */
+  #field {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+  }
+  #firewall {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    box-shadow: 0 0 12px var(--cyan);
+    opacity: .8;
+  }
+  #firewall.hit { animation: fwhit .4s; }
+  @keyframes fwhit {
+    0%, 100% { background: linear-gradient(90deg, transparent, var(--cyan), transparent); }
+    50% { background: linear-gradient(90deg, transparent, var(--red), transparent); box-shadow: 0 0 22px var(--red); }
+  }
+
+  .enemy {
+    position: absolute;
+    left: 0; top: 0;
+    padding: 5px 9px;
+    border-radius: 8px;
+    font-size: 14px;
+    letter-spacing: .06em;
+    white-space: nowrap;
+    border: 1px solid;
+    will-change: transform;
+    z-index: 5;
+  }
+  .enemy.hostile {
+    color: #ffd7e5;
+    border-color: #a03059;
+    background: #2a0f1d;
+    box-shadow: 0 0 8px rgba(255, 77, 138, .25);
+  }
+  .enemy.friendly {
+    color: #d8ffe5;
+    border-color: #2f8a52;
+    background: #0d2417;
+    border-radius: 999px;
+    box-shadow: 0 0 8px rgba(87, 227, 137, .25);
+  }
+  .enemy.friendly::before { content: "✓ "; color: var(--green); }
+  .enemy.hostile.targeted {
+    border-color: var(--cyan);
+    box-shadow: 0 0 14px var(--cyan);
+    color: #eafffb;
+    animation: tremble .25s infinite;
+  }
+  .enemy.friendly.targeted {
+    border-color: var(--red);
+    box-shadow: 0 0 16px var(--red);
+    animation: alarm .5s infinite;
+  }
+  @keyframes tremble {
+    0%, 100% { margin-left: 0; }
+    25% { margin-left: -1px; } 75% { margin-left: 1px; }
+  }
+  @keyframes alarm { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+
+  .enemy.dying {
+    animation: die .3s forwards;
+    pointer-events: none;
+  }
+  @keyframes die {
+    to { transform: var(--tf) scale(1.8); opacity: 0; filter: blur(2px); }
+  }
+  .beam {
+    position: absolute;
+    width: 3px; bottom: 0;
+    background: linear-gradient(180deg, var(--cyan), transparent 90%);
+    box-shadow: 0 0 10px var(--cyan);
+    z-index: 4;
+    animation: beam .22s forwards;
+  }
+  @keyframes beam { from { opacity: 1; } to { opacity: 0; } }
+  .spark {
+    position: absolute;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    z-index: 6;
+    animation: spark .5s forwards;
+  }
+  @keyframes spark {
+    to { transform: translate(var(--dx), var(--dy)) scale(.2); opacity: 0; }
+  }
+  .float-score {
+    position: absolute;
+    z-index: 20;
+    font-size: 15px;
+    color: var(--amber);
+    text-shadow: 0 0 8px rgba(255, 200, 87, .6);
+    animation: floatup 1s forwards;
+    white-space: nowrap;
+  }
+  .float-score.combo { color: var(--cyan); font-size: 18px; text-shadow: 0 0 10px var(--cyan); }
+  .float-score.malus { color: var(--red); }
+  @keyframes floatup {
+    from { transform: translateY(0); opacity: 1; }
+    to { transform: translateY(-46px); opacity: 0; }
+  }
+
+  #banner {
+    position: absolute;
+    top: 34%; left: 0; right: 0;
+    text-align: center;
+    z-index: 25;
+    pointer-events: none;
+    opacity: 0;
+  }
+  #banner.show { animation: banner 2.2s forwards; }
+  @keyframes banner {
+    0% { opacity: 0; transform: scale(.85); }
+    15%, 75% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; }
+  }
+  #banner .b1 {
+    font-size: 26px; letter-spacing: .3em; color: var(--cyan);
+    text-shadow: 0 0 16px var(--cyan);
+  }
+  #banner .b2 { margin-top: 8px; font-size: 13px; color: var(--amber); }
+  #banner .b2 code {
+    background: var(--bg-panel); border: 1px solid var(--line);
+    padding: 2px 6px; border-radius: 6px; color: var(--cyan);
+  }
+
+  /* ---------- motif + tir ---------- */
+  #pattern-row {
+    display: flex; align-items: stretch; gap: 8px;
+    padding: 8px 10px 4px;
+    flex: none;
+  }
+  #pattern {
+    flex: 1;
+    display: flex; align-items: center; gap: 4px;
+    flex-wrap: wrap;
+    min-height: 44px;
+    padding: 5px 8px;
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  #pattern.invalid { border-color: var(--red); box-shadow: 0 0 8px rgba(255, 92, 92, .4); }
+  #pattern .ph { color: var(--dim); font-size: 12px; }
+  .chip {
+    border: 1px solid #2a3a5c;
+    background: #101a30;
+    color: var(--txt);
+    border-radius: 7px;
+    padding: 4px 7px;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .chip.meta { color: var(--cyan); border-color: #1e5e57; background: #0a2422; }
+  #fire {
+    flex: none;
+    min-width: 96px;
+    border: 1px solid var(--cyan);
+    background: #0a2422;
+    color: var(--cyan);
+    font-size: 16px;
+    letter-spacing: .1em;
+    border-radius: 10px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  #fire:disabled { opacity: .35; cursor: default; }
+  #fire.danger { border-color: var(--red); color: var(--red); background: #2a0f14; }
+  #fire .cd {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    background: rgba(78, 242, 224, .18);
+    width: 0%;
+  }
+  #fire .fl { position: relative; z-index: 1; }
+
+  #tray-tools {
+    display: flex; gap: 8px; padding: 4px 10px 0;
+    flex: none;
+  }
+  #tray-tools button {
+    flex: 1;
+    background: var(--bg-panel); border: 1px solid var(--line); color: var(--dim);
+    border-radius: 8px; padding: 7px 0; font-size: 14px; cursor: pointer;
+  }
+  #tray {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    justify-content: center;
+    padding: 8px 10px calc(10px + env(safe-area-inset-bottom));
+    flex: none;
+    max-height: 32dvh;
+    overflow-y: auto;
+  }
+  .tok {
+    min-width: 40px; height: 42px;
+    border-radius: 9px;
+    border: 1px solid #2a3a5c;
+    background: #101a30;
+    color: var(--txt);
+    font-size: 17px;
+    cursor: pointer;
+  }
+  .tok:active { transform: translateY(1px); background: #182647; }
+  .tok.meta { color: var(--cyan); border-color: #1e5e57; background: #0a2422; }
+  .tok.new { animation: newtok 1.6s 3; }
+  @keyframes newtok { 50% { box-shadow: 0 0 12px var(--amber); border-color: var(--amber); } }
+
+  /* ---------- overlays ---------- */
+  .overlay {
+    position: absolute; inset: 0;
+    z-index: 50;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 14px;
+    background: rgba(4, 6, 14, .92);
+    text-align: center;
+    padding: 24px;
+  }
+  .overlay[hidden] { display: none; }
+  .title {
+    font-size: clamp(26px, 8vw, 40px);
+    letter-spacing: .18em;
+    color: var(--cyan);
+    text-shadow: 0 0 22px var(--cyan);
+    text-wrap: balance;
+  }
+  .title .inv { color: var(--magenta); text-shadow: 0 0 22px var(--magenta); }
+  .subtitle { color: var(--dim); font-size: 12px; letter-spacing: .25em; text-transform: uppercase; }
+  .rules {
+    max-width: 40ch;
+    text-align: left;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--txt);
+  }
+  .rules b.c { color: var(--cyan); font-weight: normal; }
+  .rules b.m { color: var(--magenta); font-weight: normal; }
+  .rules b.g { color: var(--green); font-weight: normal; }
+  .btn-main {
+    border: 1px solid var(--cyan);
+    background: #0a2422;
+    color: var(--cyan);
+    font-size: 18px;
+    letter-spacing: .2em;
+    padding: 13px 34px;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 0 18px rgba(78, 242, 224, .3);
+  }
+  .btn-main:active { transform: translateY(1px); }
+  #go-stats { font-size: 15px; line-height: 1.9; font-variant-numeric: tabular-nums; }
+  #go-stats .v { color: var(--amber); }
+  .shake { animation: shake .3s; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); } 75% { transform: translateX(6px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .enemy.hostile.targeted, .enemy.friendly.targeted { animation: none; }
+    #app::after { display: none; }
+  }
+</style>
+
+<div id="app">
+  <div id="hud">
+    <div id="hud-score">
+      <div class="hud-label">Score</div>
+      <div class="hud-val" id="score">0</div>
+    </div>
+    <div id="hud-best">
+      <div class="hud-label">Record</div>
+      <div class="hud-val" id="best">0</div>
+    </div>
+    <div class="grow"></div>
+    <div id="hud-wave">
+      <div class="hud-label">Vague</div>
+      <div class="hud-val" id="wave">1</div>
+    </div>
+    <div>
+      <div class="hud-label">Pare-feu</div>
+      <div id="shields">▮▮▮</div>
+    </div>
+    <button id="mute" aria-label="Son">♪</button>
+  </div>
+
+  <div id="field">
+    <div id="banner"><div class="b1"></div><div class="b2"></div></div>
+    <div id="firewall"></div>
+  </div>
+
+  <div id="pattern-row">
+    <div id="pattern" aria-label="Motif en cours"><span class="ph">Assemble ton motif…</span></div>
+    <button id="fire" disabled><span class="cd"></span><span class="fl">FIRE</span></button>
+  </div>
+  <div id="tray-tools">
+    <button id="undo" aria-label="Effacer le dernier module">⌫ retirer</button>
+    <button id="clear" aria-label="Vider le motif">✕ vider</button>
+  </div>
+  <div id="tray"></div>
+
+  <div class="overlay" id="ov-start">
+    <div class="title">REGEX<br><span class="inv">INVADERS</span></div>
+    <div class="subtitle">Salle d'arcade · Awoui Universe</div>
+    <div class="rules">
+      Des paquets corrompus <b class="m">descendent vers ton pare-feu</b>.<br><br>
+      1. Assemble un <b class="c">motif</b> avec les modules.<br>
+      2. Les intrus couverts par le motif <b class="c">s'illuminent</b>.<br>
+      3. <b class="c">FIRE</b> les détruit tous — plus tu en détruis d'un
+      coup, plus le combo rapporte.<br><br>
+      Épargne les <b class="g">✓ paquets alliés</b> : en toucher un coûte
+      un segment de pare-feu. Le motif doit couvrir la chaîne <i>en entier</i>.
+    </div>
+    <button class="btn-main" id="start">INSÉRER UN JETON</button>
+  </div>
+
+  <div class="overlay" id="ov-gameover" hidden>
+    <div class="title"><span class="inv">PARE-FEU</span><br>COMPROMIS</div>
+    <div id="go-stats"></div>
+    <button class="btn-main" id="restart">REJOUER</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ================= REGEX INVADERS ================= */
+
+const $ = (s) => document.querySelector(s);
+const field = $("#field");
+const trayEl = $("#tray");
+const patternEl = $("#pattern");
+const fireBtn = $("#fire");
+const fireLbl = fireBtn.querySelector(".fl");
+const fireCd = fireBtn.querySelector(".cd");
+
+/* ---------- audio (synthé WebAudio, aucun asset) ---------- */
+let actx = null;
+let muted = false;
+try { muted = localStorage.getItem("ri-muted") === "1"; } catch (e) {}
+function audioInit() {
+  if (!actx) {
+    try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+  }
+  if (actx && actx.state === "suspended") actx.resume();
+}
+function beep(freq, dur, type, vol, delay) {
+  if (muted || !actx) return;
+  const t = actx.currentTime + (delay || 0);
+  const o = actx.createOscillator();
+  const g = actx.createGain();
+  o.type = type || "square";
+  o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(vol || 0.04, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(actx.destination);
+  o.start(t); o.stop(t + dur);
+}
+const sfx = {
+  tok: () => beep(520, 0.06, "square", 0.025),
+  del: () => beep(260, 0.06, "square", 0.025),
+  fire: () => beep(880, 0.12, "sawtooth", 0.05),
+  kill: (i) => beep(660 + i * 110, 0.1, "square", 0.04, i * 0.05),
+  miss: () => beep(120, 0.25, "sawtooth", 0.06),
+  hit: () => { beep(300, 0.15, "sawtooth", 0.07); beep(150, 0.3, "sawtooth", 0.07, 0.12); },
+  ally: () => { beep(500, 0.15, "sine", 0.06); beep(250, 0.4, "sawtooth", 0.08, 0.1); },
+  wave: () => { beep(523, 0.1, "square", 0.04); beep(659, 0.1, "square", 0.04, 0.1); beep(784, 0.18, "square", 0.04, 0.2); },
+  over: () => { [400, 340, 280, 200].forEach((f, i) => beep(f, 0.22, "sawtooth", 0.06, i * 0.18)); },
+};
+
+/* ---------- déblocage des modules regex ---------- */
+const UNLOCKS = {
+  2: [{ src: "\\d", desc: "un chiffre (0-9)" }],
+  3: [{ src: ".", desc: "n'importe quel caractère" }],
+  4: [{ src: "+", desc: "répète le module précédent (1 fois ou plus)" }],
+  5: [{ src: "\\w", desc: "une lettre ou un chiffre" }],
+  6: [{ src: "?", desc: "rend le module précédent optionnel" }],
+  7: [
+    { src: "[a-f]", desc: "une lettre de a à f" },
+    { src: "[0-4]", desc: "un chiffre de 0 à 4" },
+    { src: "[5-9]", desc: "un chiffre de 5 à 9" },
+  ],
+  8: [{ src: "|", desc: "OU — l'un ou l'autre motif" }],
+  9: [{ src: "*", desc: "répète le module précédent (0 fois ou plus)" }],
+  10: [{ src: "{2}", desc: "exactement 2 fois le module précédent" }],
+  12: [{ src: "{3}", desc: "exactement 3 fois le module précédent" }],
+};
+
+/* ---------- génération des vagues ---------- */
+const WORDS = ["sudo", "root", "ping", "bash", "http", "ssh", "tcp", "udp", "dns", "git", "npm", "css", "api", "sql", "ram", "cpu", "bit", "bug", "log", "net", "web", "dev", "bin", "key", "vpn"];
+const rnd = (n) => Math.floor(Math.random() * n);
+const pick = (a) => a[rnd(a.length)];
+const DIGITS = "0123456789";
+const LOWER = "abcdefghijklmnopqrstuvwxyz";
+const HEXC = "0123456789abcdef";
+
+function genPart(p) {
+  if (p.t === "lit") return p.v;
+  if (p.t === "d") return pick(DIGITS);
+  if (p.t === "l") return pick(LOWER);
+  if (p.t === "h") return pick(HEXC);
+  return "?";
+}
+function famGen(fam) { return fam.parts.map(genPart).join(""); }
+function famFriendly(fam) {
+  // même structure, mais une case change de classe → distinguable par un bon motif
+  const idx = fam.parts.map((p, i) => (p.t !== "lit" ? i : -1)).filter((i) => i >= 0);
+  if (!idx.length) {
+    return pick(WORDS.filter((w) => w !== fam.parts[0].v && w.length === fam.parts[0].v.length));
+  }
+  const i = pick(idx);
+  const parts = fam.parts.map((p, j) => {
+    if (j !== i) return p;
+    if (p.t === "d") return { t: "l" };
+    if (p.t === "h") return { t: "lit", v: pick("ghjkmnprstuvwxyz") };
+    return { t: "d" };
+  });
+  return parts.map(genPart).join("");
+}
+function digitsFam(len) { return { parts: Array.from({ length: len }, () => ({ t: "d" })) }; }
+function hexFam(len) { return { parts: Array.from({ length: len }, () => ({ t: "h" })) }; }
+function wordFam(len) { return { parts: [{ t: "lit", v: pick(WORDS.filter((w) => w.length === len)) }] }; }
+function wordDigitFam(nd) {
+  return { parts: [{ t: "lit", v: pick(WORDS) }].concat(Array.from({ length: nd }, () => ({ t: "d" }))) };
+}
+function letterDigitFam() { return { parts: [{ t: "l" }, { t: "d" }] }; }
+
+function familiesFor(w) {
+  const pool = [];
+  pool.push(digitsFam(2 + rnd(2)));
+  if (w >= 2) pool.push(digitsFam(3));
+  if (w >= 3) pool.push(wordFam(3));
+  if (w >= 4) pool.push(wordDigitFam(1));
+  if (w >= 5) pool.push(letterDigitFam(), wordFam(4));
+  if (w >= 6) pool.push(hexFam(3));
+  if (w >= 8) pool.push(hexFam(4), digitsFam(4));
+  if (w >= 10) pool.push(wordDigitFam(2));
+  const n = Math.min(1 + Math.ceil(w / 2), 4);
+  const fams = [];
+  while (fams.length < n && pool.length) fams.push(pool.splice(rnd(pool.length), 1)[0]);
+  return fams;
+}
+
+function buildWave(w) {
+  const fams = familiesFor(w);
+  const nHost = Math.min(5 + w, 16);
+  const nAlly = w >= 3 ? Math.min(1 + Math.floor((w - 3) / 3), 3) : 0;
+  const hostiles = [];
+  // tôt dans la partie, beaucoup de doublons : c'est eux qui font découvrir le combo
+  const dupRate = Math.max(0.15, 0.55 - w * 0.05);
+  for (let i = 0; i < nHost; i++) {
+    if (hostiles.length && Math.random() < dupRate) hostiles.push(pick(hostiles));
+    else hostiles.push(famGen(fams[i % fams.length]));
+  }
+  const allies = [];
+  let guard = 40;
+  while (allies.length < nAlly && guard--) {
+    const s = famFriendly(pick(fams));
+    if (!hostiles.includes(s) && !allies.includes(s)) allies.push(s);
+  }
+  return { hostiles, allies };
+}
+
+/* ---------- état ---------- */
+let S = null;
+let best = 0;
+try { best = parseInt(localStorage.getItem("ri-best") || "0", 10) || 0; } catch (e) {}
+$("#best").textContent = best;
+
+function newState() {
+  return {
+    running: false,
+    score: 0,
+    wave: 0,
+    shields: 3,
+    enemies: [],       // {el, str, hostile, x(%), y(px), w, dead}
+    tokens: [],        // {label, src, meta}
+    unlocked: [],      // modules meta débloqués {src, desc}
+    regex: null,
+    valid: false,
+    cooldownUntil: 0,
+    lastT: 0,
+    speed: 14,
+    clearing: false,
+  };
+}
+
+/* ---------- rendu du motif ---------- */
+function compile() {
+  S.regex = null;
+  S.valid = false;
+  patternEl.classList.remove("invalid");
+  if (S.tokens.length) {
+    try {
+      S.regex = new RegExp("^(?:" + S.tokens.map((t) => t.src).join("") + ")$");
+      S.valid = true;
+    } catch (e) {
+      patternEl.classList.add("invalid");
+    }
+  }
+  renderPattern();
+  updateTargets();
+}
+function renderPattern() {
+  patternEl.innerHTML = "";
+  if (!S.tokens.length) {
+    const ph = document.createElement("span");
+    ph.className = "ph";
+    ph.textContent = "Assemble ton motif…";
+    patternEl.appendChild(ph);
+    return;
+  }
+  S.tokens.forEach((t, i) => {
+    const c = document.createElement("button");
+    c.className = "chip" + (t.meta ? " meta" : "");
+    c.textContent = t.label;
+    c.title = "Retirer ce module";
+    c.onclick = () => { S.tokens.splice(i, 1); sfx.del(); compile(); };
+    patternEl.appendChild(c);
+  });
+}
+function pushToken(label, src, meta) {
+  if (!S.running || S.tokens.length >= 14) return;
+  S.tokens.push({ label, src, meta });
+  sfx.tok();
+  compile();
+}
+
+/* ---------- ciblage / preview ---------- */
+function matches(e) { return S.valid && S.regex.test(e.str); }
+function updateTargets() {
+  let nH = 0, nA = 0;
+  for (const e of S.enemies) {
+    if (e.dead) continue;
+    const m = matches(e);
+    e.el.classList.toggle("targeted", m);
+    if (m) e.hostile ? nH++ : nA++;
+  }
+  const ready = S.valid && (nH + nA) > 0;
+  fireBtn.disabled = !ready || !S.running;
+  fireBtn.classList.toggle("danger", nA > 0);
+  fireLbl.textContent = nA > 0 ? "⚠ FIRE ×" + (nH + nA) : nH > 0 ? "FIRE ×" + nH : "FIRE";
+}
+
+/* ---------- ennemis ---------- */
+function spawnWave() {
+  S.wave++;
+  $("#wave").textContent = S.wave;
+  S.speed = Math.min(13 + S.wave * 2.5, 55);
+  const { hostiles, allies } = buildWave(S.wave);
+  const all = hostiles.map((s) => ({ str: s, hostile: true }))
+    .concat(allies.map((s) => ({ str: s, hostile: false })));
+  // mélange
+  for (let i = all.length - 1; i > 0; i--) {
+    const j = rnd(i + 1); [all[i], all[j]] = [all[j], all[i]];
+  }
+  const perRow = 3;
+  all.forEach((info, i) => {
+    const row = Math.floor(i / perRow);
+    const col = i % perRow;
+    const el = document.createElement("div");
+    el.className = "enemy " + (info.hostile ? "hostile" : "friendly");
+    el.textContent = info.str;
+    field.appendChild(el);
+    const x = 6 + col * 30 + rnd(12); // % approximatif, 3 colonnes
+    const y = -(30 + row * 52 + rnd(18));
+    const e = { el, str: info.str, hostile: info.hostile, x, y, dead: false };
+    place(e);
+    S.enemies.push(e);
+  });
+  rebuildTray();
+  // bannière + déblocages
+  const unlocks = UNLOCKS[S.wave] || [];
+  unlocks.forEach((u) => S.unlocked.push(u));
+  showBanner("VAGUE " + S.wave, unlocks.length
+    ? "Nouveau module : <code>" + esc(unlocks[0].src) + "</code> — " + esc(unlocks[0].desc)
+    : (S.wave === 3 ? "Attention : paquets alliés <b style='color:var(--green)'>✓</b> en transit !" : ""));
+  if (S.wave > 1) sfx.wave();
+  compile();
+}
+function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+function place(e) {
+  e.el.style.left = e.x + "%";
+  const tf = "translateY(" + e.y.toFixed(1) + "px)";
+  e.el.style.transform = tf;
+  e.el.style.setProperty("--tf", tf);
+}
+function rebuildTray() {
+  trayEl.innerHTML = "";
+  const chars = new Set();
+  for (const e of S.enemies) if (!e.dead) for (const c of e.str) chars.add(c);
+  const lits = [...chars].sort((a, b) => {
+    const da = DIGITS.includes(a), db = DIGITS.includes(b);
+    return da === db ? a.localeCompare(b) : da ? -1 : 1;
+  });
+  for (const c of lits) addTok(c, c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), false, false);
+  const justUnlocked = UNLOCKS[S.wave] || [];
+  for (const u of S.unlocked) {
+    addTok(u.src, u.src, true, justUnlocked.includes(u));
+  }
+}
+function addTok(label, src, meta, isNew) {
+  const b = document.createElement("button");
+  b.className = "tok" + (meta ? " meta" : "") + (isNew ? " new" : "");
+  b.textContent = label;
+  b.onclick = () => pushToken(label, src, meta);
+  trayEl.appendChild(b);
+}
+function showBanner(l1, l2) {
+  const b = $("#banner");
+  b.querySelector(".b1").textContent = l1;
+  b.querySelector(".b2").innerHTML = l2 || "";
+  b.classList.remove("show");
+  void b.offsetWidth;
+  b.classList.add("show");
+}
+
+/* ---------- tir ---------- */
+function fire() {
+  if (fireBtn.disabled || !S.running) return;
+  const now = performance.now();
+  if (now < S.cooldownUntil) return;
+  const hit = S.enemies.filter((e) => !e.dead && matches(e));
+  if (!hit.length) return;
+  sfx.fire();
+  S.cooldownUntil = now + 800;
+  let kills = 0;
+  let allyHit = false;
+  hit.forEach((e, i) => {
+    // rayon
+    const r = e.el.getBoundingClientRect(), f = field.getBoundingClientRect();
+    const bx = r.left - f.left + r.width / 2;
+    const beam = document.createElement("div");
+    beam.className = "beam";
+    beam.style.left = bx + "px";
+    beam.style.height = (f.height - (r.top - f.top) - r.height / 2) + "px";
+    field.appendChild(beam);
+    setTimeout(() => beam.remove(), 260);
+    burst(bx, r.top - f.top + r.height / 2, e.hostile ? "#ff4d8a" : "#57e389");
+    e.dead = true;
+    e.el.classList.add("dying");
+    setTimeout(() => e.el.remove(), 320);
+    if (e.hostile) { kills++; sfx.kill(Math.min(i, 6)); }
+    else allyHit = true;
+  });
+  if (kills) {
+    const pts = 10 * S.wave * kills * kills;
+    S.score += pts;
+    const last = hit[hit.length - 1];
+    floatText("+" + pts + (kills > 1 ? "  ×" + kills : ""), last, kills > 1 ? "combo" : "");
+  }
+  if (allyHit) {
+    sfx.ally();
+    loseShield("PAQUET ALLIÉ DÉTRUIT");
+  }
+  $("#score").textContent = S.score;
+  S.enemies = S.enemies.filter((e) => !e.dead);
+  updateTargets();
+  checkClear();
+}
+function burst(x, y, color) {
+  for (let i = 0; i < 7; i++) {
+    const s = document.createElement("div");
+    s.className = "spark";
+    s.style.left = x + "px"; s.style.top = y + "px";
+    s.style.background = color;
+    s.style.boxShadow = "0 0 6px " + color;
+    const a = Math.random() * Math.PI * 2, d = 18 + rnd(26);
+    s.style.setProperty("--dx", (Math.cos(a) * d).toFixed(0) + "px");
+    s.style.setProperty("--dy", (Math.sin(a) * d).toFixed(0) + "px");
+    field.appendChild(s);
+    setTimeout(() => s.remove(), 520);
+  }
+}
+function floatText(txt, e, cls) {
+  const d = document.createElement("div");
+  d.className = "float-score " + (cls || "");
+  d.textContent = txt;
+  const r = e.el ? e.el.getBoundingClientRect() : null;
+  const f = field.getBoundingClientRect();
+  d.style.left = Math.max(6, (r ? r.left - f.left : f.width / 2 - 30)) + "px";
+  d.style.top = Math.max(10, (r ? r.top - f.top : f.height / 2)) + "px";
+  field.appendChild(d);
+  setTimeout(() => d.remove(), 1050);
+}
+function loseShield(reason) {
+  S.shields--;
+  $("#shields").textContent = "▮".repeat(Math.max(0, S.shields)) + "▯".repeat(3 - Math.max(0, S.shields));
+  $("#firewall").classList.remove("hit");
+  void $("#firewall").offsetWidth;
+  $("#firewall").classList.add("hit");
+  $("#app").classList.remove("shake");
+  void $("#app").offsetWidth;
+  $("#app").classList.add("shake");
+  if (reason) {
+    const d = document.createElement("div");
+    d.className = "float-score malus";
+    d.textContent = reason;
+    d.style.left = "12px";
+    d.style.top = "40%";
+    field.appendChild(d);
+    setTimeout(() => d.remove(), 1050);
+  }
+  if (S.shields <= 0) gameOver();
+}
+function checkClear() {
+  if (S.clearing) return;
+  if (S.enemies.some((e) => e.hostile && !e.dead)) return;
+  S.clearing = true;
+  // les alliés restants s'échappent : bonus
+  const left = S.enemies.filter((e) => !e.dead && !e.hostile);
+  if (left.length) {
+    const bonus = 5 * S.wave * left.length;
+    S.score += bonus;
+    $("#score").textContent = S.score;
+    floatText("ESCORTE +" + bonus, left[0], "");
+    left.forEach((e) => { e.dead = true; e.el.classList.add("dying"); setTimeout(() => e.el.remove(), 320); });
+  }
+  S.enemies = [];
+  S.tokens = [];
+  setTimeout(() => {
+    if (!S.running) return;
+    S.clearing = false;
+    spawnWave();
+  }, 1000);
+}
+
+/* ---------- boucle ---------- */
+function tick(t) {
+  if (!S.running) return;
+  const dt = Math.min((t - S.lastT) / 1000, 0.05);
+  S.lastT = t;
+  const H = field.clientHeight;
+  let breach = false;
+  for (const e of S.enemies) {
+    if (e.dead) continue;
+    e.y += S.speed * dt;
+    place(e);
+    if (e.y + 30 >= H) {
+      e.dead = true;
+      e.el.remove();
+      if (e.hostile) breach = true;
+      else {
+        const bonus = 5 * S.wave;
+        S.score += bonus;
+        $("#score").textContent = S.score;
+        floatText("ESCORTE +" + bonus, e, "");
+      }
+    }
+  }
+  if (breach) { sfx.hit(); loseShield("INTRUSION"); }
+  const before = S.enemies.length;
+  S.enemies = S.enemies.filter((e) => !e.dead);
+  if (S.enemies.length !== before) { rebuildTrayIfNeeded(); updateTargets(); checkClear(); }
+  // affichage cooldown
+  const now = performance.now();
+  const cdLeft = Math.max(0, S.cooldownUntil - now);
+  fireCd.style.width = (cdLeft / 800 * 100) + "%";
+  requestAnimationFrame(tick);
+}
+let trayDirty = false;
+function rebuildTrayIfNeeded() {
+  // évite de reconstruire le tray en continu : différé léger
+  if (trayDirty) return;
+  trayDirty = true;
+  setTimeout(() => { trayDirty = false; if (S.running && !S.clearing) rebuildTray(); }, 300);
+}
+
+/* ---------- cycle de vie ---------- */
+function startGame() {
+  audioInit();
+  for (const e of field.querySelectorAll(".enemy, .beam, .spark, .float-score")) e.remove();
+  S = newState();
+  S.running = true;
+  $("#score").textContent = "0";
+  $("#shields").textContent = "▮▮▮";
+  $("#ov-start").hidden = true;
+  $("#ov-gameover").hidden = true;
+  spawnWave();
+  S.lastT = performance.now();
+  requestAnimationFrame(tick);
+}
+function gameOver() {
+  S.running = false;
+  sfx.over();
+  if (S.score > best) {
+    best = S.score;
+    try { localStorage.setItem("ri-best", String(best)); } catch (e) {}
+    $("#best").textContent = best;
+  }
+  $("#go-stats").innerHTML =
+    "SCORE <span class='v'>" + S.score + "</span><br>" +
+    "VAGUE ATTEINTE <span class='v'>" + S.wave + "</span><br>" +
+    "RECORD <span class='v'>" + best + "</span>";
+  $("#ov-gameover").hidden = false;
+}
+
+/* ---------- entrées ---------- */
+$("#start").onclick = startGame;
+$("#restart").onclick = startGame;
+fireBtn.onclick = fire;
+$("#undo").onclick = () => { if (S && S.tokens.length) { S.tokens.pop(); sfx.del(); compile(); } };
+$("#clear").onclick = () => { if (S && S.tokens.length) { S.tokens = []; sfx.del(); compile(); } };
+$("#mute").onclick = () => {
+  muted = !muted;
+  try { localStorage.setItem("ri-muted", muted ? "1" : "0"); } catch (e) {}
+  $("#mute").textContent = muted ? "∅" : "♪";
+  audioInit();
+};
+$("#mute").textContent = muted ? "∅" : "♪";
+
+document.addEventListener("keydown", (ev) => {
+  if (!S || !S.running) {
+    if (ev.key === "Enter") { (!$("#ov-start").hidden || !$("#ov-gameover").hidden) && startGame(); }
+    return;
+  }
+  if (ev.key === "Enter") { fire(); ev.preventDefault(); return; }
+  if (ev.key === "Backspace") { S.tokens.pop(); compile(); ev.preventDefault(); return; }
+  if (ev.key === "Escape") { S.tokens = []; compile(); return; }
+  if (/^[a-z0-9]$/i.test(ev.key)) pushToken(ev.key.toLowerCase(), ev.key.toLowerCase(), false);
+  else if (ev.key === ".") pushToken(".", ".", true);
+  else if (ev.key === "+") pushToken("+", "+", true);
+  else if (ev.key === "*") pushToken("*", "*", true);
+  else if (ev.key === "?") pushToken("?", "?", true);
+  else if (ev.key === "|") pushToken("|", "|", true);
+});
+</script>
+</body>
+</html>

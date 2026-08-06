@@ -12,11 +12,14 @@ ceiling, apprentissage implicite, cohérence sci-fi.
 
 ## Idées
 
-### 1. Regex Invaders
+### 1. Regex Invaders — 🔨 EN PROTOTYPE (`/regex-invaders/`)
 - **Mécanique** : Space Invaders / shoot'em up.
 - **Concept IT** : des vagues de chaînes de caractères descendent ; le joueur
   construit une regex qui « tire » sur toutes les chaînes qu'elle matche.
 - **On retient** : les motifs regex de base puis avancés, à la difficulté.
+- **Choix v1** (2026-08-06) : match ancré (chaîne entière), construction par
+  tuiles tactiles, combo n², paquets alliés à épargner dès la vague 3,
+  déblocage d'un module regex par vague. Voir le README du jeu.
 
 ### 2. Sudo Snake
 - **Mécanique** : Snake.

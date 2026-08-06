@@ -40,6 +40,14 @@ vers le MMO, l'académie IT et l'écosystème Awoui.
 
 | Jeu | Mécanique | Concept IT | Statut |
 |---|---|---|---|
-| PowerShell Hero | Rythme (Guitar Hero) | Commandes PowerShell | ✅ Existant sur universe.awoui.com |
-| The Flux | Runner (Subway Surfers) | Un bit traverse le réseau | ✅ Existant sur universe.awoui.com |
-| *(à produire ici)* | — | — | Voir `jeux/backlog-idees.md` |
+| PowerShell Hero | Rythme (Guitar Hero) | Commandes PowerShell | ✅ Existant sur universe.awoui.com (code chez le propriétaire, intégration ici plus tard) |
+| The Flux | Runner (Subway Surfers) | Un bit traverse le réseau | ✅ Existant sur universe.awoui.com (idem) |
+| **Regex Invaders** | Shoot'em up (Space Invaders) | Expressions régulières | 🔨 Prototype jouable dans ce repo (`/regex-invaders/`) |
+| *(suivants)* | — | — | Voir `jeux/backlog-idees.md` |
+
+## Contraintes techniques (confirmées par le propriétaire)
+
+- **Full JS/CSS/HTML** vanilla, comme les jeux existants.
+- **Mobile d'abord** (jouable au doigt sur téléphone), puis PC — les jeux
+  actuels d'Universe sont PC uniquement, les nouveaux doivent être tactiles.
+- Fun, répétable, **difficulté croissante fascinante**.
