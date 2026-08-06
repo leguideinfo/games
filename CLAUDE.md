@@ -24,6 +24,16 @@ Les jeux d'arcade sont considérés comme **la clef du succès et de l'adhérenc
 | `docs/jeux/the-flux.md` | Fiche du jeu existant The Flux |
 | `docs/jeux/backlog-idees.md` | Backlog d'idées de nouveaux jeux (propositions à valider) |
 
+## Prochaine session (prévue : à la maison, avec accès au code du site)
+
+**Chantier convenu : le pont vers la prod.** La slice `/la-source/` est
+**gelée en features** (décision du 2026-08-06, v6). Au programme :
+1. Modularisation propre du code de la slice (rendu / économie / missions / UI).
+2. Persistance serveur : PostgreSQL (backend existant de universe.awoui.com),
+   calcul des gains idle côté serveur.
+3. Intégration des assets définitifs du propriétaire (sprites iso, charte).
+4. À terme : multi asynchrone v1, volets/paliers, timers, Forge/unités étendues.
+
 ## Règles de travail
 
 - Chaque jeu vit dans son propre dossier à la racine (`/<nom-du-jeu>/`) avec son
