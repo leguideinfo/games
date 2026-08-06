@@ -317,10 +317,9 @@
       <div id="buff" class="hud-rate"></div>
     </div>
     <div class="grow"></div>
-    <div id="colname">
-      <div class="hud-label">Colonie</div>
-      <div class="hud-val">L'Étincelle</div>
-      <div id="clevel" style="font-size:10px;color:var(--dim)">niveau 1</div>
+    <div style="text-align:center">
+      <div class="hud-label">Niv</div>
+      <div class="hud-val" id="clevel" style="color:var(--amber)">1</div>
     </div>
     <button id="mute" aria-label="Son">♪</button>
   </div>
@@ -390,7 +389,7 @@
 
   <div class="sheet" id="sh-source" hidden>
     <button class="close">✕</button>
-    <h3>La Source</h3>
+    <h3>La Source · colonie L'Étincelle</h3>
     <div class="sub">L'Étincelle qui a fait naître la colonie. Tout s'y relie.</div>
     <div id="src-stats"></div>
     <div class="actrow" id="src-act"></div>
@@ -1251,7 +1250,7 @@ function frame(t) {
   $("#buff").textContent = S.buffLeft > 0
     ? "SURCHARGE ×" + S.buffMult.toFixed(2) + " · " + Math.ceil(S.buffLeft) + "s"
     : (mobs.length ? "🕷 parasite : −15 %" : "");
-  $("#clevel").textContent = "niveau " + colonyLevel();
+  $("#clevel").textContent = colonyLevel();
   refreshGates();
   requestAnimationFrame(frame);
 }
