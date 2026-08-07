@@ -1,3 +1,15 @@
+# L'Atelier de Mémoire & la Restauration d'Archives
+
+> **Distinction actée (propriétaire, 2026-08-07)** — deux mini-jeux, deux sens :
+> - **Jeu d'assemblage** (pièces abstraites dans une forme) → **la Forge
+>   d'assemblage** : les Mémoires-pictogrammes (concepts). C'est l'Atelier.
+> - **Vrai puzzle d'image** (fragments reconnaissables d'une image à replacer)
+>   → **les Archives** : la « Restauration d'Archives ». Première implémentée :
+>   **Archive 002 « La Terre »** (9 pièces, image dessinée en canvas puis
+>   découpée — un jour remplaçable par les illustrations du propriétaire via
+>   data-URI). Récompense en Eo, légende lore placeholder (« c'était chez
+>   nous »). Requiert le Lecteur d'Archives.
+
 # L'Atelier de Mémoire — le puzzle à niveaux comme reconstruction de la conscience collective
 
 *Proposition Claude (2026-08-07) en réponse à la question du propriétaire :

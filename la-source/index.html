@@ -289,6 +289,31 @@
   @keyframes aglow { 50% { transform: scale(1.15); filter: brightness(1.6); } }
   #at-score { text-align: center; margin-top: 8px; color: var(--amber); font-size: 13.5px; min-height: 20px; }
 
+  /* ---------- restauration d'archive (vrai puzzle d'image) ---------- */
+  #re-tray { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; }
+  .rpiece {
+    width: 54px; height: 54px; padding: 0;
+    border: 2px solid var(--line); border-radius: 8px;
+    background-size: 300% 300%;
+    background-color: #0a0f1e;
+  }
+  .rpiece.sel { border-color: var(--cyan); box-shadow: 0 0 10px rgba(78, 242, 224, .5); }
+  #re-board {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px;
+    background: rgba(6, 9, 19, .5);
+    border: 1px solid rgba(255, 255, 255, .07);
+    border-radius: 14px; padding: 8px;
+  }
+  .rslot {
+    aspect-ratio: 1; border-radius: 6px;
+    border: 1px dashed rgba(120, 160, 220, .28);
+    background-color: #10182b;
+    background-size: 300% 300%;
+  }
+  .rslot.filled { border: 1px solid rgba(255, 255, 255, .15); }
+  .rslot.glow { animation: aglow .8s; }
+  #re-cap { text-align: center; margin-top: 8px; color: var(--amber); font-size: 13.5px; min-height: 20px; }
+
   /* ---------- pluie d'éclats ---------- */
   #frenzy {
     position: absolute; inset: 0; z-index: 45;
@@ -562,6 +587,15 @@
     <div id="at-score"></div>
   </div>
 
+  <div class="sheet" id="sh-restore" hidden>
+    <button class="close">✕</button>
+    <h3>🖼 Restauration d'Archive</h3>
+    <div class="sub">L'image est fragmentée. Replace chaque morceau dans le cadre.</div>
+    <div id="re-tray"></div>
+    <div id="re-board"></div>
+    <div id="re-cap"></div>
+  </div>
+
   <div class="sheet" id="sh-tech" hidden>
     <button class="close">✕</button>
     <h3>Technologies</h3>
@@ -729,7 +763,7 @@ function newSave() {
     v: 2, mat: 50, eo: 0, buildings: [], techs: [], seenIntro: false,
     mi: 0, orbsCollected: 0, lastSeen: Date.now(), buffLeft: 0, buffMult: 1,
     ext: 0, cleared: [], units: [], archives: [], reader: false,
-    rubble: [], lastRubble: Date.now(), memories: [],
+    rubble: [], lastRubble: Date.now(), memories: [], restored: [],
   };
 }
 function load() {
@@ -751,6 +785,7 @@ if (!S.archives) S.archives = [];
 if (!S.rubble) S.rubble = [];
 if (!S.lastRubble) S.lastRubble = Date.now();
 if (!S.memories) S.memories = [];
+if (!S.restored) S.restored = [];
 if (S.reader == null) S.reader = false;
 S.units.forEach((u) => { delete u.busy; });
 window.__LS = () => S;
@@ -1662,6 +1697,7 @@ function closeSheets() {
   selTile = null;
   cave = null;
   atl = null;
+  rest = null;
 }
 for (const b of document.querySelectorAll(".sheet .close")) b.onclick = closeSheets;
 
@@ -2169,6 +2205,24 @@ function openArch() {
   }
   const list = $("#arch-list");
   list.innerHTML = "";
+  // archives visuelles (vrais puzzles d'image) — demandent le Lecteur
+  if (S.reader) {
+    for (const [ridStr, rdef] of Object.entries(REST)) {
+      const rid = Number(ridStr);
+      const rdone = S.restored.includes(rid);
+      const card = document.createElement("div");
+      card.className = "bcard";
+      card.innerHTML = "<div class='ic'>🖼</div><div class='grow'>" +
+        "<div class='nm'>Archive 00" + rid + (rdone ? " · " + rdef.nm : "") + "</div>" +
+        "<div class='ds'>" + (rdone ? rdef.cap : "Image corrompue — à restaurer.") + "</div></div>";
+      const b = document.createElement("button");
+      b.textContent = rdone ? "REVOIR" : "RESTAURER";
+      if (!rdone) b.classList.add("guide");
+      b.onclick = () => openRestore(rid);
+      card.appendChild(b);
+      list.appendChild(card);
+    }
+  }
   for (const f of S.archives) {
     if (f.dec) {
       const d = document.createElement("div");
@@ -2412,6 +2466,138 @@ function atlReveal() {
   }
   save();
   setTimeout(() => { if (!$("#sh-atelier").hidden) openArch(); }, 3400);
+}
+
+/* ---------- restauration d'archives : vrais puzzles d'image ---------- */
+function drawEarthImage() {
+  const c = document.createElement("canvas");
+  c.width = 330; c.height = 330;
+  const g = c.getContext("2d");
+  const r = mulberry32(4242);
+  g.fillStyle = "#04060f"; g.fillRect(0, 0, 330, 330);
+  for (let i = 0; i < 90; i++) {
+    g.globalAlpha = 0.3 + r() * 0.7;
+    g.fillStyle = "#cfe6ff";
+    g.fillRect(r() * 330, r() * 330, 1.6, 1.6);
+  }
+  g.globalAlpha = 1;
+  const cx = 165, cy = 165, R = 118;
+  const sp = g.createRadialGradient(cx - 40, cy - 40, 20, cx, cy, R);
+  sp.addColorStop(0, "#7ec8ff"); sp.addColorStop(0.55, "#2a7fd4"); sp.addColorStop(1, "#0a2a5e");
+  g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.fillStyle = sp; g.fill();
+  g.save();
+  g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.clip();
+  const blob = (x, y, w, h, col) => {
+    g.fillStyle = col;
+    g.beginPath();
+    for (let a = 0; a <= Math.PI * 2 + 0.3; a += 0.45) {
+      const rr = 1 + (r() - 0.5) * 0.55;
+      const px = x + Math.cos(a) * w * rr, py = y + Math.sin(a) * h * rr;
+      a === 0 ? g.moveTo(px, py) : g.lineTo(px, py);
+    }
+    g.closePath(); g.fill();
+  };
+  blob(cx - 55, cy - 35, 55, 40, "#3f9d5a");
+  blob(cx + 42, cy + 12, 42, 52, "#4aa863");
+  blob(cx - 12, cy + 70, 40, 20, "#c9a06a");
+  blob(cx + 15, cy - 75, 30, 16, "#e8f4ff");
+  g.fillStyle = "rgba(255,255,255,.5)";
+  for (let i = 0; i < 8; i++) {
+    const a = r() * Math.PI * 2, d = r() * R * 0.8;
+    g.beginPath();
+    g.ellipse(cx + Math.cos(a) * d, cy + Math.sin(a) * d, 26 + r() * 24, 6 + r() * 5, r() * 3, 0, Math.PI * 2);
+    g.fill();
+  }
+  const sh = g.createLinearGradient(cx - R, cy, cx + R, cy);
+  sh.addColorStop(0, "rgba(2,4,12,0)"); sh.addColorStop(0.7, "rgba(2,4,12,0)"); sh.addColorStop(1, "rgba(2,4,12,.75)");
+  g.fillStyle = sh;
+  g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.fill();
+  g.restore();
+  g.beginPath(); g.arc(cx, cy, R + 4, 0, Math.PI * 2);
+  g.strokeStyle = "rgba(140,200,255,.8)"; g.lineWidth = 3;
+  g.shadowColor = "#7ec8ff"; g.shadowBlur = 18;
+  g.stroke(); g.shadowBlur = 0;
+  return c.toDataURL("image/png");
+}
+const REST = {
+  2: { nm: "La Terre", cap: "Archive 002 · La Terre — c'était chez nous.", make: drawEarthImage },
+};
+let rest = null;
+function openRestore(id) {
+  closeSheets();
+  const def = REST[id];
+  const url = def.make();
+  const order = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+  const r = mulberry32(id * 337 + 5);
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(r() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  rest = { id, def, url, order, sel: null, placed: new Set() };
+  const board = $("#re-board");
+  board.innerHTML = "";
+  for (let i = 0; i < 9; i++) {
+    const d = document.createElement("div");
+    d.className = "rslot";
+    d.dataset.i = i;
+    d.onclick = () => reTry(i);
+    board.appendChild(d);
+  }
+  reTray();
+  $("#re-cap").textContent = "Choisis un morceau, puis tape sa place.";
+  $("#sh-restore").hidden = false;
+}
+function reTray() {
+  const tr = $("#re-tray");
+  tr.innerHTML = "";
+  if (rest.sel == null || rest.placed.has(rest.sel)) {
+    rest.sel = null;
+    for (const i of rest.order) if (!rest.placed.has(i)) { rest.sel = i; break; }
+  }
+  for (const i of rest.order) {
+    if (rest.placed.has(i)) continue;
+    const b = document.createElement("button");
+    b.className = "rpiece" + (rest.sel === i ? " sel" : "");
+    b.style.backgroundImage = "url(" + rest.url + ")";
+    b.style.backgroundPosition = (i % 3) * 50 + "% " + Math.floor(i / 3) * 50 + "%";
+    b.onclick = () => { rest.sel = i; sfx.ui(); reTray(); };
+    tr.appendChild(b);
+  }
+}
+function reTry(slot) {
+  if (!rest || rest.sel == null) return;
+  if (slot !== rest.sel) {
+    sfx.deny();
+    $("#re-board").classList.remove("shake");
+    void $("#re-board").offsetWidth;
+    $("#re-board").classList.add("shake");
+    return;
+  }
+  const d = $("#re-board").children[slot];
+  d.classList.add("filled", "glow");
+  d.style.backgroundImage = "url(" + rest.url + ")";
+  d.style.backgroundPosition = (slot % 3) * 50 + "% " + Math.floor(slot / 3) * 50 + "%";
+  rest.placed.add(slot);
+  beep(420 + rest.placed.size * 40, 0.08, "square", 0.035);
+  reTray();
+  $("#re-cap").textContent = rest.placed.size + " / 9 morceaux";
+  if (rest.placed.size >= 9) reReveal();
+}
+function reReveal() {
+  const { id, def } = rest;
+  const board = $("#re-board");
+  [...board.children].forEach((d, i) => {
+    setTimeout(() => { d.classList.remove("glow"); void d.offsetWidth; d.classList.add("glow"); }, 60 * i);
+  });
+  sfx.tech();
+  $("#re-cap").textContent = "🖼 " + def.cap;
+  if (!S.restored.includes(id)) {
+    S.restored.push(id);
+    S.eo = Math.min(eoCap(), S.eo + 15);
+    setTimeout(() => toast("🖼 Archive restaurée : <b>" + def.nm + "</b> +15 Eo.", true), 1400);
+  }
+  save();
+  setTimeout(() => { if (!$("#sh-restore").hidden) openArch(); }, 3600);
 }
 
 function openAsm() {
@@ -2908,6 +3094,11 @@ window.__api = {
     const c = atl.pieces[atl.sel].cells[0];
     const r = $("#at-grid").children[c[1] * atl.W + c[0]].getBoundingClientRect();
     return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  },
+  rePlaceHint() {
+    if (!rest || rest.sel == null) return false;
+    reTry(rest.sel);
+    return true;
   },
   atlPlaceHint() {
     if (!atl || atl.sel == null) return false;

@@ -194,6 +194,20 @@ await page.waitForTimeout(400);
 const arch3 = await page.evaluate(() => ({ dec: window.__LS().archives[0].dec, missionsDone: document.querySelector("#missions").hidden }));
 console.log("fragment décrypté (quête annexe finie):", JSON.stringify(arch3));
 
+// Archive visuelle 002 : restauration de l'image de la Terre (vrai puzzle)
+await page.waitForTimeout(300);
+await page.locator("#arch-list button", { hasText: "RESTAURER" }).click();
+await page.waitForTimeout(400);
+for (let i = 0; i < 12; i++) {
+  const more = await page.evaluate(() => window.__api.rePlaceHint());
+  if (!more) break;
+  await page.waitForTimeout(70);
+}
+await page.waitForTimeout(600);
+console.log("archive de la Terre restaurée:", await page.evaluate(() => JSON.stringify(window.__LS().restored)));
+await page.screenshot({ path: shots + "/re-terre.png" });
+await page.waitForTimeout(3600); // retour auto aux quêtes
+
 // Atelier de Mémoire : reconstitution du Feu (pièces guidées par l'api)
 await page.waitForTimeout(400);
 await page.locator("#arch-list button", { hasText: "RECONSTITUER" }).first().click();
