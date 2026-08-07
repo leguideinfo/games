@@ -118,6 +118,12 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   propriétaire, pixel pour pixel). Les autres bâtiments suivront au même
   format : un PNG fond transparent dans `assets/sprites/`, un appel
   `regSprite` par bâtiment.
+- **Plateau-terrain définitif (v7.3)** : la zone de départ 9×9 est le
+  **plateau illustré du propriétaire** (`assets/terrain-plateau.png`,
+  embarqué en WebP détouré) — mappé en perspective sur la grille
+  (transformation affine losange→losange), falaises baked en bordure,
+  **découpe de grille légère** par-dessus pour garder les cases lisibles.
+  Les anneaux d'expansion au-delà du 9×9 restent procéduraux.
 
 ## Contrôles
 
