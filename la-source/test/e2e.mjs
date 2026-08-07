@@ -159,6 +159,8 @@ console.log("parasite éliminé:", await page.evaluate(() => ({ mi: window.__LS(
 // M20 : expansion via UI (réessaie le tap Source si besoin)
 await page.evaluate(() => { window.__LS().mat = 500; });
 for (let tries = 0; tries < 4; tries++) {
+  await page.evaluate(() => window.__api.center(4, 4));
+  await page.waitForTimeout(150);
   const sp = await page.evaluate(() => window.__api.screenOf(4, 4));
   await page.mouse.click(sp.x, sp.y);
   await page.waitForTimeout(350);

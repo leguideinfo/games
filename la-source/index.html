@@ -963,7 +963,7 @@ function crysAdj(x, y) {
     if (inB(x + dx, y + dy) && tileAt(x + dx, y + dy).kind === "crystal") n++;
   return n;
 }
-const EXP_COSTS = [450, 1350, 4050, 12150];
+const EXP_COSTS = [450, 1350]; // 13×13 max sur cette map ; suite = étendre les côtés de la map
 const CLEAR_COST = 50;
 
 /* ---------- caméra / canvas ---------- */
@@ -1175,7 +1175,7 @@ regSprite("extracteur", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQYAAACmC
 /* ---------- carte-terrain (asset du propriétaire : la map EST le monde) ----------
    L'image couvre tout le champ de jeu ; la caméra est bornée à ses bords,
    le zoom minimal garantit qu'on ne voit jamais au-delà. */
-const TERRA = { ok: false, iw: 2000, ih: 0, wx: 0, wy: 0 };
+const TERRA = { ok: false, iw: 1400, ih: 0, wx: 0, wy: 0 }; // aire réduite : cases plus larges
 (function () {
   const img = new Image();
   img.onload = () => {
@@ -2017,7 +2017,7 @@ function openSource() {
     const ns = GRID + 2 * (S.ext + 1);
     btn.textContent = "ÉTENDRE LE TERRITOIRE → " + ns + "×" + ns + " · " + fmt(cost) + " 💠";
     btn.disabled = S.mat < cost;
-    if (S.mi === 16 && !btn.disabled) btn.classList.add("guide");
+    if (S.mi === 20 && !btn.disabled) btn.classList.add("guide");
     btn.onclick = () => {
       if (S.mat < cost) { sfx.deny(); return; }
       S.mat -= cost;

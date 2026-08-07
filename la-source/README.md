@@ -124,8 +124,10 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   map sont les bords de l'écran. La **caméra est bornée** à l'image
   (zoom minimal dynamique) et démarre légèrement zoomée pour laisser du
   déplacement. Seul le **territoire débloqué** montre la découpe de
-  grille ; les expansions ajoutent des anneaux sur la même map (les 4
-  paliers actuels tiennent dedans). À terme (idée propriétaire) :
+  grille. **Échelle (retour propriétaire)** : la map couvre ~15 cases de
+  large (au lieu de ~22) pour des cases et bâtiments plus imposants à
+  l'écran ; l'expansion en anneaux est bornée à **13×13**. À terme
+  (idée propriétaire) :
   l'agrandissement ne sera plus des anneaux perpétuels mais une
   **extension des côtés de la map**. (`terrain-plateau.png` = ancien
   essai plateau, conservé en référence.)
