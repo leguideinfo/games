@@ -1737,7 +1737,8 @@ function openBld(b) {
   fa.innerHTML = "";
   if (b.t === "forge") {
     const cap = bsum("forge") + 1;
-    fa.innerHTML = "<div class='stat'><span>Unités assemblées</span><b>" + S.units.length + " / " + cap + "</b></div>";
+    fa.innerHTML = "<div class='sl-nm' style='margin:6px 0'>🛠 PRODUCTION D'UNITÉS</div>" +
+      "<div class='stat'><span>Unités assemblées</span><b>" + S.units.length + " / " + cap + "</b></div>";
     for (const [k, u] of Object.entries(UT)) {
       const row = document.createElement("button");
       row.className = "forge-asm";
@@ -1750,6 +1751,26 @@ function openBld(b) {
       row.onclick = () => assemble(k, b);
       fa.appendChild(row);
     }
+    // l'autre visage de la Forge : l'Atelier de Mémoire
+    const ah = document.createElement("div");
+    ah.className = "sl-nm";
+    ah.style.margin = "12px 0 6px";
+    ah.textContent = "🧩 ATELIER DE MÉMOIRE";
+    fa.appendChild(ah);
+    const ids = Object.keys(ATL).map(Number).sort((x, y) => x - y);
+    const next = ids.find((i) => !S.memories.includes(i) && (i === 1 || S.memories.includes(i - 1)));
+    const mb = document.createElement("button");
+    mb.className = "forge-asm";
+    if (next) {
+      mb.innerHTML = "🧩 Mémoire 00" + next + " — <b>RECONSTITUER</b>" +
+        "<div class='ds2'>La Forge assemble aussi les souvenirs.</div>";
+      mb.onclick = () => openAtelier(next);
+    } else {
+      mb.innerHTML = "🖼 Fresque complète — <b>REVOIR</b>" +
+        "<div class='ds2'>Toutes les Mémoires sont reconstituées.</div>";
+      mb.onclick = () => openArch();
+    }
+    fa.appendChild(mb);
   }
   const uc = upCost(b);
   const upBtn = $("#bl-up");

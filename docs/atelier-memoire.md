@@ -75,6 +75,21 @@ visible, aligné avec les fédérations et la vision (« couches » 1 à 4).
   contrainte de licence/attribution CC-BY dans un jeu commercial ; style
   cohérent avec la charte et recolorable par l'artiste plus tard.
 
+## Intégration Forge d'assemblage (idée propriétaire 2026-08-07, implémentée en v1)
+
+- La Forge porte bien son nom : elle assemble les machines **et les
+  souvenirs**. Son panneau a désormais **deux postes de travail distincts** :
+  « 🛠 Production d'unités » (drone ouvrier, chasseur) et « 🧩 Atelier de
+  Mémoire » (la prochaine Mémoire à reconstituer, ou la Fresque à revoir).
+- **L'entrée QUÊTES est conservée** (accès précoce dès la mission 2 + vue
+  Fresque/liste) — la Forge est l'ancrage diégétique dans la colonie.
+- **Piste d'intégration profonde (à valider)** : les premières Mémoires
+  (1-4) s'assemblent dans le module d'Aurore ; à partir de la 005, « les
+  pièces sont trop lourdes pour le module » → **la Forge devient requise,
+  et son niveau débloque les paliers de Mémoires** (Forge niv 2 → Mémoires
+  5-8, etc.). Le bâtiment devient un moteur de progression de la Fresque,
+  distinct de sa capacité d'unités.
+
 ## À trancher avec le propriétaire
 
 - La liste exacte des Mémoires (concepts) et leurs lignes de savoir.
