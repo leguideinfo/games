@@ -64,6 +64,7 @@ Supreme Commander.
   (fissures/cailloux/plaques/teintes) ont été retirés — ils reviendront
   en assets du propriétaire. En territoire, éboulis = rocher.
 - **Caméra libre** : bornée souplement autour du territoire (+7 cases),
-  **zoom 0,55–4,5** (fort zoom demandé) ; expansion débornée.
+  **zoom 1,1–5,2** (dézoom volontairement limité pour le moment,
+  fort zoom rapproché) ; expansion débornée.
 - La map-image (`assets/map-test.png`, `terrain-plateau.png`) reste en
   archive de référence.
