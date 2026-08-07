@@ -76,30 +76,39 @@ await page.click("#bl-up");
 await page.waitForTimeout(300);
 console.log("mission après amélioration:", await page.evaluate(() => window.__LS().mi));
 
-// M3-M6 : entrepôt, centrale, ferme, datacenter
-await page.evaluate(() => {
-  for (const t of ["entrepot", "centrale", "ferme", "datacenter"]) {
-    window.__LS().mat = 300;
-    for (let y = 0; y < 9; y++) for (let x = 0; x < 9; x++) {
-      if (window.__api.buildableAt(x, y)) { window.__api.build(t, x, y); y = 99; break; }
-    }
+// M3 : palier « ressens le stock » (250/300 💠)
+await page.evaluate(() => { window.__LS().mat = 260; });
+await page.waitForTimeout(500);
+// M4-M10 : entrepôt → 2e extracteur → centrale (puis NIV 2) → ferme → 12 Eo → datacenter
+const buildFirst = (t) => page.evaluate((tt) => {
+  window.__LS().mat = 300;
+  for (let y = 0; y < 9; y++) for (let x = 0; x < 9; x++) {
+    if (window.__api.buildableAt(x, y)) { window.__api.build(tt, x, y); return; }
   }
-});
-await page.waitForTimeout(300);
-console.log("après M6:", await page.evaluate(() => ({ mi: window.__LS().mi, techVisible: !document.querySelector("#tab-tech").hidden })));
+}, t);
+for (const t of ["entrepot", "extracteur", "centrale"]) { await buildFirst(t); await page.waitForTimeout(350); }
+await page.evaluate(() => { window.__LS().buildings.find((b) => b.t === "centrale").l = 2; });
+await page.waitForTimeout(500);
+await buildFirst("ferme");
+await page.waitForTimeout(350);
+await page.evaluate(() => window.__api.giveEo(15));
+await page.waitForTimeout(500);
+await buildFirst("datacenter");
+await page.waitForTimeout(400);
+console.log("après la séquence ressources (attendu mi 11):", await page.evaluate(() => ({ mi: window.__LS().mi, techVisible: !document.querySelector("#tab-tech").hidden })));
 
-// M7-M8 : DHCP puis DNS
+// M11-M12 : DHCP puis DNS
 await page.evaluate(() => { window.__api.giveEo(60); window.__api.research("dhcp"); });
 await page.evaluate(() => { window.__api.giveEo(60); window.__api.research("dns"); });
 await page.waitForTimeout(300);
 
-// M9 : carte
+// M13 : carte
 await page.evaluate(() => { for (const s of document.querySelectorAll(".sheet")) s.hidden = true; });
 await page.click("#tab-map");
 await page.waitForTimeout(300);
 await page.click("#tab-col");
 
-// M10-M13 : baie réseau, surcharge, console, forge
+// M14-M17 : baie réseau, surcharge, console, forge
 await page.evaluate(() => {
   window.__LS().mat = 300; window.__api.giveEo(60);
   for (let y = 0; y < 9; y++) for (let x = 0; x < 9; x++) {
@@ -116,9 +125,9 @@ for (const t of ["console", "forge"]) {
   }, t);
 }
 await page.waitForTimeout(300);
-console.log("après forge:", await page.evaluate(() => window.__LS().mi));
+console.log("après forge (attendu 18):", await page.evaluate(() => window.__LS().mi));
 
-// M14 : drone récolteur posé sur cristaux par tap réel (dézoome si hors vue)
+// M18 : drone récolteur posé sur cristaux par tap réel (dézoome si hors vue)
 await page.evaluate(() => { window.__LS().mat = 300; window.__api.assemble("recolteur"); });
 let cpos = null;
 for (let tries = 0; tries < 4 && !cpos; tries++) {
@@ -131,7 +140,7 @@ await page.mouse.click(cpos.x, cpos.y);
 await page.waitForTimeout(300);
 console.log("drone posé:", await page.evaluate(() => ({ mi: window.__LS().mi, units: window.__LS().units.length })));
 
-// M15 : chasseur contre le parasite (dézoome si hors vue)
+// M19 : chasseur contre le parasite (dézoome si hors vue)
 await page.evaluate(() => { window.__LS().mat = 300; window.__api.giveEo(30); window.__api.assemble("chasseur"); });
 await page.waitForFunction(() => window.__api.mobsPos().length > 0, null, { timeout: 10000 });
 let mpos = null;
@@ -141,10 +150,10 @@ for (let tries = 0; tries < 6 && !mpos; tries++) {
   if (!mpos) { await page.click("#z-out"); await page.waitForTimeout(200); }
 }
 await page.mouse.click(mpos.sx, mpos.sy);
-await page.waitForFunction(() => window.__LS().mi >= 16, null, { timeout: 15000 });
+await page.waitForFunction(() => window.__LS().mi >= 20, null, { timeout: 15000 });
 console.log("parasite éliminé:", await page.evaluate(() => ({ mi: window.__LS().mi, mobs: window.__api.mobsPos().length })));
 
-// M16 : expansion via UI (réessaie le tap Source si besoin)
+// M20 : expansion via UI (réessaie le tap Source si besoin)
 await page.evaluate(() => { window.__LS().mat = 500; });
 for (let tries = 0; tries < 4; tries++) {
   const sp = await page.evaluate(() => window.__api.screenOf(4, 4));

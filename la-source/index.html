@@ -694,37 +694,37 @@ const BT = {
     game: "Regex Invaders",
   },
   centrale: {
-    nm: "Centrale énergétique", ic: "⚡", col: "#ffc857", base: 40, conso: 0, mAt: 4,
+    nm: "Centrale énergétique", ic: "⚡", col: "#ffc857", base: 40, conso: 0, mAt: 6,
     ds: "Alimente l'infrastructure.",
     game: null,
   },
   entrepot: {
-    nm: "Entrepôt de matériaux", ic: "🗄", col: "#ff7a1a", base: 30, conso: 4, mAt: 3,
+    nm: "Entrepôt de matériaux", ic: "🗄", col: "#ff7a1a", base: 30, conso: 4, mAt: 4,
     ds: "Stocke les matériaux.",
     game: null,
   },
   ferme: {
-    nm: "Ferme de serveurs", ic: "🖥", col: "#38a9ff", base: 60, conso: 8, mAt: 5,
+    nm: "Ferme de serveurs", ic: "🖥", col: "#38a9ff", base: 60, conso: 8, mAt: 8,
     ds: "Calcule les données (Eo).",
     game: "Admin Rush",
   },
   datacenter: {
-    nm: "Datacenter", ic: "💾", col: "#a06bff", base: 50, conso: 6, mAt: 6,
+    nm: "Datacenter", ic: "💾", col: "#a06bff", base: 50, conso: 6, mAt: 10,
     ds: "Conserve les données.",
     game: null,
   },
   reseau: {
-    nm: "Baie réseau", ic: "📡", col: "#57e389", base: 90, eo: 15, conso: 5, tech: "dns", mAt: 10,
+    nm: "Baie réseau", ic: "📡", col: "#57e389", base: 90, eo: 15, conso: 5, tech: "dns", mAt: 14,
     ds: "Contrats de matériaux du réseau galactique.",
     game: "The Flux",
   },
   forge: {
-    nm: "Forge d'assemblage", ic: "🔧", col: "#ff9a4d", base: 100, conso: 6, mAt: 13,
+    nm: "Forge d'assemblage", ic: "🔧", col: "#ff9a4d", base: 100, conso: 6, mAt: 17,
     ds: "Assemble les unités.",
     game: null,
   },
   console: {
-    nm: "Console de commandement", ic: "🖲", col: "#e6eef5", base: 120, eo: 10, conso: 5, mAt: 12,
+    nm: "Console de commandement", ic: "🖲", col: "#e6eef5", base: 120, eo: 10, conso: 5, mAt: 16,
     ds: "PowerShell : +4 % de production par niveau.",
     game: "PowerShell Hero",
   },
@@ -742,18 +742,27 @@ const TECHS = {
   backup: { nm: "BACKUP", col: "#a06bff", eo: 60, ds: "Hors-ligne compté sur 24 h." },
 };
 const MISSIONS = [
+  // — chapitre 💠 Matériaux —
   { t: "Récolte 3 éclats de matériaux ✨ (tape-les)", rm: 20, k: "orbs3" },
-  { t: "Pose ton premier Extracteur de matériaux", rm: 30, k: "build_extracteur" },
-  { t: "Améliore ton Extracteur", rm: 40, k: "upgrade" },
-  { t: "Pose un Entrepôt de matériaux", rm: 40, k: "build_entrepot" },
-  { t: "Pose une Centrale énergétique", rm: 50, k: "build_centrale" },
-  { t: "Pose une Ferme de serveurs", re: 5, k: "build_ferme" },
-  { t: "Pose un Datacenter", re: 10, k: "build_datacenter" },
+  { t: "Pose ton premier Extracteur de matériaux", rm: 25, k: "build_extracteur" },
+  { t: "Améliore ton Extracteur", rm: 30, k: "upgrade" },
+  { t: "Regarde-le forer : atteins 250 💠 (le stock plafonne à 300)", rm: 30, k: "mat250", c: () => S.mat >= 250 },
+  { t: "Le stock est trop petit — pose un Entrepôt de matériaux", rm: 40, k: "build_entrepot" },
+  // — chapitre ⚡ Énergie —
+  { t: "Pose un 2e Extracteur", rm: 40, k: "ext2", c: () => bcount("extracteur") >= 2 },
+  { t: "⚡ La réserve de la soute a des limites — pose une Centrale", rm: 50, k: "build_centrale" },
+  { t: "Améliore ta Centrale (NIV 2)", rm: 50, k: "centrale2", c: () => S.buildings.some((b) => b.t === "centrale" && b.l >= 2) },
+  // — chapitre 💾 Données —
+  { t: "Pose une Ferme de serveurs : elle calcule des Données 💾", re: 5, k: "build_ferme" },
+  { t: "Regarde-la calculer : accumule 12 Eo 💾", re: 5, k: "eo12", c: () => S.eo >= 12 },
+  { t: "20 Eo max, c'est peu — pose un Datacenter", rm: 60, k: "build_datacenter" },
+  // — chapitre 🌐 Réseau & technologies —
   { t: "Recherche DHCP (onglet TECHNOS)", rm: 60, k: "tech_dhcp" },
   { t: "Recherche DNS", rm: 80, k: "tech_dns" },
   { t: "Ouvre la Carte du secteur", rm: 100, k: "map" },
   { t: "Pose une Baie réseau", rm: 100, k: "build_reseau" },
   { t: "Réussis une Surcharge ⚡ (tape un bâtiment)", rm: 120, k: "turbo" },
+  // — chapitre 🔧 Commandement & unités —
   { t: "Pose une Console de commandement", rm: 150, k: "build_console" },
   { t: "Pose une Forge d'assemblage", rm: 150, k: "build_forge" },
   { t: "Assemble un Drone ouvrier, pose-le sur des cristaux", rm: 150, k: "unit_recolteur" },
@@ -765,7 +774,7 @@ const MISSIONS = [
 let S = null;
 function newSave() {
   return {
-    v: 2, mat: 50, eo: 0, buildings: [], techs: [], seenIntro: false,
+    v: 3, mat: 50, eo: 0, buildings: [], techs: [], seenIntro: false,
     mi: 0, orbsCollected: 0, lastSeen: Date.now(), buffLeft: 0, buffMult: 1,
     ext: 0, cleared: [], units: [], archives: [], reader: false,
     rubble: [], lastRubble: Date.now(), memories: [], restored: [],
@@ -774,7 +783,15 @@ function newSave() {
 function load() {
   try {
     const raw = localStorage.getItem("ls-save-v4");
-    if (raw) return Object.assign(newSave(), JSON.parse(raw));
+    if (raw) {
+      const sv = Object.assign(newSave(), JSON.parse(raw));
+      if ((sv.v || 2) < 3) { // v3 : missions re-séquencées (17 → 21)
+        const remap = [0, 1, 2, 4, 6, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
+        sv.mi = remap[Math.min(sv.mi, 17)];
+        sv.v = 3;
+      }
+      return sv;
+    }
   } catch (e) {}
   return newSave();
 }
@@ -863,6 +880,11 @@ function missionUI() {
   const m = MISSIONS[S.mi];
   $("#m-text").innerHTML = m.t + " <span class='m-reward'>" + (m.rm ? "+" + m.rm + " 💠" : "+" + m.re + " Eo") + "</span>";
 }
+function missionTick() {
+  if (S.mi >= MISSIONS.length) return;
+  const m = MISSIONS[S.mi];
+  if (m.c && m.c()) missionDone(m.k);
+}
 function missionDone(k) {
   if (S.mi >= MISSIONS.length) return;
   const m = MISSIONS[S.mi];
@@ -878,7 +900,7 @@ function missionDone(k) {
   if (S.mi === 3) {
     setTimeout(() => toast("🕳 Le sol tremble… des <b>crevasses</b> se sont ouvertes ! Tape-en une pour sonder."), 1500);
   }
-  if (S.mi === 15) {
+  if (S.mi === 19) {
     spawnMob();
     setTimeout(() => toast("🕷 Un <b>parasite de données</b> rôde à la frontière ! Il ralentit ton extraction (−15 %)."), 1500);
   }
@@ -1281,7 +1303,7 @@ function drawUnit(u, t) {
 }
 
 /* ---------- guidage nouveau joueur ---------- */
-const GUIDE_BUILD = { 1: "extracteur", 3: "entrepot", 4: "centrale", 5: "ferme", 6: "datacenter", 10: "reseau", 12: "console", 13: "forge" };
+const GUIDE_BUILD = { 1: "extracteur", 4: "entrepot", 5: "extracteur", 6: "centrale", 8: "ferme", 10: "datacenter", 14: "reseau", 16: "console", 17: "forge" };
 function nearestTile(pred) {
   let best = null, bd = 1e9;
   for (let y = bmin(); y <= bmax(); y++) for (let x = bmin(); x <= bmax(); x++) {
@@ -1299,9 +1321,12 @@ function guideWorldTarget() {
   if (mi === 0) { const o = orbs[0]; return o && { x: o.x, y: o.y, kind: "orb" }; }
   if (GUIDE_BUILD[mi]) { const t = nearestTile(buildable); return t && { x: t.x, y: t.y, kind: "tile" }; }
   if (mi === 2) { const b = S.buildings.find((b) => b.t === "extracteur"); return b && { x: b.x, y: b.y, kind: "bld" }; }
-  if (mi === 11) { const b = S.buildings.find((b) => BT[b.t].game); return b && { x: b.x, y: b.y, kind: "bld" }; }
-  if (mi === 14) { const b = S.buildings.find((b) => b.t === "forge"); return b && { x: b.x, y: b.y, kind: "bld" }; }
-  if (mi === 15) {
+  if (mi === 3) { const o = orbs[0]; return o && { x: o.x, y: o.y, kind: "orb" }; }
+  if (mi === 7) { const b = S.buildings.find((b) => b.t === "centrale"); return b && { x: b.x, y: b.y, kind: "bld" }; }
+  if (mi === 9) { const b = S.buildings.find((b) => b.t === "ferme"); return b && { x: b.x, y: b.y, kind: "bld" }; }
+  if (mi === 15) { const b = S.buildings.find((b) => BT[b.t].game); return b && { x: b.x, y: b.y, kind: "bld" }; }
+  if (mi === 18) { const b = S.buildings.find((b) => b.t === "forge"); return b && { x: b.x, y: b.y, kind: "bld" }; }
+  if (mi === 19) {
     if (!S.units.some((u) => u.t === "chasseur")) {
       const b = S.buildings.find((b) => b.t === "forge");
       return b && { x: b.x, y: b.y, kind: "bld" };
@@ -1309,7 +1334,7 @@ function guideWorldTarget() {
     const m = mobs[0];
     return m && { x: m.x, y: m.y, kind: "mob" };
   }
-  if (mi === 16) return { x: SRC.x, y: SRC.y, kind: "src" };
+  if (mi === 20) return { x: SRC.x, y: SRC.y, kind: "src" };
   return null;
 }
 function drawCrevasseHint(t) {
@@ -1447,7 +1472,7 @@ function frame(t) {
     }
   }
   // parasites aux frontières (après la mission 15)
-  if (S.mi >= 15) {
+  if (S.mi >= 19) {
     mobT += dt;
     if (mobT > 55 && mobs.length < 2) { mobT = 0; spawnMob(); }
   }
@@ -1524,6 +1549,7 @@ function frame(t) {
     ? "SURCHARGE ×" + S.buffMult.toFixed(2) + " · " + Math.ceil(S.buffLeft) + "s"
     : (mobs.length ? "🕷 parasite : −15 %" : "");
   $("#clevel").textContent = colonyLevel();
+  missionTick();
   refreshGates();
   requestAnimationFrame(frame);
 }
@@ -1786,8 +1812,8 @@ function openBld(b) {
       row.innerHTML = u.ic + " " + u.nm + " · " + u.cost + " 💠" + (u.ceo ? " + " + u.ceo + " Eo" : "") +
         "<div class='ds2'>" + u.ds + "</div>";
       row.disabled = S.units.length >= cap || S.mat < u.cost || S.eo < u.ceo;
-      if (!row.disabled && ((S.mi === 14 && k === "recolteur") ||
-          (S.mi === 15 && k === "chasseur" && !S.units.some((v) => v.t === "chasseur"))))
+      if (!row.disabled && ((S.mi === 18 && k === "recolteur") ||
+          (S.mi === 19 && k === "chasseur" && !S.units.some((v) => v.t === "chasseur"))))
         row.classList.add("guide");
       row.onclick = () => assemble(k, b);
       fa.appendChild(row);
@@ -1815,7 +1841,7 @@ function openBld(b) {
   }
   const uc = upCost(b);
   const upBtn = $("#bl-up");
-  upBtn.classList.toggle("guide", S.mi === 2 && b.t === "extracteur" && S.mat >= uc);
+  upBtn.classList.toggle("guide", (S.mi === 2 && b.t === "extracteur" || S.mi === 7 && b.t === "centrale") && S.mat >= uc);
   if (b.l >= 10) { upBtn.textContent = "NIV MAX"; upBtn.disabled = true; }
   else {
     upBtn.textContent = "AMÉLIORER · " + fmt(uc) + " 💠";
@@ -1830,7 +1856,7 @@ function openBld(b) {
     };
   }
   const tb = $("#bl-turbo");
-  tb.classList.toggle("guide", S.mi === 11 && !!def.game);
+  tb.classList.toggle("guide", S.mi === 15 && !!def.game);
   if (def.game && S.mi >= 11) {
     tb.hidden = false;
     tb.textContent = "⚡ SURCHARGE";
@@ -3020,13 +3046,13 @@ function unlockMap() { refreshGates(); }
 function refreshGates() {
   $("#hud-eo").style.display = (bcount("ferme") || S.eo > 0.5) ? "" : "none";
   $("#hud-en").style.display = enUse() > 0 ? "" : "none";
-  $("#tab-tech").hidden = S.mi < 7;
-  $("#tab-tech").classList.toggle("guide", S.mi === 7 || S.mi === 8);
+  $("#tab-tech").hidden = S.mi < 11;
+  $("#tab-tech").classList.toggle("guide", S.mi === 11 || S.mi === 12);
   const dns = S.techs.includes("dns");
   $("#tab-map").hidden = !dns;
   $("#tab-map").disabled = !dns;
   $("#tab-map").textContent = "CARTE";
-  $("#tab-map").classList.toggle("guide", S.mi === 9);
+  $("#tab-map").classList.toggle("guide", S.mi === 13);
   $("#tab-arch").hidden = !(S.archives.length || S.mi >= 2);
   $("#tab-arch").classList.toggle("guide", S.mi >= 2 && S.mi <= 4 && !S.memories.length);
 }

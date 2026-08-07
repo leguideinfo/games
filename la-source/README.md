@@ -51,7 +51,15 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   Hero) se fera via **un autre système, à concevoir plus tard** — pistes en
   vrac (hypothèses) : bâtiment « Salle d'arcade » dans la colonie, contrats
   de la Baie réseau qui lancent un mini-jeu, terminaux dédiés.
-- **Missions guidées** (17 étapes) : elles SONT le système de déblocage.
+- **Missions guidées** (21 étapes, re-séquencées v7) : elles SONT le système
+  de déblocage, organisées en chapitres de ressources — 💠 Matériaux
+  (éclats → Extracteur → amélioration → **palier « atteins 250 💠 »** →
+  Entrepôt), ⚡ Énergie (**2e Extracteur** → Centrale → **Centrale NIV 2**),
+  💾 Données (Ferme → **palier « accumule 12 Eo »** → Datacenter), 🌐 Réseau
+  & technologies, 🔧 Commandement & unités. Chaque bâtiment n'arrive
+  qu'après un moment passé à **ressentir** la ressource qu'il sert
+  (jauge qui se remplit, plafond atteint, consommation qui monte) — plus
+  d'enchaînement pose-sur-pose. Migration automatique des sauvegardes.
 - **Guidage visuel (v4.2)** : la mission en cours pointe sa cible — losange
   ambre pulsant + chevron ▼ dans le monde (case à construire près de la
   Source, bâtiment à améliorer, Forge, parasite, la Source pour
