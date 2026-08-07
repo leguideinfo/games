@@ -191,21 +191,14 @@ console.log("fragment décrypté (quête annexe finie):", JSON.stringify(arch3))
 await page.waitForTimeout(400);
 await page.locator("#arch-list button", { hasText: "RECONSTITUER" }).click();
 await page.waitForTimeout(300);
-await page.locator("#at-tray .at-piece").first().click(); // mono-tuile
-await page.waitForTimeout(150);
-for (let i = 0; i < 30; i++) {
-  const cell = await page.evaluate(() => {
-    const c = [...document.querySelectorAll(".acell[data-need]")].find((el) => !el.classList.contains("fill"));
-    if (!c) return null;
-    const r = c.getBoundingClientRect();
-    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-  });
-  if (!cell) break;
-  await page.mouse.click(cell.x, cell.y);
-  await page.waitForTimeout(60);
+for (let i = 0; i < 25; i++) {
+  const hint = await page.evaluate(() => window.__api.atlHint());
+  if (!hint) break;
+  await page.mouse.click(hint.x, hint.y);
+  await page.waitForTimeout(80);
 }
 await page.waitForTimeout(600);
-const atlRes = await page.evaluate(() => ({ memories: window.__LS().memories, eo: Math.round(window.__LS().eo) }));
+const atlRes = await page.evaluate(() => ({ memories: window.__LS().memories, mat: Math.round(window.__LS().mat) }));
 console.log("mémoire du Feu reconstituée:", JSON.stringify(atlRes));
 await page.screenshot({ path: shots + "/atl-reveal.png" });
 await page.evaluate(() => { for (const s of document.querySelectorAll(".sheet")) s.hidden = true; });

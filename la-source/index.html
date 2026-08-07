@@ -832,6 +832,9 @@ function missionDone(k) {
   S.mi++;
   sfx.mission();
   toast("Mission accomplie : <b>+" + (m.rm ? m.rm + " 💠" : m.re + " Eo") + "</b>", true);
+  if (S.mi === 2) {
+    setTimeout(() => toast("🧩 <b>L'Atelier de Mémoire</b> est ouvert — onglet QUÊTES."), 1500);
+  }
   if (S.mi === 3) {
     setTimeout(() => toast("🕳 Le sol tremble… des <b>crevasses</b> se sont ouvertes ! Tape-en une pour sonder."), 1500);
   }
@@ -2127,7 +2130,9 @@ function openArch() {
   $("#arch-sub").textContent = "Les fils à tirer, à ton rythme.";
   const rd = $("#arch-reader");
   const qhead = "<div class='sl-nm' style='margin-bottom:6px'>📼 QUÊTE · LES ARCHIVES DE L'HUMANITÉ</div>";
-  if (S.reader) {
+  if (!S.archives.length) {
+    rd.innerHTML = "";
+  } else if (S.reader) {
     rd.innerHTML = qhead + "<div class='bcard'><div class='ic'>🖥</div><div class='grow'>" +
       "<div class='nm' style='color:var(--green)'>Lecteur d'Archives — EN LIGNE</div>" +
       "<div class='ds'>Système d'époque opérationnel.</div></div></div>";
@@ -2170,8 +2175,8 @@ function openArch() {
       list.appendChild(card);
     }
   }
-  // Atelier de Mémoire (quand le Lecteur est en ligne)
-  if (S.reader) {
+  // Atelier de Mémoire (dès l'ouverture de l'onglet)
+  if (true) {
     const ah = document.createElement("div");
     ah.className = "sl-nm";
     ah.style.margin = "12px 0 6px";
@@ -2182,7 +2187,7 @@ function openArch() {
     card.className = "bcard";
     card.innerHTML = "<div class='ic'>" + (done ? "🔥" : "🧩") + "</div><div class='grow'>" +
       "<div class='nm'>" + (done ? "Le feu" : "Mémoire 001") + "</div>" +
-      "<div class='ds'>" + (done ? "Première énergie maîtrisée par l'humanité." : "Signal visuel corrompu — à reconstituer.") + "</div></div>";
+      "<div class='ds'>" + (done ? "Première énergie maîtrisée par l'humanité." : "Une image dort dans la mémoire du module — remets les pièces en place.") + "</div></div>";
     const b = document.createElement("button");
     b.textContent = done ? "REVOIR" : "RECONSTITUER";
     if (!done) b.classList.add("guide");
@@ -2209,97 +2214,132 @@ const ATL = {
     col: { "1": "#ff7a1a", "2": "#ffc857" },
   },
 };
-const ATL_PIECES = [
-  [[0, 0]],
-  [[0, 0], [1, 0]],
-  [[0, 0], [1, 0], [2, 0]],
-  [[0, 0], [1, 0], [0, 1]],
-];
 let atl = null;
 function openAtelier(id) {
   closeSheets();
   const m = ATL[id];
-  atl = { id, m, filled: new Set(), sel: 0, rot: ATL_PIECES.map((pp) => pp.map((c) => [...c])) };
+  const H = m.pic.length, W = m.pic[0].length;
+  // découpe l'image en pièces de puzzle (2-4 cases, déterministe)
+  const r = mulberry32(id * 991 + 7);
+  const owner = {};
+  const pieces = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (m.pic[y][x] === "." || owner[y * W + x] != null) continue;
+    const cells = [[x, y]];
+    owner[y * W + x] = pieces.length;
+    const target = 2 + Math.floor(r() * 3);
+    let cur = [x, y];
+    while (cells.length < target) {
+      const nbrs = [[cur[0] + 1, cur[1]], [cur[0], cur[1] + 1], [cur[0] - 1, cur[1]], [cur[0], cur[1] - 1]]
+        .filter(([nx, ny]) => nx >= 0 && nx < W && ny >= 0 && ny < H && m.pic[ny][nx] !== "." && owner[ny * W + nx] == null);
+      if (!nbrs.length) break;
+      const n = nbrs[Math.floor(r() * nbrs.length)];
+      owner[n[1] * W + n[0]] = pieces.length;
+      cells.push(n);
+      cur = n;
+    }
+    pieces.push({ cells, placed: false });
+  }
+  const order = pieces.map((_, i) => i);
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(r() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  atl = { id, m, W, H, pieces, order, owner, sel: null, placed: 0 };
   const g = $("#at-grid");
   g.innerHTML = "";
-  const H = m.pic.length, W = m.pic[0].length;
   g.style.gridTemplateColumns = "repeat(" + W + ", 1fr)";
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     const d = document.createElement("div");
     const need = m.pic[y][x] !== ".";
     d.className = "acell" + (need ? " need" : " void");
     d.dataset.x = x; d.dataset.y = y;
-    if (need) { d.dataset.need = "1"; d.onclick = () => atlPlace(x, y); }
+    if (need) { d.dataset.need = "1"; d.onclick = () => atlTry(x, y); }
     g.appendChild(d);
   }
   atlTray();
-  $("#at-score").textContent = "";
+  $("#at-score").textContent = "Choisis une pièce, puis tape sa place dans la forme.";
   $("#sh-atelier").hidden = false;
 }
 function atlTray() {
   const tr = $("#at-tray");
   tr.innerHTML = "";
-  atl.rot.forEach((pp, i) => {
+  // toujours une pièce sélectionnée : la première libre si besoin
+  if (atl.sel == null || atl.pieces[atl.sel].placed) {
+    atl.sel = null;
+    for (const i of atl.order) if (!atl.pieces[i].placed) { atl.sel = i; break; }
+  }
+  for (const i of atl.order) {
+    const pc = atl.pieces[i];
+    if (pc.placed) continue;
     const b = document.createElement("button");
     b.className = "at-piece" + (atl.sel === i ? " sel" : "");
+    const minx = Math.min(...pc.cells.map((c) => c[0]));
+    const miny = Math.min(...pc.cells.map((c) => c[1]));
+    const bw = Math.max(...pc.cells.map((c) => c[0])) - minx + 1;
+    const bh = Math.max(...pc.cells.map((c) => c[1])) - miny + 1;
     const mini = document.createElement("div");
     mini.className = "at-mini";
-    for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) {
+    mini.style.gridTemplateColumns = "repeat(" + bw + ", 11px)";
+    mini.style.gridAutoRows = "11px";
+    for (let y = 0; y < bh; y++) for (let x = 0; x < bw; x++) {
       const c = document.createElement("div");
-      if (pp.some(([px, py]) => px === x && py === y)) c.className = "at-mini-c";
+      const cell = pc.cells.find(([px, py]) => px - minx === x && py - miny === y);
+      if (cell) {
+        c.className = "at-mini-c";
+        c.style.background = atl.m.col[atl.m.pic[cell[1]][cell[0]]];
+      }
       mini.appendChild(c);
     }
     b.appendChild(mini);
     b.onclick = () => { atl.sel = i; sfx.ui(); atlTray(); };
     tr.appendChild(b);
-  });
-  const rot = document.createElement("button");
-  rot.className = "at-piece";
-  rot.textContent = "🔄";
-  rot.style.fontSize = "17px";
-  rot.onclick = () => { atl.rot[atl.sel] = rotP(atl.rot[atl.sel]); sfx.ui(); atlTray(); };
-  tr.appendChild(rot);
-}
-function atlPlace(ax, ay) {
-  if (!atl) return;
-  const m = atl.m, H = m.pic.length, W = m.pic[0].length;
-  const cells = atl.rot[atl.sel].map(([dx, dy]) => [ax + dx, ay + dy]);
-  const ok = cells.every(([x, y]) =>
-    x >= 0 && x < W && y >= 0 && y < H && m.pic[y][x] !== "." && !atl.filled.has(y * W + x));
-  if (!ok) { sfx.deny(); return; }
-  for (const [x, y] of cells) {
-    atl.filled.add(y * W + x);
-    $("#at-grid").children[y * W + x].classList.add("fill");
   }
-  beep(360 + atl.filled.size * 10, 0.06, "square", 0.03);
-  let need = 0;
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (m.pic[y][x] !== ".") need++;
-  $("#at-score").textContent = atl.filled.size + " / " + need + " tuiles";
-  if (atl.filled.size >= need) atlReveal();
+}
+function atlTry(x, y) {
+  if (!atl || atl.sel == null) return;
+  const pc = atl.pieces[atl.sel];
+  if (pc.placed) return;
+  // la pièce s'emboîte si on tape une case de SON emplacement
+  if (atl.owner[y * atl.W + x] !== atl.sel) {
+    sfx.deny();
+    $("#at-grid").classList.remove("shake");
+    void $("#at-grid").offsetWidth;
+    $("#at-grid").classList.add("shake");
+    return;
+  }
+  pc.placed = true;
+  atl.placed++;
+  for (const [cx, cy] of pc.cells) {
+    const cell = $("#at-grid").children[cy * atl.W + cx];
+    cell.classList.add("fill", "glow");
+    cell.style.background = atl.m.col[atl.m.pic[cy][cx]];
+    cell.style.borderColor = atl.m.col[atl.m.pic[cy][cx]];
+    cell.style.borderStyle = "solid";
+  }
+  beep(420 + atl.placed * 30, 0.08, "square", 0.035);
+  $("#at-score").textContent = atl.placed + " / " + atl.pieces.length + " pièces";
+  atlTray();
+  if (atl.placed >= atl.pieces.length) atlReveal();
 }
 function atlReveal() {
   const m = atl.m, id = atl.id, H = m.pic.length, W = m.pic[0].length;
   const g = $("#at-grid");
   let i = 0;
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const ch = m.pic[y][x];
-    if (ch === ".") continue;
+    if (m.pic[y][x] === ".") continue;
     const cell = g.children[y * W + x];
-    setTimeout(() => {
-      cell.style.background = m.col[ch];
-      cell.style.borderColor = m.col[ch];
-      cell.classList.add("glow");
-    }, 45 * i++);
+    setTimeout(() => { cell.classList.remove("glow"); void cell.offsetWidth; cell.classList.add("glow"); }, 40 * i++);
   }
   sfx.tech();
   $("#at-score").textContent = "🔥 " + m.nm + " — " + m.savoir;
   if (!S.memories.includes(id)) {
     S.memories.push(id);
-    S.eo = Math.min(eoCap(), S.eo + 10);
-    setTimeout(() => toast("🧩 Mémoire reconstituée : <b>" + m.nm + "</b> +10 Eo — la Fresque s'agrandit.", true), 1400);
+    S.mat = Math.min(matCap(), S.mat + 60);
+    setTimeout(() => toast("🧩 Mémoire reconstituée : <b>" + m.nm + "</b> +60 💠 — la Fresque s'agrandit.", true), 1400);
   }
   save();
-  setTimeout(() => { if (!$("#sh-atelier").hidden) openArch(); }, 3200);
+  setTimeout(() => { if (!$("#sh-atelier").hidden) openArch(); }, 3400);
 }
 
 function openAsm() {
@@ -2424,7 +2464,8 @@ function refreshGates() {
   $("#tab-map").disabled = !dns;
   $("#tab-map").textContent = "CARTE";
   $("#tab-map").classList.toggle("guide", S.mi === 9);
-  $("#tab-arch").hidden = !S.archives.length;
+  $("#tab-arch").hidden = !(S.archives.length || S.mi >= 2);
+  $("#tab-arch").classList.toggle("guide", S.mi >= 2 && S.mi <= 4 && !S.memories.length);
 }
 
 /* ---------- onglets ---------- */
@@ -2790,6 +2831,12 @@ window.__api = {
   },
   turboWin() { S.buffMult = 1.5; S.buffLeft = 120; missionDone("turbo"); },
   frenzy() { startFrenzy(); },
+  atlHint() {
+    if (!atl || atl.sel == null) return null;
+    const c = atl.pieces[atl.sel].cells[0];
+    const r = $("#at-grid").children[c[1] * atl.W + c[0]].getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  },
   giveEo(n) { S.eo = Math.min(eoCap(), S.eo + n); },
   research(k) { if (!S.techs.includes(k)) { S.techs.push(k); if (k === "dns") unlockMap(); missionDone("tech_" + k); save(); } },
   reset() { localStorage.removeItem("ls-save-v1"); location.reload(); },

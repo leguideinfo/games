@@ -56,12 +56,18 @@ visible, aligné avec les fédérations et la vision (« couches » 1 à 4).
 
 ## Prototype (2026-08-07 — dérogation ponctuelle au gel, validée par le propriétaire)
 
-- **Mémoire 001 « Le feu »** jouable dans la slice : section « Atelier de
-  Mémoire » de l'onglet QUÊTES (visible quand le Lecteur d'Archives est en
-  ligne). Grille 6×6, tuiles mono/domino/tromino + rotation, pose libre dans
-  la silhouette (pas de gravité : c'est une fresque murale). Complétion →
-  révélation animée du pictogramme + ligne de savoir + 10 Eo (première fois),
-  rejouable en « REVOIR ».
+- **Mémoire 001 « Le feu »** jouable dans la slice — **v2 « vrai puzzle
+  d'enfant »** (retour propriétaire 2026-08-07) : l'image est découpée en
+  ~10 **pièces colorées** (2-4 cases, découpe déterministe), mélangées dans
+  le plateau ; on choisit une pièce et on tape sa place — elle s'emboîte au
+  bon endroit ou la grille vibre. Essai-erreur, pas de rotation, l'image se
+  construit sous les yeux. Complétion → vague de révélation + ligne de
+  savoir + 60 💠, rejouable en « REVOIR ».
+- **Disponible tôt** (retour propriétaire : après la quête serveur c'était
+  trop tard) : l'onglet QUÊTES s'ouvre dès la **mission 2** avec l'Atelier.
+  Cohérence lore : les **mémoires visuelles** sont dans le module d'Aurore
+  (à elle, accessibles d'emblée) ; seules les **Archives textuelles**
+  (l'intrigue) exigent le système d'époque.
 - **Décision visuels (Claude, validée « à toi de trancher ») : produits en
   interne, en mosaïque data-driven** (grille de caractères + palette par
   Mémoire, ~6 lignes de code chacune). Raisons : la révélation cellule par
