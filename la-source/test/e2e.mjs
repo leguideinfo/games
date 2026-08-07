@@ -196,7 +196,7 @@ console.log("fragment décrypté (quête annexe finie):", JSON.stringify(arch3))
 
 // Archive visuelle 002 : restauration de l'image de la Terre (vrai puzzle)
 await page.waitForTimeout(300);
-await page.locator("#arch-list button", { hasText: "RESTAURER" }).click();
+await page.locator("#arch-list button:not([disabled])", { hasText: "RESTAURER" }).first().click();
 await page.waitForTimeout(400);
 for (let i = 0; i < 12; i++) {
   const more = await page.evaluate(() => window.__api.rePlaceHint());
@@ -207,6 +207,19 @@ await page.waitForTimeout(600);
 console.log("archive de la Terre restaurée:", await page.evaluate(() => JSON.stringify(window.__LS().restored)));
 await page.screenshot({ path: shots + "/re-terre.png" });
 await page.waitForTimeout(3600); // retour auto aux quêtes
+
+// Archives 003 (forêt, 3×3) puis 004 (ville, 4×4) — Lecteur en ligne
+for (const step of [12, 20]) {
+  await page.locator("#arch-list button:not([disabled])", { hasText: "RESTAURER" }).first().click();
+  await page.waitForTimeout(400);
+  for (let i = 0; i < step; i++) {
+    const more = await page.evaluate(() => window.__api.rePlaceHint());
+    if (!more) break;
+    await page.waitForTimeout(60);
+  }
+  await page.waitForTimeout(4200); // révélation + retour aux quêtes
+}
+console.log("galerie restaurée:", await page.evaluate(() => JSON.stringify(window.__LS().restored)));
 
 // Atelier de Mémoire : reconstitution du Feu (pièces guidées par l'api)
 await page.waitForTimeout(400);

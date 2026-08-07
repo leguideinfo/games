@@ -4,11 +4,15 @@
 > - **Jeu d'assemblage** (pièces abstraites dans une forme) → **la Forge
 >   d'assemblage** : les Mémoires-pictogrammes (concepts). C'est l'Atelier.
 > - **Vrai puzzle d'image** (fragments reconnaissables d'une image à replacer)
->   → **les Archives** : la « Restauration d'Archives ». Première implémentée :
->   **Archive 002 « La Terre »** (9 pièces, image dessinée en canvas puis
->   découpée — un jour remplaçable par les illustrations du propriétaire via
->   data-URI). Récompense en Eo, légende lore placeholder (« c'était chez
->   nous »). Requiert le Lecteur d'Archives.
+>   → **les Archives** : la « Restauration d'Archives », galerie « Les images
+>   du passé » dans QUÊTES. Implémentées : **002 « La Terre »** (3×3),
+>   **003 « La forêt »** (3×3), **004 « La ville »** (4×4) — images dessinées
+>   en canvas puis découpées, un jour remplaçables par les illustrations du
+>   propriétaire via data-URI. Récompense en Eo croissante (5+5×id), légendes
+>   lore placeholder. **Gating (retour propriétaire 2026-08-07 : « au début
+>   c'est mieux ») : la Terre est la photo personnelle d'Aurore → jouable dès
+>   l'ouverture de QUÊTES (mission 2)** ; les suivantes exigent le Lecteur
+>   d'Archives + la restauration de la précédente (chaîne).
 
 # L'Atelier de Mémoire — le puzzle à niveaux comme reconstruction de la conscience collective
 

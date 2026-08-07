@@ -2210,18 +2210,32 @@ function openArch() {
   const list = $("#arch-list");
   list.innerHTML = "";
   // archives visuelles (vrais puzzles d'image) — demandent le Lecteur
-  if (S.reader) {
-    for (const [ridStr, rdef] of Object.entries(REST)) {
-      const rid = Number(ridStr);
+  {
+    const rh = document.createElement("div");
+    rh.className = "sl-nm";
+    rh.style.margin = "12px 0 6px";
+    rh.textContent = "🖼 QUÊTE · LES IMAGES DU PASSÉ";
+    list.appendChild(rh);
+    const rids = Object.keys(REST).map(Number).sort((a, b) => a - b);
+    let rguided = false;
+    for (const rid of rids) {
+      const rdef = REST[rid];
       const rdone = S.restored.includes(rid);
+      const chainOk = rid === rids[0] || S.restored.includes(rid - 1);
+      const needsReader = rid !== 2; // la Terre est la photo d'Aurore : dispo d'emblée
+      const runlocked = chainOk && (!needsReader || S.reader);
       const card = document.createElement("div");
-      card.className = "bcard";
-      card.innerHTML = "<div class='ic'>🖼</div><div class='grow'>" +
+      card.className = "bcard" + (runlocked ? "" : " locked");
+      card.innerHTML = "<div class='ic'>" + (runlocked || rdone ? "🖼" : "🔒") + "</div><div class='grow'>" +
         "<div class='nm'>Archive 00" + rid + (rdone ? " · " + rdef.nm : "") + "</div>" +
-        "<div class='ds'>" + (rdone ? rdef.cap : "Image corrompue — à restaurer.") + "</div></div>";
+        "<div class='ds'>" + (rdone ? rdef.cap
+          : runlocked ? "Image corrompue — à restaurer."
+          : !chainOk ? "Restaure l'Archive précédente."
+          : "Nécessite le Lecteur d'Archives.") + "</div></div>";
       const b = document.createElement("button");
       b.textContent = rdone ? "REVOIR" : "RESTAURER";
-      if (!rdone) b.classList.add("guide");
+      b.disabled = !runlocked;
+      if (runlocked && !rdone && !rguided) { b.classList.add("guide"); rguided = true; }
       b.onclick = () => openRestore(rid);
       card.appendChild(b);
       list.appendChild(card);
@@ -2524,24 +2538,114 @@ function drawEarthImage() {
   g.stroke(); g.shadowBlur = 0;
   return c.toDataURL("image/png");
 }
+function drawForestImage() {
+  const c = document.createElement("canvas");
+  c.width = 330; c.height = 330;
+  const g = c.getContext("2d");
+  const r = mulberry32(777);
+  const sky = g.createLinearGradient(0, 0, 0, 235);
+  sky.addColorStop(0, "#f6c877"); sky.addColorStop(0.5, "#f2a35f"); sky.addColorStop(1, "#d97f4e");
+  g.fillStyle = sky; g.fillRect(0, 0, 330, 235);
+  g.beginPath(); g.arc(165, 185, 40, 0, Math.PI * 2);
+  g.fillStyle = "#fff2c8"; g.shadowColor = "#ffd98a"; g.shadowBlur = 45; g.fill(); g.shadowBlur = 0;
+  g.fillStyle = "#3e5a3a";
+  g.beginPath(); g.moveTo(0, 210);
+  for (let x = 0; x <= 330; x += 28) g.lineTo(x, 196 + r() * 20);
+  g.lineTo(330, 240); g.lineTo(0, 240); g.closePath(); g.fill();
+  const tri = (x, base, w, h, col) => {
+    g.fillStyle = col;
+    g.beginPath();
+    g.moveTo(x, base); g.lineTo(x + w / 2, base - h); g.lineTo(x + w, base);
+    g.closePath(); g.fill();
+  };
+  for (let x = -10; x < 330; x += 34) tri(x + r() * 8, 252 + r() * 6, 36, 58 + r() * 18, "#274d2c");
+  for (let x = -16; x < 330; x += 46) {
+    const bx = x + r() * 10, base = 300 + r() * 8;
+    g.fillStyle = "#5a3a1f"; g.fillRect(bx + 20, base - 6, 7, 14);
+    tri(bx, base, 48, 86 + r() * 22, "#356e38");
+  }
+  g.fillStyle = "#2c4526"; g.fillRect(0, 300, 330, 30);
+  g.fillStyle = "rgba(255,240,220,.26)";
+  for (const my of [252, 276]) {
+    g.beginPath(); g.ellipse(165 + (r() - 0.5) * 80, my, 150, 9, 0, 0, Math.PI * 2); g.fill();
+  }
+  return c.toDataURL("image/png");
+}
+function drawCityImage() {
+  const c = document.createElement("canvas");
+  c.width = 330; c.height = 330;
+  const g = c.getContext("2d");
+  const r = mulberry32(909);
+  const sky = g.createLinearGradient(0, 0, 0, 250);
+  sky.addColorStop(0, "#1c2f5e"); sky.addColorStop(0.55, "#6e5aa8"); sky.addColorStop(1, "#e8825a");
+  g.fillStyle = sky; g.fillRect(0, 0, 330, 250);
+  for (let i = 0; i < 40; i++) {
+    g.globalAlpha = 0.4 + r() * 0.6;
+    g.fillStyle = "#e8f0ff";
+    g.fillRect(r() * 330, r() * 110, 1.4, 1.4);
+  }
+  g.globalAlpha = 1;
+  g.beginPath(); g.arc(245, 238, 26, 0, Math.PI * 2);
+  g.fillStyle = "#ffd9a0"; g.shadowColor = "#ffd9a0"; g.shadowBlur = 30; g.fill(); g.shadowBlur = 0;
+  // skyline arrière
+  g.fillStyle = "#1a2440";
+  for (let x = 0; x < 330; x += 26) {
+    const h = 55 + r() * 70;
+    g.fillRect(x, 250 - h, 24, h);
+  }
+  // skyline avant + fenêtres
+  const lit = [];
+  for (let x = -8; x < 330; x += 38) {
+    const w = 26 + r() * 12, h = 85 + r() * 85, bx = x + r() * 6;
+    g.fillStyle = "#0e1630";
+    g.fillRect(bx, 250 - h, w, h);
+    let on = false;
+    g.fillStyle = "#ffd98a";
+    for (let wy = 250 - h + 8; wy < 242; wy += 11) {
+      for (let wx = bx + 4; wx < bx + w - 5; wx += 8) {
+        if (r() < 0.55) { g.fillRect(wx, wy, 4, 5); on = true; }
+      }
+    }
+    if (on) lit.push(bx + w / 2);
+  }
+  // eau + reflets
+  const wa = g.createLinearGradient(0, 250, 0, 330);
+  wa.addColorStop(0, "#141c38"); wa.addColorStop(1, "#080d1e");
+  g.fillStyle = wa; g.fillRect(0, 250, 330, 80);
+  g.fillStyle = "rgba(255,217,138,.3)";
+  for (const lx of lit) {
+    for (let y = 254; y < 326; y += 7) g.fillRect(lx - 2 + (r() - 0.5) * 6, y, 4, 3);
+  }
+  g.fillStyle = "rgba(255,217,160,.35)";
+  for (let y = 254; y < 326; y += 6) g.fillRect(243 + (r() - 0.5) * 8, y, 6, 3);
+  return c.toDataURL("image/png");
+}
 const REST = {
-  2: { nm: "La Terre", cap: "Archive 002 · La Terre — c'était chez nous.", make: drawEarthImage },
+  2: { nm: "La Terre", cap: "Archive 002 · La Terre — c'était chez nous.", make: drawEarthImage, n: 3 },
+  3: { nm: "La forêt", cap: "Archive 003 · La forêt — on respirait sous les arbres.", make: drawForestImage, n: 3 },
+  4: { nm: "La ville", cap: "Archive 004 · Une ville — des millions de vies qui s'allumaient le soir.", make: drawCityImage, n: 4 },
 };
 let rest = null;
+function rePos(i, n) {
+  const st = 100 / (n - 1);
+  return (i % n) * st + "% " + Math.floor(i / n) * st + "%";
+}
 function openRestore(id) {
   closeSheets();
   const def = REST[id];
   const url = def.make();
-  const order = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+  const n = def.n;
+  const order = Array.from({ length: n * n }, (_, i) => i);
   const r = mulberry32(id * 337 + 5);
   for (let i = order.length - 1; i > 0; i--) {
     const j = Math.floor(r() * (i + 1));
     [order[i], order[j]] = [order[j], order[i]];
   }
-  rest = { id, def, url, order, sel: null, placed: new Set() };
+  rest = { id, def, url, n, order, sel: null, placed: new Set() };
   const board = $("#re-board");
   board.innerHTML = "";
-  for (let i = 0; i < 9; i++) {
+  board.style.gridTemplateColumns = "repeat(" + n + ", 1fr)";
+  for (let i = 0; i < n * n; i++) {
     const d = document.createElement("div");
     d.className = "rslot";
     d.dataset.i = i;
@@ -2564,7 +2668,8 @@ function reTray() {
     const b = document.createElement("button");
     b.className = "rpiece" + (rest.sel === i ? " sel" : "");
     b.style.backgroundImage = "url(" + rest.url + ")";
-    b.style.backgroundPosition = (i % 3) * 50 + "% " + Math.floor(i / 3) * 50 + "%";
+    b.style.backgroundSize = rest.n * 100 + "% " + rest.n * 100 + "%";
+    b.style.backgroundPosition = rePos(i, rest.n);
     b.onclick = () => { rest.sel = i; sfx.ui(); reTray(); };
     tr.appendChild(b);
   }
@@ -2581,12 +2686,13 @@ function reTry(slot) {
   const d = $("#re-board").children[slot];
   d.classList.add("filled", "glow");
   d.style.backgroundImage = "url(" + rest.url + ")";
-  d.style.backgroundPosition = (slot % 3) * 50 + "% " + Math.floor(slot / 3) * 50 + "%";
+  d.style.backgroundSize = rest.n * 100 + "% " + rest.n * 100 + "%";
+  d.style.backgroundPosition = rePos(slot, rest.n);
   rest.placed.add(slot);
-  beep(420 + rest.placed.size * 40, 0.08, "square", 0.035);
+  beep(420 + rest.placed.size * 30, 0.08, "square", 0.035);
   reTray();
-  $("#re-cap").textContent = rest.placed.size + " / 9 morceaux";
-  if (rest.placed.size >= 9) reReveal();
+  $("#re-cap").textContent = rest.placed.size + " / " + (rest.n * rest.n) + " morceaux";
+  if (rest.placed.size >= rest.n * rest.n) reReveal();
 }
 function reReveal() {
   const { id, def } = rest;
@@ -2598,8 +2704,9 @@ function reReveal() {
   $("#re-cap").textContent = "🖼 " + def.cap;
   if (!S.restored.includes(id)) {
     S.restored.push(id);
-    S.eo = Math.min(eoCap(), S.eo + 15);
-    setTimeout(() => toast("🖼 Archive restaurée : <b>" + def.nm + "</b> +15 Eo.", true), 1400);
+    const rw = 5 + 5 * id;
+    S.eo = Math.min(eoCap(), S.eo + rw);
+    setTimeout(() => toast("🖼 Archive restaurée : <b>" + def.nm + "</b> +" + rw + " Eo.", true), 1400);
   }
   save();
   setTimeout(() => { if (!$("#sh-restore").hidden) openArch(); }, 3600);
