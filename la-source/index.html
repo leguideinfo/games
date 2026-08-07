@@ -1052,8 +1052,8 @@ function drawTile(x, y, t) {
     ctx.fillStyle = g; ctx.fill();
     ctx.strokeStyle = "rgba(60,35,15,.25)"; ctx.lineWidth = 1; ctx.stroke();
   }
-  // falaises de bordure — le plateau-asset apporte les siennes
-  if ((y === bmax() || x === bmax()) && !onTex) {
+  // falaises de bordure du plateau (le monde flotte dans le vide)
+  if (y === bmax() || x === bmax()) {
     ctx.beginPath();
     ctx.moveTo(p.x - (y === bmax() ? TW / 2 * z : 0), p.y);
     if (y === bmax()) {
@@ -1205,18 +1205,11 @@ const TILE = { ok: false, world: TW, mips: {} }; // 1 répétition ≈ 1 case ; 
 function zBounds() { return { lo: 1.6, hi: 5.2 }; }
 function clampCam() { // le centre de l'écran reste proche du territoire (jamais perdu dans le vide)
   if (view !== "col") return;
-  const m = ((bmax() - bmin()) / 2 + 7) * TW;
+  const m = ((bmax() - bmin()) / 2 + 4) * TW;
   const cx0 = (SRC.x - SRC.y) * TW / 2, cy0 = (SRC.x + SRC.y) * TH / 2;
   const wx = (W / 2 - cam.x) / cam.z, wy = (H / 2 - cam.y) / cam.z;
   cam.x = W / 2 - Math.max(cx0 - m, Math.min(cx0 + m, wx)) * cam.z;
   cam.y = H / 2 - Math.max(cy0 - m * TH / TW, Math.min(cy0 + m * TH / TW, wy)) * cam.z;
-}
-function visRange() {
-  const cs = [s2w(0, 0), s2w(W, 0), s2w(0, H), s2w(W, H)];
-  return {
-    x0: Math.min(...cs.map((c) => c.x)) - 1, x1: Math.max(...cs.map((c) => c.x)) + 1,
-    y0: Math.min(...cs.map((c) => c.y)) - 1, y1: Math.max(...cs.map((c) => c.y)) + 1,
-  };
 }
 function tilePattern() {
   // niveau de mip : la plus petite version ≥ la taille affichée (net sans bouillie)
@@ -1232,27 +1225,21 @@ function tilePattern() {
   return mp;
 }
 function drawTerrainTex() {
-  if (!TILE.ok) { ctx.fillStyle = "hsl(27 50% 40%)"; ctx.fillRect(0, 0, W, H); return; }
+  if (!TILE.ok) return;
   const mp = tilePattern();
   const k = cam.z * TILE.world / mp.size;
+  // clip au losange du territoire : le monde s'arrête où s'arrête le déblocage
+  const T = w2s(bmin() - 0.5, bmin() - 0.5), R = w2s(bmax() + 0.5, bmin() - 0.5);
+  const B = w2s(bmax() + 0.5, bmax() + 0.5), L = w2s(bmin() - 0.5, bmax() + 0.5);
   ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(T.x, T.y); ctx.lineTo(R.x, R.y); ctx.lineTo(B.x, B.y); ctx.lineTo(L.x, L.y);
+  ctx.closePath();
+  ctx.clip();
   ctx.setTransform(DPR * k, 0, 0, DPR * k, DPR * cam.x, DPR * cam.y);
   ctx.fillStyle = mp.pat;
   ctx.fillRect(-cam.x / k, -cam.y / k, W / k, H / k);
   ctx.restore();
-  drawVariations();
-}
-function drawVariations() {
-  // volontairement simple pour commencer : décor épars hors territoire, rien d'autre
-  const vr = visRange();
-  for (let y = Math.floor(vr.y0); y <= vr.y1; y++) for (let x = Math.floor(vr.x0); x <= vr.x1; x++) {
-    if (inB(x, y)) continue;
-    const k2 = tileAt(x, y).kind;
-    if (k2 !== "crystal" && k2 !== "caillou") continue;
-    const h = hash2(x + 977, y + 331);
-    if (k2 === "crystal" && h % 4 === 0) drawCrystalSprite(x, y);
-    else if (k2 === "caillou" && h % 3 === 0) drawRockSprite(x, y);
-  }
 }
 function drawRockSprite(x, y) {
   if (!ROCK.ok) return;

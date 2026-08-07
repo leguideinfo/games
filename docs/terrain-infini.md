@@ -58,13 +58,20 @@ Supreme Commander.
   sur les bâtiments (~11-13 px image / px monde). Rendu net à tout zoom
   par **mip-mapping maison** (128/256/512/1024, niveau choisi selon
   zoom×DPR, patterns mis en cache).
-- **Décor volontairement épars (retour propriétaire : « plus simple
-  pour commencer »)** : hors territoire, ~3 % de cases avec cristaux et
-  ~1,5 % avec rocher (jamais retourné/miroir) ; les decals canvas
-  (fissures/cailloux/plaques/teintes) ont été retirés — ils reviendront
-  en assets du propriétaire. En territoire, éboulis = rocher.
-- **Caméra libre** : bornée souplement autour du territoire (+7 cases),
-  **zoom 1,1–5,2** (dézoom volontairement limité pour le moment,
-  fort zoom rapproché) ; expansion débornée.
+- **Présentation « plateau flottant » (retour propriétaire 2026-08-07) :
+  seul le territoire débloqué est affiché** — le pattern de tuile est
+  clippé au losange du territoire, falaises de bordure dessinées, le
+  reste est le vide spatial. Le pattern infini reste le moteur : chaque
+  expansion agrandit le plateau sans limite. Décor uniquement en
+  territoire (cristaux, rochers — jamais en miroir) ; les decals canvas
+  ont été retirés (reviendront en assets).
+- **Caméra** : bornée autour du plateau (+4 cases), **zoom 1,6–5,2**
+  (dézoom resserré) ; expansion débornée.
+- **Prochain chantier relief (2 étages)** : ① relief par décor — assets
+  propriétaire : mesas (1/2/3 cases), arêtes rocheuses orientées NE-SO
+  et NO-SE, cratères, dunes en decal ; Claude : placement en chaînes
+  par bruit basse fréquence, cases infranchissables. ② vraie heightmap
+  avec falaises étagées (assets : segments de falaise raccordables +
+  rampe ; Claude : moteur altitude/rendu/gameplay).
 - La map-image (`assets/map-test.png`, `terrain-plateau.png`) reste en
   archive de référence.
