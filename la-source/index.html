@@ -270,7 +270,7 @@
   #cave-score { text-align: center; color: var(--amber); font-size: 15px; min-height: 20px; }
 
   /* ---------- atelier de mémoire ---------- */
-  #at-tray { display: flex; gap: 8px; margin-bottom: 10px; }
+  #at-tray { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; }
   .at-piece { border: 1px solid var(--line); background: var(--panel2); border-radius: 10px; padding: 7px; }
   .at-piece.sel { border-color: var(--blue); background: #0c1a30; }
   .at-mini { display: grid; grid-template-columns: repeat(3, 10px); grid-auto-rows: 10px; gap: 2px; }
@@ -2175,25 +2175,32 @@ function openArch() {
       list.appendChild(card);
     }
   }
-  // Atelier de Mémoire (dès l'ouverture de l'onglet)
-  if (true) {
+  // Atelier de Mémoire : séquence de Mémoires, chacune débloque la suivante
+  {
     const ah = document.createElement("div");
     ah.className = "sl-nm";
     ah.style.margin = "12px 0 6px";
     ah.textContent = "🧩 QUÊTE · L'ATELIER DE MÉMOIRE";
     list.appendChild(ah);
-    const done = S.memories.includes(1);
-    const card = document.createElement("div");
-    card.className = "bcard";
-    card.innerHTML = "<div class='ic'>" + (done ? "🔥" : "🧩") + "</div><div class='grow'>" +
-      "<div class='nm'>" + (done ? "Le feu" : "Mémoire 001") + "</div>" +
-      "<div class='ds'>" + (done ? "Première énergie maîtrisée par l'humanité." : "Une image dort dans la mémoire du module — remets les pièces en place.") + "</div></div>";
-    const b = document.createElement("button");
-    b.textContent = done ? "REVOIR" : "RECONSTITUER";
-    if (!done) b.classList.add("guide");
-    b.onclick = () => openAtelier(1);
-    card.appendChild(b);
-    list.appendChild(card);
+    const ids = Object.keys(ATL).map(Number).sort((a, b) => a - b);
+    let guided = false;
+    for (const aid of ids) {
+      const mm = ATL[aid];
+      const done = S.memories.includes(aid);
+      const unlocked = aid === 1 || S.memories.includes(aid - 1);
+      const card = document.createElement("div");
+      card.className = "bcard" + (unlocked ? "" : " locked");
+      card.innerHTML = "<div class='ic'>" + (done ? mm.ic : unlocked ? "🧩" : "🔒") + "</div><div class='grow'>" +
+        "<div class='nm'>Mémoire 00" + aid + (done ? " · " + mm.nm : "") + "</div>" +
+        "<div class='ds'>" + (done ? mm.savoir : unlocked ? "Une image dort dans la mémoire du module." : "Termine la Mémoire précédente.") + "</div></div>";
+      const b = document.createElement("button");
+      b.textContent = done ? "REVOIR" : "RECONSTITUER";
+      b.disabled = !unlocked;
+      if (unlocked && !done && !guided) { b.classList.add("guide"); guided = true; }
+      b.onclick = () => openAtelier(aid);
+      card.appendChild(b);
+      list.appendChild(card);
+    }
   }
   $("#sh-arch").hidden = false;
 }
@@ -2201,7 +2208,7 @@ function openArch() {
 /* ---------- atelier de mémoire ---------- */
 const ATL = {
   1: {
-    nm: "Le feu",
+    nm: "Le feu", ic: "🔥",
     savoir: "Première énergie maîtrisée par l'humanité.",
     pic: [
       "..1...",
@@ -2212,6 +2219,49 @@ const ATL = {
       ".111..",
     ],
     col: { "1": "#ff7a1a", "2": "#ffc857" },
+  },
+  2: {
+    nm: "La roue", ic: "🛞",
+    savoir: "Porter plus loin que ses bras — le mouvement démultiplié.",
+    pic: [
+      ".11111.",
+      "1..2..1",
+      "1..2..1",
+      "1223221",
+      "1..2..1",
+      "1..2..1",
+      ".11111.",
+    ],
+    col: { "1": "#8a6844", "2": "#c9a06a", "3": "#ffc857" },
+  },
+  3: {
+    nm: "L'arbre", ic: "🌳",
+    savoir: "La vie qui grandit, nourrit et abrite.",
+    pic: [
+      "..222..",
+      ".22222.",
+      "2222222",
+      ".22222.",
+      "...1...",
+      "...1...",
+      "..111..",
+    ],
+    col: { "1": "#8a5a2b", "2": "#57e389" },
+  },
+  4: {
+    nm: "L'abri", ic: "🏠",
+    savoir: "Le premier endroit à soi.",
+    pic: [
+      "...11...",
+      "..1111..",
+      ".111111.",
+      "11111111",
+      ".222222.",
+      ".223322.",
+      ".223322.",
+      ".222222.",
+    ],
+    col: { "1": "#ff7a1a", "2": "#e8e6e0", "3": "#38a9ff" },
   },
 };
 let atl = null;
@@ -2280,8 +2330,8 @@ function atlTray() {
     const bh = Math.max(...pc.cells.map((c) => c[1])) - miny + 1;
     const mini = document.createElement("div");
     mini.className = "at-mini";
-    mini.style.gridTemplateColumns = "repeat(" + bw + ", 11px)";
-    mini.style.gridAutoRows = "11px";
+    mini.style.gridTemplateColumns = "repeat(" + bw + ", 9px)";
+    mini.style.gridAutoRows = "9px";
     for (let y = 0; y < bh; y++) for (let x = 0; x < bw; x++) {
       const c = document.createElement("div");
       const cell = pc.cells.find(([px, py]) => px - minx === x && py - miny === y);
@@ -2332,11 +2382,12 @@ function atlReveal() {
     setTimeout(() => { cell.classList.remove("glow"); void cell.offsetWidth; cell.classList.add("glow"); }, 40 * i++);
   }
   sfx.tech();
-  $("#at-score").textContent = "🔥 " + m.nm + " — " + m.savoir;
+  $("#at-score").textContent = m.ic + " " + m.nm + " — " + m.savoir;
   if (!S.memories.includes(id)) {
     S.memories.push(id);
-    S.mat = Math.min(matCap(), S.mat + 60);
-    setTimeout(() => toast("🧩 Mémoire reconstituée : <b>" + m.nm + "</b> +60 💠 — la Fresque s'agrandit.", true), 1400);
+    const rw = 40 + 20 * id;
+    S.mat = Math.min(matCap(), S.mat + rw);
+    setTimeout(() => toast("🧩 Mémoire reconstituée : <b>" + m.nm + "</b> +" + rw + " 💠 — la Fresque s'agrandit.", true), 1400);
   }
   save();
   setTimeout(() => { if (!$("#sh-atelier").hidden) openArch(); }, 3400);
@@ -2836,6 +2887,12 @@ window.__api = {
     const c = atl.pieces[atl.sel].cells[0];
     const r = $("#at-grid").children[c[1] * atl.W + c[0]].getBoundingClientRect();
     return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  },
+  atlPlaceHint() {
+    if (!atl || atl.sel == null) return false;
+    const c = atl.pieces[atl.sel].cells[0];
+    atlTry(c[0], c[1]);
+    return true;
   },
   giveEo(n) { S.eo = Math.min(eoCap(), S.eo + n); },
   research(k) { if (!S.techs.includes(k)) { S.techs.push(k); if (k === "dns") unlockMap(); missionDone("tech_" + k); save(); } },

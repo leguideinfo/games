@@ -144,11 +144,18 @@ await page.mouse.click(mpos.sx, mpos.sy);
 await page.waitForFunction(() => window.__LS().mi >= 16, null, { timeout: 15000 });
 console.log("parasite éliminé:", await page.evaluate(() => ({ mi: window.__LS().mi, mobs: window.__api.mobsPos().length })));
 
-// M16 : expansion via UI
+// M16 : expansion via UI (réessaie le tap Source si besoin)
 await page.evaluate(() => { window.__LS().mat = 500; });
-const srcPos = await page.evaluate(() => window.__api.screenOf(4, 4));
-await page.mouse.click(srcPos.x, srcPos.y);
-await page.waitForTimeout(300);
+for (let tries = 0; tries < 4; tries++) {
+  const sp = await page.evaluate(() => window.__api.screenOf(4, 4));
+  await page.mouse.click(sp.x, sp.y);
+  await page.waitForTimeout(350);
+  const open = await page.evaluate(() => !document.querySelector("#sh-source").hidden && !!document.querySelector("#src-act button"));
+  if (open) break;
+  await page.evaluate(() => { for (const sh of document.querySelectorAll(".sheet")) sh.hidden = true; });
+  await page.click("#z-in").catch(() => {});
+  await page.waitForTimeout(200);
+}
 await page.click("#src-act button");
 await page.waitForTimeout(400);
 const done = await page.evaluate(() => ({ mi: window.__LS().mi, ext: window.__LS().ext, missionBoxHidden: document.querySelector("#missions").hidden }));
@@ -187,20 +194,31 @@ await page.waitForTimeout(400);
 const arch3 = await page.evaluate(() => ({ dec: window.__LS().archives[0].dec, missionsDone: document.querySelector("#missions").hidden }));
 console.log("fragment décrypté (quête annexe finie):", JSON.stringify(arch3));
 
-// Atelier de Mémoire : reconstitution du Feu (mono-tuile, toutes les cases)
+// Atelier de Mémoire : reconstitution du Feu (pièces guidées par l'api)
 await page.waitForTimeout(400);
-await page.locator("#arch-list button", { hasText: "RECONSTITUER" }).click();
+await page.locator("#arch-list button", { hasText: "RECONSTITUER" }).first().click();
 await page.waitForTimeout(300);
 for (let i = 0; i < 25; i++) {
-  const hint = await page.evaluate(() => window.__api.atlHint());
-  if (!hint) break;
-  await page.mouse.click(hint.x, hint.y);
-  await page.waitForTimeout(80);
+  const more = await page.evaluate(() => window.__api.atlPlaceHint());
+  if (!more) break;
+  await page.waitForTimeout(70);
 }
 await page.waitForTimeout(600);
 const atlRes = await page.evaluate(() => ({ memories: window.__LS().memories, mat: Math.round(window.__LS().mat) }));
 console.log("mémoire du Feu reconstituée:", JSON.stringify(atlRes));
 await page.screenshot({ path: shots + "/atl-reveal.png" });
+// Mémoire 002 (la Roue) débloquée en séquence : on la complète aussi
+await page.waitForTimeout(3800); // retour auto à la liste des quêtes
+await page.locator("#arch-list button", { hasText: "RECONSTITUER" }).first().click();
+await page.waitForTimeout(300);
+for (let i = 0; i < 25; i++) {
+  const more = await page.evaluate(() => window.__api.atlPlaceHint());
+  if (!more) break;
+  await page.waitForTimeout(70);
+}
+await page.waitForTimeout(600);
+console.log("mémoire de la Roue:", await page.evaluate(() => JSON.stringify(window.__LS().memories)));
+await page.screenshot({ path: shots + "/atl-roue.png" });
 await page.evaluate(() => { for (const s of document.querySelectorAll(".sheet")) s.hidden = true; });
 
 // persistance
