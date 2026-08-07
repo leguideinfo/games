@@ -6,13 +6,17 @@
 > - **Vrai puzzle d'image** (fragments reconnaissables d'une image à replacer)
 >   → **les Archives** : la « Restauration d'Archives », galerie « Les images
 >   du passé » dans QUÊTES. Implémentées : **002 « La Terre »** (3×3),
->   **003 « La forêt »** (3×3), **004 « La ville »** (4×4) — images dessinées
->   en canvas puis découpées, un jour remplaçables par les illustrations du
->   propriétaire via data-URI. Récompense en Eo croissante (5+5×id), légendes
->   lore placeholder. **Gating (retour propriétaire 2026-08-07 : « au début
->   c'est mieux ») : la Terre est la photo personnelle d'Aurore → jouable dès
->   l'ouverture de QUÊTES (mission 2)** ; les suivantes exigent le Lecteur
->   d'Archives + la restauration de la précédente (chaîne).
+>   **003 « La forêt »** (3×3), **004 « La ville »** (4×4), **005 « La
+>   fusée »** (5×5) — images dessinées en canvas puis découpées, un jour
+>   remplaçables par les illustrations du propriétaire via data-URI.
+>   Récompense en Eo croissante (5+5×id), légendes lore placeholder.
+>   **Gating (retour propriétaire 2026-08-07) : le verrou « Lecteur
+>   d'Archives » est retiré des images** — ce sont les photos du module
+>   d'Aurore, jouables dès l'ouverture de QUÊTES (mission 2) ; seule la
+>   **chaîne** demeure (restaurer la précédente débloque la suivante).
+>   **Difficulté croissante actée** (la fille du propriétaire fait déjà du
+>   100 pièces IRL — ici on reste progressif) : 3×3 → 3×3 → 4×4 → 5×5,
+>   à poursuivre (6×6…) au fil des prochaines images.
 
 # L'Atelier de Mémoire — le puzzle à niveaux comme reconstruction de la conscience collective
 

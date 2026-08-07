@@ -208,8 +208,8 @@ console.log("archive de la Terre restaurée:", await page.evaluate(() => JSON.st
 await page.screenshot({ path: shots + "/re-terre.png" });
 await page.waitForTimeout(3600); // retour auto aux quêtes
 
-// Archives 003 (forêt, 3×3) puis 004 (ville, 4×4) — Lecteur en ligne
-for (const step of [12, 20]) {
+// Archives 003 (forêt, 3×3), 004 (ville, 4×4), 005 (fusée, 5×5) — chaîne sans Lecteur
+for (const step of [12, 20, 30]) {
   await page.locator("#arch-list button:not([disabled])", { hasText: "RESTAURER" }).first().click();
   await page.waitForTimeout(400);
   for (let i = 0; i < step; i++) {

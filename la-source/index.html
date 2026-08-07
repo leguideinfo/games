@@ -2,10 +2,9 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>La Source — Awoui Universe (vertical slice)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>La Source — Awoui Universe</title>
 </head>
-<body>
 <style>
   /* ========== LA SOURCE — vertical slice du jeu principal d'Awoui Universe ==========
      Charte : désert ocre + cristaux cyan, bâtiments titane blanc/graphite, énergie bleue. */
@@ -302,6 +301,7 @@
     background-color: #0a0f1e;
   }
   .rpiece.sel { border-color: var(--cyan); box-shadow: 0 0 10px rgba(78, 242, 224, .5); }
+  #re-tray.dense .rpiece { width: 40px; height: 40px; border-radius: 6px; }
   #re-board {
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px;
     background: rgba(6, 9, 19, .5);
@@ -2209,7 +2209,7 @@ function openArch() {
   }
   const list = $("#arch-list");
   list.innerHTML = "";
-  // archives visuelles (vrais puzzles d'image) — demandent le Lecteur
+  // archives visuelles (vrais puzzles d'image) — photos du module d'Aurore, sans Lecteur
   {
     const rh = document.createElement("div");
     rh.className = "sl-nm";
@@ -2222,16 +2222,14 @@ function openArch() {
       const rdef = REST[rid];
       const rdone = S.restored.includes(rid);
       const chainOk = rid === rids[0] || S.restored.includes(rid - 1);
-      const needsReader = rid !== 2; // la Terre est la photo d'Aurore : dispo d'emblée
-      const runlocked = chainOk && (!needsReader || S.reader);
+      const runlocked = chainOk; // photos du module d'Aurore : aucun Lecteur requis
       const card = document.createElement("div");
       card.className = "bcard" + (runlocked ? "" : " locked");
       card.innerHTML = "<div class='ic'>" + (runlocked || rdone ? "🖼" : "🔒") + "</div><div class='grow'>" +
         "<div class='nm'>Archive 00" + rid + (rdone ? " · " + rdef.nm : "") + "</div>" +
         "<div class='ds'>" + (rdone ? rdef.cap
           : runlocked ? "Image corrompue — à restaurer."
-          : !chainOk ? "Restaure l'Archive précédente."
-          : "Nécessite le Lecteur d'Archives.") + "</div></div>";
+          : "Restaure l'Archive précédente.") + "</div></div>";
       const b = document.createElement("button");
       b.textContent = rdone ? "REVOIR" : "RESTAURER";
       b.disabled = !runlocked;
@@ -2620,10 +2618,73 @@ function drawCityImage() {
   for (let y = 254; y < 326; y += 6) g.fillRect(243 + (r() - 0.5) * 8, y, 6, 3);
   return c.toDataURL("image/png");
 }
+function drawRocketImage() {
+  const c = document.createElement("canvas");
+  c.width = 330; c.height = 330;
+  const g = c.getContext("2d");
+  const r = mulberry32(1407);
+  const sky = g.createLinearGradient(0, 0, 0, 330);
+  sky.addColorStop(0, "#080e2c"); sky.addColorStop(0.6, "#2b3670"); sky.addColorStop(1, "#c07a52");
+  g.fillStyle = sky; g.fillRect(0, 0, 330, 330);
+  for (let i = 0; i < 60; i++) {
+    g.globalAlpha = 0.3 + r() * 0.7;
+    g.fillStyle = "#eaf2ff";
+    g.fillRect(r() * 330, r() * 200, 1.5, 1.5);
+  }
+  g.globalAlpha = 1;
+  const cx = 158;
+  // panache de flamme
+  const fl = g.createLinearGradient(0, 205, 0, 305);
+  fl.addColorStop(0, "#fffbe0"); fl.addColorStop(0.35, "#ffcf5e"); fl.addColorStop(0.75, "#ff7a3c"); fl.addColorStop(1, "rgba(255,90,40,0)");
+  g.fillStyle = fl;
+  g.beginPath();
+  g.moveTo(cx - 15, 205);
+  g.bezierCurveTo(cx - 26, 250, cx - 8, 285, cx, 305);
+  g.bezierCurveTo(cx + 8, 285, cx + 26, 250, cx + 15, 205);
+  g.closePath(); g.fill();
+  g.shadowColor = "#ffb066"; g.shadowBlur = 26;
+  g.fillStyle = "#fff3c8";
+  g.beginPath(); g.ellipse(cx, 214, 11, 20, 0, 0, Math.PI * 2); g.fill();
+  g.shadowBlur = 0;
+  // corps blanc + nez rouge
+  g.fillStyle = "#e8ecf4";
+  g.beginPath();
+  g.moveTo(cx - 22, 200); g.lineTo(cx - 22, 110);
+  g.quadraticCurveTo(cx - 22, 58, cx, 40);
+  g.quadraticCurveTo(cx + 22, 58, cx + 22, 110);
+  g.lineTo(cx + 22, 200); g.closePath(); g.fill();
+  g.fillStyle = "#d6483c";
+  g.beginPath();
+  g.moveTo(cx - 22, 92);
+  g.quadraticCurveTo(cx - 22, 58, cx, 40);
+  g.quadraticCurveTo(cx + 22, 58, cx + 22, 92);
+  g.closePath(); g.fill();
+  // hublot
+  g.beginPath(); g.arc(cx, 122, 12, 0, Math.PI * 2);
+  g.fillStyle = "#20325c"; g.fill();
+  g.lineWidth = 4; g.strokeStyle = "#aeb8cc"; g.stroke();
+  // ailerons
+  g.fillStyle = "#d6483c";
+  g.beginPath(); g.moveTo(cx - 22, 150); g.quadraticCurveTo(cx - 48, 185, cx - 40, 205); g.lineTo(cx - 22, 196); g.closePath(); g.fill();
+  g.beginPath(); g.moveTo(cx + 22, 150); g.quadraticCurveTo(cx + 48, 185, cx + 40, 205); g.lineTo(cx + 22, 196); g.closePath(); g.fill();
+  // tuyère
+  g.fillStyle = "#8a93a8"; g.fillRect(cx - 12, 198, 24, 10);
+  // sol + nuages de fumée
+  g.fillStyle = "#2a1d22"; g.fillRect(0, 298, 330, 32);
+  for (let i = 0; i < 26; i++) {
+    const sx = 30 + r() * 270, sy = 285 + r() * 30, sr = 14 + r() * 26;
+    g.globalAlpha = 0.5 + r() * 0.4;
+    g.fillStyle = i % 3 ? "#cfc4bf" : "#efe6df";
+    g.beginPath(); g.arc(sx, sy, sr, 0, Math.PI * 2); g.fill();
+  }
+  g.globalAlpha = 1;
+  return c.toDataURL("image/png");
+}
 const REST = {
   2: { nm: "La Terre", cap: "Archive 002 · La Terre — c'était chez nous.", make: drawEarthImage, n: 3 },
   3: { nm: "La forêt", cap: "Archive 003 · La forêt — on respirait sous les arbres.", make: drawForestImage, n: 3 },
   4: { nm: "La ville", cap: "Archive 004 · Une ville — des millions de vies qui s'allumaient le soir.", make: drawCityImage, n: 4 },
+  5: { nm: "La fusée", cap: "Archive 005 · Le décollage — un jour, l'humanité a quitté le sol.", make: drawRocketImage, n: 5 },
 };
 let rest = null;
 function rePos(i, n) {
@@ -2659,6 +2720,7 @@ function openRestore(id) {
 function reTray() {
   const tr = $("#re-tray");
   tr.innerHTML = "";
+  tr.classList.toggle("dense", rest.n >= 5);
   if (rest.sel == null || rest.placed.has(rest.sel)) {
     rest.sel = null;
     for (const i of rest.order) if (!rest.placed.has(i)) { rest.sel = i; break; }
@@ -3233,5 +3295,4 @@ if (!introOn) $("#intro").hidden = true;
 else { setScene(0); requestAnimationFrame(drawIntro); }
 document.addEventListener("visibilitychange", () => { if (document.hidden) save(); });
 requestAnimationFrame(frame);
-</script></body>
-</html>
+</script>
