@@ -110,19 +110,19 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
      convoités. (Étage 4 en prod : coloniser d'autres nœuds via la Sonde
      d'exploration.)
 
-## Contrôles
-
-- **Mobile** : glisser = caméra, pincer ou boutons ± = zoom, tap = tout
-  (case libre → construire, bâtiment → panneau, orbe → collecte, Source →
-  état de la colonie).
-- **PC** : molette = zoom, clic = idem.
-
 - **Pipeline de sprites (v7.2)** : `regSprite(type, dataURI, fumées)` branche
   une image iso sur un type de bâtiment — dessinée à l'ancre du socle,
   y-sortée, mise à l'échelle avec le niveau, fumée animée par cheminée.
   Démonstration sur la **Forge** avec une recréation canvas du style des
   assets du propriétaire (graphite/or/cyan). Les PNG définitifs remplacent
   la recréation à l'identique (data-URI, un appel par bâtiment).
+
+## Contrôles
+
+- **Mobile** : glisser = caméra, pincer ou boutons ± = zoom, tap = tout
+  (case libre → construire, bâtiment → panneau, orbe → collecte, Source →
+  état de la colonie).
+- **PC** : molette = zoom, clic = idem.
 
 ## Correspondance slice → prod
 
