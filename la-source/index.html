@@ -302,6 +302,7 @@
   }
   .rpiece.sel { border-color: var(--cyan); box-shadow: 0 0 10px rgba(78, 242, 224, .5); }
   #re-tray.dense .rpiece { width: 40px; height: 40px; border-radius: 6px; }
+  #re-tray.dense2 .rpiece { width: 32px; height: 32px; border-radius: 5px; border-width: 1.5px; }
   #re-board {
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px;
     background: rgba(6, 9, 19, .5);
@@ -2218,9 +2219,12 @@ function openArch() {
     list.appendChild(rh);
     const rids = Object.keys(REST).map(Number).sort((a, b) => a - b);
     let rguided = false;
+    let rpending = 0; // 2 cartes non restaurées max : la jouable + un aperçu
     for (const rid of rids) {
       const rdef = REST[rid];
       const rdone = S.restored.includes(rid);
+      if (!rdone && rpending >= 2) break;
+      if (!rdone) rpending++;
       const chainOk = rid === rids[0] || S.restored.includes(rid - 1);
       const runlocked = chainOk; // photos du module d'Aurore : aucun Lecteur requis
       const card = document.createElement("div");
@@ -2618,6 +2622,129 @@ function drawCityImage() {
   for (let y = 254; y < 326; y += 6) g.fillRect(243 + (r() - 0.5) * 8, y, 6, 3);
   return c.toDataURL("image/png");
 }
+function drawOceanImage() {
+  const c = document.createElement("canvas");
+  c.width = 330; c.height = 330;
+  const g = c.getContext("2d");
+  const r = mulberry32(2606);
+  const sky = g.createLinearGradient(0, 0, 0, 150);
+  sky.addColorStop(0, "#8fd0f0"); sky.addColorStop(1, "#d8eefa");
+  g.fillStyle = sky; g.fillRect(0, 0, 330, 150);
+  g.beginPath(); g.arc(268, 52, 22, 0, Math.PI * 2);
+  g.fillStyle = "#fff2b8"; g.shadowColor = "#fff2b8"; g.shadowBlur = 24; g.fill(); g.shadowBlur = 0;
+  g.fillStyle = "rgba(255,255,255,.9)";
+  for (const [nx, ny, nw] of [[60, 48, 30], [150, 78, 24], [248, 108, 20]]) {
+    for (let i = 0; i < 4; i++) { g.beginPath(); g.arc(nx + i * nw * 0.5, ny + (i % 2) * 4, nw * (0.5 + r() * 0.3), 0, Math.PI * 2); g.fill(); }
+  }
+  g.strokeStyle = "#5a6a78"; g.lineWidth = 2;
+  for (const [mx, my] of [[95, 98], [122, 84], [205, 62]]) {
+    g.beginPath(); g.moveTo(mx - 7, my); g.quadraticCurveTo(mx - 2, my - 5, mx, my); g.quadraticCurveTo(mx + 2, my - 5, mx + 7, my); g.stroke();
+  }
+  const sea = g.createLinearGradient(0, 150, 0, 330);
+  sea.addColorStop(0, "#2f7fb8"); sea.addColorStop(1, "#0d3a66");
+  g.fillStyle = sea; g.fillRect(0, 150, 330, 180);
+  g.strokeStyle = "rgba(255,255,255,.55)"; g.lineWidth = 2;
+  for (let y = 165; y < 325; y += 14) {
+    g.beginPath();
+    let px = -10 + r() * 20;
+    g.moveTo(px, y);
+    while (px < 340) { const seg = 18 + r() * 30; g.quadraticCurveTo(px + seg / 2, y - 4, px + seg, y); px += seg + 8 + r() * 26; g.moveTo(px, y); }
+    g.stroke();
+  }
+  // voilier
+  g.fillStyle = "#8a4b2f";
+  g.beginPath(); g.moveTo(120, 216); g.lineTo(186, 216); g.lineTo(172, 230); g.lineTo(132, 230); g.closePath(); g.fill();
+  g.strokeStyle = "#4a3a30"; g.lineWidth = 3;
+  g.beginPath(); g.moveTo(152, 216); g.lineTo(152, 152); g.stroke();
+  g.fillStyle = "#f6f2ea";
+  g.beginPath(); g.moveTo(156, 156); g.quadraticCurveTo(196, 190, 158, 212); g.closePath(); g.fill();
+  g.beginPath(); g.moveTo(148, 162); g.quadraticCurveTo(118, 192, 146, 212); g.closePath(); g.fill();
+  return c.toDataURL("image/png");
+}
+function drawMountainImage() {
+  const c = document.createElement("canvas");
+  c.width = 330; c.height = 330;
+  const g = c.getContext("2d");
+  const r = mulberry32(2707);
+  const sky = g.createLinearGradient(0, 0, 0, 260);
+  sky.addColorStop(0, "#274b8a"); sky.addColorStop(1, "#e8b8c8");
+  g.fillStyle = sky; g.fillRect(0, 0, 330, 330);
+  g.fillStyle = "#7688b0";
+  g.beginPath(); g.moveTo(0, 235);
+  g.lineTo(55, 150); g.lineTo(120, 235); g.lineTo(190, 140); g.lineTo(260, 235); g.lineTo(330, 175); g.lineTo(330, 235);
+  g.closePath(); g.fill();
+  const peak = (px, py, w, col) => {
+    g.fillStyle = col;
+    g.beginPath(); g.moveTo(px - w, 280); g.lineTo(px, py); g.lineTo(px + w, 280); g.closePath(); g.fill();
+    g.fillStyle = "#f4f7fc";
+    g.beginPath();
+    g.moveTo(px, py);
+    g.lineTo(px - w * 0.32, py + (280 - py) * 0.34);
+    g.lineTo(px - w * 0.14, py + (280 - py) * 0.27);
+    g.lineTo(px, py + (280 - py) * 0.4);
+    g.lineTo(px + w * 0.15, py + (280 - py) * 0.26);
+    g.lineTo(px + w * 0.32, py + (280 - py) * 0.34);
+    g.closePath(); g.fill();
+  };
+  peak(95, 92, 105, "#3c4f78");
+  peak(235, 70, 120, "#465a88");
+  g.fillStyle = "#17324a";
+  g.fillRect(0, 278, 330, 52);
+  for (let x = -6; x < 336; x += 13) {
+    const h = 26 + r() * 22;
+    g.fillStyle = r() < 0.5 ? "#1d4258" : "#245068";
+    g.beginPath(); g.moveTo(x - 8, 292); g.lineTo(x, 292 - h); g.lineTo(x + 8, 292); g.closePath(); g.fill();
+  }
+  return c.toDataURL("image/png");
+}
+function drawMoonImage() {
+  const c = document.createElement("canvas");
+  c.width = 330; c.height = 330;
+  const g = c.getContext("2d");
+  const r = mulberry32(2808);
+  g.fillStyle = "#04060f"; g.fillRect(0, 0, 330, 330);
+  for (let i = 0; i < 90; i++) {
+    g.globalAlpha = 0.3 + r() * 0.7;
+    g.fillStyle = "#eaf2ff";
+    g.fillRect(r() * 330, r() * 235, 1.4, 1.4);
+  }
+  g.globalAlpha = 1;
+  // la Terre qui se lève
+  g.save();
+  g.beginPath(); g.arc(226, 96, 46, 0, Math.PI * 2); g.clip();
+  g.fillStyle = "#1c63b8"; g.fillRect(180, 50, 92, 92);
+  g.fillStyle = "#2e9e5b";
+  for (let i = 0; i < 7; i++) {
+    g.beginPath(); g.ellipse(186 + r() * 80, 56 + r() * 80, 8 + r() * 14, 5 + r() * 9, r() * 3, 0, Math.PI * 2); g.fill();
+  }
+  g.fillStyle = "rgba(255,255,255,.5)";
+  for (let i = 0; i < 10; i++) {
+    g.beginPath(); g.ellipse(184 + r() * 84, 52 + r() * 88, 5 + r() * 7, 1.6 + r() * 1.6, r() * 0.8 - 0.4, 0, Math.PI * 2); g.fill();
+  }
+  const sh = g.createLinearGradient(180, 0, 272, 0);
+  sh.addColorStop(0, "rgba(2,4,12,.6)"); sh.addColorStop(0.45, "rgba(2,4,12,0)");
+  g.fillStyle = sh; g.fillRect(180, 50, 92, 92);
+  g.restore();
+  g.strokeStyle = "rgba(140,190,255,.35)"; g.lineWidth = 3;
+  g.beginPath(); g.arc(226, 96, 47, 0, Math.PI * 2); g.stroke();
+  // sol lunaire
+  const gr = g.createLinearGradient(0, 200, 0, 330);
+  gr.addColorStop(0, "#b9bcc4"); gr.addColorStop(1, "#70747e");
+  g.fillStyle = gr;
+  g.beginPath();
+  g.moveTo(0, 236);
+  g.quadraticCurveTo(90, 208, 180, 226);
+  g.quadraticCurveTo(260, 240, 330, 222);
+  g.lineTo(330, 330); g.lineTo(0, 330); g.closePath(); g.fill();
+  for (let i = 0; i < 12; i++) {
+    const cxp = 15 + r() * 300, cyp = 248 + r() * 70, cr = 5 + r() * 14;
+    g.fillStyle = "rgba(70,74,84,.55)";
+    g.beginPath(); g.ellipse(cxp, cyp, cr, cr * 0.55, 0, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = "rgba(235,238,244,.5)"; g.lineWidth = 2;
+    g.beginPath(); g.ellipse(cxp, cyp - 2, cr, cr * 0.55, 0, Math.PI, Math.PI * 2); g.stroke();
+  }
+  return c.toDataURL("image/png");
+}
 function drawRocketImage() {
   const c = document.createElement("canvas");
   c.width = 330; c.height = 330;
@@ -2685,6 +2812,9 @@ const REST = {
   3: { nm: "La forêt", cap: "Archive 003 · La forêt — on respirait sous les arbres.", make: drawForestImage, n: 3 },
   4: { nm: "La ville", cap: "Archive 004 · Une ville — des millions de vies qui s'allumaient le soir.", make: drawCityImage, n: 4 },
   5: { nm: "La fusée", cap: "Archive 005 · Le décollage — un jour, l'humanité a quitté le sol.", make: drawRocketImage, n: 5 },
+  6: { nm: "L'océan", cap: "Archive 006 · L'océan — la mer chantait sur toute la planète.", make: drawOceanImage, n: 6 },
+  7: { nm: "La montagne", cap: "Archive 007 · Les sommets — la neige couronnait le monde.", make: drawMountainImage, n: 6 },
+  8: { nm: "La Lune", cap: "Archive 008 · Depuis la Lune — la première fois qu'on s'est vus de loin.", make: drawMoonImage, n: 7 },
 };
 let rest = null;
 function rePos(i, n) {
@@ -2720,7 +2850,8 @@ function openRestore(id) {
 function reTray() {
   const tr = $("#re-tray");
   tr.innerHTML = "";
-  tr.classList.toggle("dense", rest.n >= 5);
+  tr.classList.toggle("dense", rest.n >= 5 && rest.n < 7);
+  tr.classList.toggle("dense2", rest.n >= 7);
   if (rest.sel == null || rest.placed.has(rest.sel)) {
     rest.sel = null;
     for (const i of rest.order) if (!rest.placed.has(i)) { rest.sel = i; break; }

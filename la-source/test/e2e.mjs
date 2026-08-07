@@ -208,8 +208,8 @@ console.log("archive de la Terre restaurée:", await page.evaluate(() => JSON.st
 await page.screenshot({ path: shots + "/re-terre.png" });
 await page.waitForTimeout(3600); // retour auto aux quêtes
 
-// Archives 003 (forêt, 3×3), 004 (ville, 4×4), 005 (fusée, 5×5) — chaîne sans Lecteur
-for (const step of [12, 20, 30]) {
+// Archives 003→008 en chaîne (forêt, ville, fusée, océan, montagne, Lune)
+for (const step of [12, 20, 30, 40, 40, 55]) {
   await page.locator("#arch-list button:not([disabled])", { hasText: "RESTAURER" }).first().click();
   await page.waitForTimeout(400);
   for (let i = 0; i < step; i++) {
@@ -220,6 +220,13 @@ for (const step of [12, 20, 30]) {
   await page.waitForTimeout(4200); // révélation + retour aux quêtes
 }
 console.log("galerie restaurée:", await page.evaluate(() => JSON.stringify(window.__LS().restored)));
+// affichage progressif : 2 cartes non restaurées max dans la liste
+await page.evaluate(() => { window.__LS().restored.length = 0; openArch(); });
+await page.waitForTimeout(200);
+console.log("cartes images visibles (attendu 2):", await page.evaluate(() =>
+  [...document.querySelectorAll("#arch-list .bcard .nm")].filter((n) => n.textContent.startsWith("Archive 00")).length));
+await page.evaluate(() => { window.__LS().restored.push(2, 3, 4, 5, 6, 7, 8); openArch(); });
+await page.waitForTimeout(200);
 
 // Atelier de Mémoire : reconstitution du Feu (pièces guidées par l'api)
 await page.waitForTimeout(400);

@@ -7,8 +7,13 @@
 >   → **les Archives** : la « Restauration d'Archives », galerie « Les images
 >   du passé » dans QUÊTES. Implémentées : **002 « La Terre »** (3×3),
 >   **003 « La forêt »** (3×3), **004 « La ville »** (4×4), **005 « La
->   fusée »** (5×5) — images dessinées en canvas puis découpées, un jour
->   remplaçables par les illustrations du propriétaire via data-URI.
+>   fusée »** (5×5), **006 « L'océan »** (6×6), **007 « La montagne »**
+>   (6×6), **008 « La Lune »** (7×7, la Terre vue de la Lune) — images
+>   dessinées en canvas puis découpées, un jour remplaçables par les
+>   illustrations du propriétaire via data-URI. **Affichage progressif
+>   (retour propriétaire 2026-08-07) : 2 cartes non restaurées max** dans
+>   la liste (la jouable + un aperçu verrouillé) — la suite apparaît au
+>   fur et à mesure.
 >   Récompense en Eo croissante (5+5×id), légendes lore placeholder.
 >   **Gating (retour propriétaire 2026-08-07) : le verrou « Lecteur
 >   d'Archives » est retiré des images** — ce sont les photos du module
