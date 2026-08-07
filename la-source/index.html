@@ -1078,7 +1078,7 @@ function drawTile(x, y, t) {
   }
   // décor
   if (info.kind === "crystal") {
-    if (CRYS.ok) { drawCrystalSprite(x, y); return; }
+    if (CRYS.ok) return; // dessiné dans la passe triée en profondeur (avec les bâtiments)
     const n = 2 + Math.floor(info.j * 3);
     for (let i = 0; i < n; i++) {
       const ox = (info.j * 37 % 1 - 0.5 + i * 0.25 - n * 0.1) * TW * 0.5 * z;
@@ -1105,7 +1105,7 @@ function drawTile(x, y, t) {
       return;
     }
     if (info.kind === "caillou") {
-      if (ROCK.ok) drawRockSprite(x, y);
+      if (ROCK.ok) { /* dessiné dans la passe triée en profondeur */ }
       else for (const [ox, oy, rr] of [[-8, 2, 8], [7, 0, 6.5], [0, -4, 5.5]]) {
         // éboulis : petit tas de galets (secours)
         ctx.beginPath();
@@ -1662,13 +1662,22 @@ function frame(t) {
     drawTerrainTex();
     for (let y = bmin(); y <= bmax(); y++) for (let x = bmin(); x <= bmax(); x++) drawTile(x, y, t);
     for (const b of S.buildings) drawLink(b, t);
-    const drawables = [...S.buildings].sort((a, b) => (a.x + a.y) - (b.x + b.y));
-    let srcDrawn = false;
-    for (const b of drawables) {
-      if (!srcDrawn && (b.x + b.y) >= (SRC.x + SRC.y)) { drawSource(t); srcDrawn = true; }
-      drawBuilding(b, t);
+    const drawables = S.buildings.map((b) => ({ d: b.x + b.y, b }));
+    for (let y = bmin(); y <= bmax(); y++) for (let x = bmin(); x <= bmax(); x++) {
+      const k2 = tileAt(x, y).kind;
+      if (k2 === "crystal" && CRYS.ok)
+        drawables.push({ d: x + y, deco: "crys", x, y });
+      else if (k2 === "caillou" && ROCK.ok && S.mi >= 3)
+        drawables.push({ d: x + y, deco: "rock", x, y });
     }
-    if (!srcDrawn) drawSource(t);
+    drawables.push({ d: SRC.x + SRC.y - 0.01, src: true });
+    drawables.sort((a, b) => a.d - b.d);
+    for (const it of drawables) {
+      if (it.src) drawSource(t);
+      else if (it.deco === "crys") drawCrystalSprite(it.x, it.y);
+      else if (it.deco === "rock") drawRockSprite(it.x, it.y);
+      else drawBuilding(it.b, t);
+    }
     for (const o of orbs) drawOrb(o, t);
     for (const m of mobs) drawMob(m, t);
     for (const u of S.units) drawUnit(u, t);
