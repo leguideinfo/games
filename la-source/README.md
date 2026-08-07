@@ -117,6 +117,13 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   état de la colonie).
 - **PC** : molette = zoom, clic = idem.
 
+- **Pipeline de sprites (v7.2)** : `regSprite(type, dataURI, fumées)` branche
+  une image iso sur un type de bâtiment — dessinée à l'ancre du socle,
+  y-sortée, mise à l'échelle avec le niveau, fumée animée par cheminée.
+  Démonstration sur la **Forge** avec une recréation canvas du style des
+  assets du propriétaire (graphite/or/cyan). Les PNG définitifs remplacent
+  la recréation à l'identique (data-URI, un appel par bâtiment).
+
 ## Correspondance slice → prod
 
 | Slice | Prod (universe.awoui.com) |

@@ -1141,6 +1141,99 @@ function isoBox(sx, sy, w, h, hgt, col) {
   }
   ctx.globalAlpha = 1;
 }
+/* ---------- sprites de bâtiments (pipeline assets définitifs) ----------
+   regSprite(type, dataURI, smoke) branche une image iso sur un type :
+   le PNG du propriétaire remplacera la recréation canvas à l'identique. */
+const SPRITE_IMG = {};
+function regSprite(type, src, smoke) {
+  const img = new Image();
+  img.onload = () => { SPRITE_IMG[type] = { img, w: img.width, h: img.height, smoke: smoke || [] }; };
+  img.src = src;
+}
+function bakeFactorySprite() {
+  const c = document.createElement("canvas");
+  c.width = 260; c.height = 210;
+  const g = c.getContext("2d");
+  const ell = (x, y, rx, ry, f, st, lw) => {
+    g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+    if (f) { g.fillStyle = f; g.fill(); }
+    if (st) { g.strokeStyle = st; g.lineWidth = lw || 1.5; g.stroke(); }
+  };
+  const cyl = (x, yb, rx, ry, h, c1, c2) => {
+    const gr = g.createLinearGradient(x - rx, 0, x + rx, 0);
+    gr.addColorStop(0, c2); gr.addColorStop(0.42, c1); gr.addColorStop(1, c2);
+    g.fillStyle = gr; g.fillRect(x - rx, yb - h, rx * 2, h);
+    ell(x, yb, rx, ry, gr);
+  };
+  const px = 130, py = 146, hw = 122, hh = 56, th = 14;
+  // plaque iso : côtés puis dessus, liseré or, bande cyan
+  g.beginPath(); g.moveTo(px - hw, py); g.lineTo(px, py + hh); g.lineTo(px, py + hh + th); g.lineTo(px - hw, py + th); g.closePath();
+  g.fillStyle = "#14161b"; g.fill();
+  g.beginPath(); g.moveTo(px + hw, py); g.lineTo(px, py + hh); g.lineTo(px, py + hh + th); g.lineTo(px + hw, py + th); g.closePath();
+  g.fillStyle = "#1a1d23"; g.fill();
+  g.beginPath(); g.moveTo(px, py - hh); g.lineTo(px + hw, py); g.lineTo(px, py + hh); g.lineTo(px - hw, py); g.closePath();
+  g.fillStyle = "#2a2e37"; g.fill();
+  g.strokeStyle = "rgba(217,164,74,.75)"; g.lineWidth = 2; g.stroke();
+  g.strokeStyle = "rgba(78,242,224,.8)"; g.lineWidth = 2.6;
+  g.beginPath(); g.moveTo(px - hw * 0.62, py + th + hh * 0.38); g.lineTo(px - hw * 0.06, py + th + hh * 0.66); g.stroke();
+  // dalles techniques sur la plaque
+  g.strokeStyle = "rgba(255,255,255,.05)"; g.lineWidth = 1;
+  for (const f of [0.33, 0.66]) {
+    g.beginPath(); g.moveTo(px - hw * f, py - hh * (1 - f) + hh * (1 - f) * 0); g.moveTo(px - hw + hw * f, py - hh * f * 0 + 0);
+    g.moveTo(px - hw * (1 - f), py - hh * f); g.lineTo(px + hw * f, py + hh * (1 - f)); g.stroke();
+  }
+  // réservoir arrière-gauche + cheminée
+  cyl(72, 104, 20, 8, 40, "#2c3039", "#171a20");
+  ell(72, 64, 20, 8, "#22262e", "rgba(217,164,74,.8)", 2);
+  g.fillStyle = "#b8863b"; g.fillRect(52, 84, 40, 5);
+  cyl(72, 58, 7, 3, 16, "#22252c", "#121419");
+  ell(72, 42, 7, 3, "#0e1014", "rgba(217,164,74,.9)", 1.6);
+  // tour droite (boîte iso) + écran cyan + cheminée
+  g.fillStyle = "#191c22"; g.beginPath();
+  g.moveTo(212, 58); g.lineTo(212, 122); g.lineTo(190, 134); g.lineTo(190, 70); g.closePath(); g.fill();
+  g.fillStyle = "#262a32"; g.beginPath();
+  g.moveTo(190, 70); g.lineTo(190, 134); g.lineTo(166, 122); g.lineTo(166, 58); g.closePath(); g.fill();
+  g.fillStyle = "#31353f"; g.beginPath();
+  g.moveTo(166, 58); g.lineTo(190, 70); g.lineTo(212, 58); g.lineTo(188, 46); g.closePath(); g.fill();
+  g.strokeStyle = "rgba(217,164,74,.6)"; g.lineWidth = 1.5;
+  g.strokeRect(169.5, 80.5, 17, 26);
+  g.fillStyle = "#07222a"; g.fillRect(171, 82, 14, 23);
+  g.fillStyle = "rgba(78,242,224,.9)";
+  for (let i = 0; i < 4; i++) g.fillRect(173, 85 + i * 5, 6 + (i % 2) * 4, 2);
+  cyl(196, 52, 8, 3.5, 18, "#22252c", "#121419");
+  ell(196, 34, 8, 3.5, "#0e1014", "rgba(217,164,74,.9)", 1.6);
+  // réacteur central : cylindre graphite, anneaux or, dôme cyan
+  cyl(128, 116, 30, 11, 50, "#2e323c", "#181b21");
+  for (const ry2 of [86, 102]) {
+    g.strokeStyle = "rgba(217,164,74,.85)"; g.lineWidth = 3;
+    g.beginPath(); g.ellipse(128, ry2, 30, 11, 0, 0.08, Math.PI - 0.08); g.stroke();
+  }
+  ell(128, 66, 30, 11, "#22262e", "rgba(217,164,74,.5)", 1.5);
+  ell(128, 64, 12, 5, "#0a3a44");
+  ell(128, 64, 12, 5, null, "rgba(78,242,224,.9)", 2);
+  g.strokeStyle = "#9aa0a8"; g.lineWidth = 1.5;
+  g.beginPath(); g.moveTo(128, 59); g.lineTo(128, 46); g.stroke();
+  g.fillStyle = "#ffd27a"; ell(128, 44, 2.2, 2.2, "#ffd27a");
+  // tuyaux + colliers or
+  g.lineCap = "round"; g.strokeStyle = "#101318"; g.lineWidth = 9;
+  g.beginPath(); g.moveTo(94, 118); g.quadraticCurveTo(108, 130, 126, 130); g.stroke();
+  g.beginPath(); g.moveTo(152, 124); g.quadraticCurveTo(166, 122, 176, 114); g.stroke();
+  g.strokeStyle = "#b8863b"; g.lineWidth = 3;
+  for (const [qx, qy] of [[108, 127], [166, 120]]) {
+    g.beginPath(); g.moveTo(qx - 4, qy - 5); g.lineTo(qx - 4, qy + 5); g.stroke();
+  }
+  // console avant + écran
+  g.fillStyle = "#20242b"; g.fillRect(86, 138, 26, 18);
+  g.fillStyle = "#07222a"; g.fillRect(89, 141, 20, 9);
+  g.fillStyle = "rgba(78,242,224,.85)"; g.fillRect(91, 143, 10, 2); g.fillRect(91, 147, 14, 2);
+  // feux ambrés
+  for (const [lx, ly] of [[48, 118], [206, 128], [150, 150]]) {
+    g.fillStyle = "#ffb14d"; ell(lx, ly, 1.8, 1.8, "#ffb14d");
+  }
+  return c.toDataURL("image/png");
+}
+regSprite("forge", bakeFactorySprite(), [{ fx: 0.277, fy: 0.16 }, { fx: 0.754, fy: 0.12 }]);
+
 function drawBuilding(b, t) {
   const p = w2s(b.x, b.y), z = cam.z;
   const def = BT[b.t];
@@ -1149,6 +1242,32 @@ function drawBuilding(b, t) {
   // socle
   diamond(ctx, p.x, p.y, TW * 0.8 * z, TH * 0.8 * z);
   ctx.fillStyle = "#22262e"; ctx.fill();
+  const spr = SPRITE_IMG[b.t];
+  if (spr) {
+    const sw = TW * 1.16 * z * (1 + 0.02 * Math.min(b.l, 10));
+    const sh = sw * spr.h / spr.w;
+    const sx0 = p.x - sw / 2, sy0 = p.y + TH * 0.52 * z - sh;
+    ctx.drawImage(spr.img, sx0, sy0, sw, sh);
+    // fumée des cheminées
+    for (const ch of spr.smoke) {
+      for (let i = 0; i < 3; i++) {
+        const ph2 = ((t / 2600) + i / 3 + ch.fx) % 1;
+        const sy2 = sy0 + ch.fy * sh - ph2 * 26 * z;
+        ctx.globalAlpha = 0.34 * (1 - ph2);
+        ctx.beginPath();
+        ctx.arc(sx0 + ch.fx * sw + Math.sin((t / 900) + i * 2.1) * 3 * z, sy2, (3 + ph2 * 6) * z, 0, Math.PI * 2);
+        ctx.fillStyle = "#c9ced8"; ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
+    if (b.l >= 5) {
+      ctx.fillStyle = def.col; ctx.globalAlpha = 0.85;
+      ctx.beginPath();
+      ctx.arc(p.x + sw * 0.4, sy0 + sh * 0.2, 3 * z, 0, Math.PI * 2);
+      ctx.fill(); ctx.globalAlpha = 1;
+    }
+    return;
+  }
   isoBox(p.x, p.y, w, h, hgt, def.col);
   // antenne niv 3+
   if (b.l >= 3) {
