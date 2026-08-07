@@ -72,6 +72,15 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   terrain de chasse. En prod : premier pas vers le PvE/PvP cyber de la
   vision (intrusion/défense).
 - **Persistance** locale (`localStorage`) + reprise hors-ligne.
+- **Intuitivité enfant (v6.1)** : l'intro avance au tap sur la scène
+  (après 1,2 s d'animation) ; le bouton COLONIE, déjà actif, ouvre
+  directement l'action de la mission en cours (poser/améliorer/Source) ;
+  « Pluie d'éclats » : 3 éclats récoltés en rafale (< 5 s) déclenchent un
+  mini-jeu éclair au centre de l'écran — 6 s d'étincelles à taper vite
+  (+5+niv 💠 chacune), au plus une fois toutes les 90 s.
+- **Éboulis simples (v6.1)** : mix ~50/50 avec les crevasses — tap →
+  🚜 DÉBLAYER (30 💠, instantané). Des éboulis réapparaissent lentement
+  sur le territoire (1 toutes les ~4 min, max 3 en attente).
 - **Crevasses & puzzle de colmatage (v5.2)** : avant la mission 3, simples
   cases de sable assombri ; à la mission 3, « le sol tremble » et les
   **crevasses s'ouvrent** (failles uniformes, lueur des profondeurs), la

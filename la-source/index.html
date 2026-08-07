@@ -269,6 +269,35 @@
   .pcell.gemEo::after { content: "💾"; }
   #cave-score { text-align: center; color: var(--amber); font-size: 15px; min-height: 20px; }
 
+  /* ---------- pluie d'éclats ---------- */
+  #frenzy {
+    position: absolute; inset: 0; z-index: 45;
+    display: grid; place-items: center;
+    background: rgba(4, 6, 14, .35);
+  }
+  #frenzy[hidden] { display: none; }
+  #frz-panel {
+    width: min(86vw, 320px);
+    background: rgba(13, 18, 33, .94);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(78, 242, 224, .35);
+    border-radius: 20px;
+    box-shadow: 0 0 40px rgba(78, 242, 224, .25);
+    padding: 14px;
+    animation: frzin .3s;
+  }
+  @keyframes frzin { from { transform: scale(.8); opacity: 0; } }
+  #frz-title { text-align: center; font-weight: 700; font-size: 16px; color: var(--cyan); margin-bottom: 8px; }
+  #frz-zone { position: relative; height: 240px; border-radius: 14px; background: rgba(6, 9, 19, .5); overflow: hidden; }
+  .spark-btn {
+    position: absolute; width: 52px; height: 52px;
+    border: none; background: none; padding: 0;
+    font-size: 30px; line-height: 52px;
+    filter: drop-shadow(0 0 8px rgba(78, 242, 224, .9));
+    animation: gempop 1s forwards;
+  }
+  #frz-score { text-align: center; color: var(--amber); font-size: 15px; font-weight: 700; min-height: 22px; margin-top: 6px; }
+
   /* ---------- toasts ---------- */
   #toasts {
     position: absolute; left: 0; right: 0; bottom: 76px;
@@ -520,6 +549,14 @@
     <button id="src-intro" style="margin-top:10px;border:1px solid var(--line);background:none;color:var(--dim);border-radius:8px;padding:7px 12px;font-size:11px;width:100%">↺ Revoir l'intro</button>
   </div>
 
+  <div id="frenzy" hidden>
+    <div id="frz-panel">
+      <div id="frz-title">✨ Pluie d'éclats !</div>
+      <div id="frz-zone"></div>
+      <div id="frz-score"></div>
+    </div>
+  </div>
+
   <div id="toasts"></div>
 
   <div id="intro">
@@ -663,6 +700,7 @@ function newSave() {
     v: 2, mat: 50, eo: 0, buildings: [], techs: [], seenIntro: false,
     mi: 0, orbsCollected: 0, lastSeen: Date.now(), buffLeft: 0, buffMult: 1,
     ext: 0, cleared: [], units: [], archives: [], reader: false,
+    rubble: [], lastRubble: Date.now(),
   };
 }
 function load() {
@@ -681,6 +719,8 @@ if (!S.cleared) S.cleared = [];
 if (!S.ext) S.ext = 0;
 if (!S.units) S.units = [];
 if (!S.archives) S.archives = [];
+if (!S.rubble) S.rubble = [];
+if (!S.lastRubble) S.lastRubble = Date.now();
 if (S.reader == null) S.reader = false;
 S.units.forEach((u) => { delete u.busy; });
 window.__LS = () => S;
@@ -780,6 +820,7 @@ function missionDone(k) {
 /* ---------- terrain (procédural infini, stable par coordonnée) ---------- */
 const tcache = new Map();
 let clearedSet = new Set(S.cleared || []);
+let rubbleSet = new Set(S.rubble || []);
 function hash2(x, y) {
   let h = (x * 374761393 + y * 668265263) | 0;
   h = Math.imul(h ^ (h >>> 13), 1274126177);
@@ -794,12 +835,14 @@ function tileAt(x, y) {
     let kind = "sand";
     if (!(x === SRC.x && y === SRC.y)) {
       if (v > 0.87) kind = "crystal";
-      else if (v > 0.78) kind = "rock";
+      else if (v > 0.825) kind = "crevasse";
+      else if (v > 0.78) kind = "caillou";
     }
     t = { kind, j: r() };
     tcache.set(k, t);
   }
-  if (t.kind === "rock" && clearedSet.has(k)) return { kind: "sand", j: t.j };
+  if ((t.kind === "crevasse" || t.kind === "caillou") && clearedSet.has(k)) return { kind: "sand", j: t.j };
+  if (t.kind === "sand" && rubbleSet.has(k)) return { kind: "caillou", j: t.j };
   return t;
 }
 const bmin = () => -S.ext;
@@ -936,11 +979,22 @@ function drawTile(x, y, t) {
       ctx.fill();
       ctx.shadowBlur = 0;
     }
-  } else if (info.kind === "rock") {
+  } else if (info.kind === "crevasse" || info.kind === "caillou") {
     if (S.mi < 3) {
       // pas encore révélée : sol légèrement plus sombre, c'est tout
       diamond(ctx, p.x, p.y, TW * z, TH * z);
       ctx.fillStyle = "rgba(30, 15, 5, .18)"; ctx.fill();
+      return;
+    }
+    if (info.kind === "caillou") {
+      // éboulis : petit tas de galets
+      for (const [ox, oy, rr] of [[-8, 2, 8], [7, 0, 6.5], [0, -4, 5.5]]) {
+        ctx.beginPath();
+        ctx.ellipse(p.x + ox * z, p.y + oy * z, rr * z, rr * 0.62 * z, 0, 0, Math.PI * 2);
+        ctx.fillStyle = "hsl(24 22% " + (30 + rr) + "%)";
+        ctx.fill();
+        ctx.strokeStyle = "rgba(40,25,10,.5)"; ctx.lineWidth = 1; ctx.stroke();
+      }
       return;
     }
     // crevasse : faille sombre, lueur des profondeurs
@@ -1187,7 +1241,7 @@ function guideWorldTarget() {
 }
 function drawCrevasseHint(t) {
   if (view !== "col" || S.mi < 3 || S.cleared.length > 0) return;
-  const c = nearestTile((x, y) => tileAt(x, y).kind === "rock");
+  const c = nearestTile((x, y) => tileAt(x, y).kind === "crevasse");
   if (!c) return;
   const p = w2s(c.x, c.y), z = cam.z;
   const pulse = 0.5 + 0.5 * Math.sin(t / 300);
@@ -1309,6 +1363,16 @@ function frame(t) {
     }
     save();
   }
+  // éboulis : réapparition lente (max 3, ~4 min)
+  if (S.mi >= 3 && Date.now() - S.lastRubble > 240000) {
+    S.lastRubble = Date.now();
+    if (S.rubble.length < 3) {
+      for (let i = 0; i < 20; i++) {
+        const x = bmin() + rnd(bmax() - bmin() + 1), y = bmin() + rnd(bmax() - bmin() + 1);
+        if (buildable(x, y)) { rubbleSet.add(x + "," + y); S.rubble = [...rubbleSet]; save(); break; }
+      }
+    }
+  }
   // parasites aux frontières (après la mission 15)
   if (S.mi >= 15) {
     mobT += dt;
@@ -1395,11 +1459,60 @@ function frame(t) {
 function collectOrb(o, auto) {
   orbs = orbs.filter((x) => x !== o);
   S.mat = Math.min(matCap(), S.mat + o.val);
-  if (!auto) sfx.collect();
+  if (!auto) {
+    sfx.collect();
+    collectTimes.push(performance.now());
+    collectTimes = collectTimes.filter((t) => performance.now() - t < 5000);
+    if (collectTimes.length >= 3 && performance.now() > frzCooldownUntil && !frz) startFrenzy();
+  }
   S.orbsCollected++;
   if (S.orbsCollected === 1)
     toast("✨ Éclat récolté ! La planète en fait émerger, surtout <b>près des cristaux</b>.");
   if (S.orbsCollected >= 3) missionDone("orbs3");
+}
+
+/* ---------- pluie d'éclats (frénésie de collecte) ---------- */
+let frz = null, collectTimes = [], frzCooldownUntil = 0;
+function startFrenzy() {
+  frzCooldownUntil = performance.now() + 90000;
+  collectTimes = [];
+  frz = { mat: 0 };
+  const zone = $("#frz-zone");
+  zone.innerHTML = "";
+  $("#frz-score").textContent = "Tape vite !";
+  $("#frenzy").hidden = false;
+  [660, 880, 1100].forEach((f, i) => beep(f, 0.1, "sine", 0.05, i * 0.09));
+  const myFrz = frz;
+  const spawn = setInterval(() => {
+    if (frz !== myFrz) { clearInterval(spawn); return; }
+    if (zone.querySelectorAll(".spark-btn").length >= 3) return;
+    const b = document.createElement("button");
+    b.className = "spark-btn";
+    b.textContent = Math.random() < 0.25 ? "✨" : "💠";
+    b.style.left = (6 + Math.random() * (zone.clientWidth - 60)) + "px";
+    b.style.top = (6 + Math.random() * (zone.clientHeight - 60)) + "px";
+    b.onclick = () => {
+      if (frz !== myFrz) return;
+      frz.mat += 5 + colonyLevel();
+      sfx.collect();
+      b.remove();
+      $("#frz-score").textContent = "+" + frz.mat + " 💠";
+    };
+    zone.appendChild(b);
+    setTimeout(() => b.remove(), 1000);
+  }, 330);
+  setTimeout(() => {
+    clearInterval(spawn);
+    if (frz !== myFrz) return;
+    const m = frz.mat;
+    frz = null;
+    $("#frenzy").hidden = true;
+    if (m > 0) {
+      S.mat = Math.min(matCap(), S.mat + m);
+      toast("✨ Pluie d'éclats : <b>+" + m + " 💠</b> !", true);
+    }
+    save();
+  }, 6000);
 }
 
 /* ---------- entrées canvas ---------- */
@@ -1472,8 +1585,10 @@ cv.addEventListener("pointerup", (e) => {
   if (b) { openBld(b); return; }
   if (buildable(tp.x, tp.y)) {
     openBuild(tp);
-  } else if (inB(tp.x, tp.y) && tileAt(tp.x, tp.y).kind === "rock" && S.mi >= 3) {
+  } else if (inB(tp.x, tp.y) && S.mi >= 3 && tileAt(tp.x, tp.y).kind === "crevasse") {
     openCrevasse(tp);
+  } else if (inB(tp.x, tp.y) && S.mi >= 3 && tileAt(tp.x, tp.y).kind === "caillou") {
+    openRubble(tp);
   } else {
     closeSheets();
     selTile = null;
@@ -1707,6 +1822,34 @@ function openSource() {
   }
   act.appendChild(btn);
   $("#sh-source").hidden = false;
+}
+
+function openRubble(tp) {
+  closeSheets();
+  selTile = tp;
+  $("#bl-name").textContent = "🪨 Éboulis";
+  $("#bl-desc").textContent = "Des débris bloquent la case.";
+  $("#bl-stats").innerHTML = "";
+  $("#bl-forge").innerHTML = "";
+  const upBtn = $("#bl-up");
+  upBtn.classList.remove("guide");
+  upBtn.textContent = "🚜 DÉBLAYER · 30 💠";
+  upBtn.disabled = S.mat < 30;
+  upBtn.onclick = () => {
+    if (S.mat < 30) { sfx.deny(); return; }
+    S.mat -= 30;
+    const k = tp.x + "," + tp.y;
+    if (rubbleSet.has(k)) { rubbleSet.delete(k); S.rubble = [...rubbleSet]; }
+    else { clearedSet.add(k); S.cleared = [...clearedSet]; }
+    sfx.build();
+    const ps = w2s(tp.x, tp.y);
+    burst(ps.x, ps.y, "#c9a06a");
+    toast("🚜 Case déblayée !");
+    save();
+    closeSheets();
+  };
+  $("#bl-turbo").hidden = true;
+  $("#sh-bld").hidden = false;
 }
 
 let cave = null;
@@ -2125,7 +2268,19 @@ function refreshGates() {
 }
 
 /* ---------- onglets ---------- */
-$("#tab-col").onclick = () => { view = "col"; setTab("col"); };
+$("#tab-col").onclick = () => {
+  const wasCol = view === "col";
+  view = "col"; setTab("col");
+  if (!wasCol || placing) return;
+  // déjà sur la colonie : ouvre directement l'action de la mission en cours
+  const gt = guideWorldTarget();
+  if (!gt || gt.x == null) return;
+  if (gt.kind === "tile" && GUIDE_BUILD[S.mi]) openBuild({ x: gt.x, y: gt.y });
+  else if (gt.kind === "bld") {
+    const b = S.buildings.find((bb) => bb.x === gt.x && bb.y === gt.y);
+    if (b) openBld(b);
+  } else if (gt.kind === "src") openSource();
+};
 $("#tab-map").onclick = () => {
   if ($("#tab-map").disabled) return;
   view = "map"; setTab("map");
@@ -2440,6 +2595,12 @@ $("#src-intro").onclick = () => {
   requestAnimationFrame(drawIntro);
 };
 $("#iskip").onclick = () => { audioInit(); endIntro(); };
+icv.addEventListener("pointerup", () => {
+  if (!introOn) return;
+  if ((performance.now() - sceneT0) / 1000 < 1.2) return; // laisse la scène se jouer
+  audioInit(); sfx.ui();
+  scene >= SCENES.length - 1 ? endIntro() : setScene(scene + 1);
+});
 
 /* ---------- API debug/tests ---------- */
 window.__api = {
@@ -2468,6 +2629,7 @@ window.__api = {
     return out;
   },
   turboWin() { S.buffMult = 1.5; S.buffLeft = 120; missionDone("turbo"); },
+  frenzy() { startFrenzy(); },
   giveEo(n) { S.eo = Math.min(eoCap(), S.eo + n); },
   research(k) { if (!S.techs.includes(k)) { S.techs.push(k); if (k === "dns") unlockMap(); missionDone("tech_" + k); save(); } },
   reset() { localStorage.removeItem("ls-save-v1"); location.reload(); },
