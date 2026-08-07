@@ -130,11 +130,11 @@ console.log("après forge (attendu 18):", await page.evaluate(() => window.__LS(
 // M18 : drone récolteur posé sur cristaux par tap réel (dézoome si hors vue)
 await page.evaluate(() => { window.__LS().mat = 300; window.__api.assemble("recolteur"); });
 let cpos = null;
-for (let tries = 0; tries < 4 && !cpos; tries++) {
+for (let tries = 0; tries < 6 && !cpos; tries++) {
   cpos = await page.evaluate(() =>
     window.__api.crystalsAll().find((c) => c.x > 40 && c.x < 350 && c.y > 130 && c.y < 530) || null);
-  if (!cpos) await page.click("#z-out");
-  await page.waitForTimeout(150);
+  if (!cpos) await page.evaluate(() => { const c = window.__api.crystalsAll()[0]; if (c) window.__api.center(c.tx, c.ty); });
+  await page.waitForTimeout(200);
 }
 await page.mouse.click(cpos.x, cpos.y);
 await page.waitForTimeout(300);
@@ -147,7 +147,10 @@ let mpos = null;
 for (let tries = 0; tries < 6 && !mpos; tries++) {
   mpos = await page.evaluate(() =>
     window.__api.mobsPos().find((m) => m.sx > 20 && m.sx < 350 && m.sy > 145 && m.sy < 640) || null);
-  if (!mpos) { await page.click("#z-out"); await page.waitForTimeout(200); }
+  if (!mpos) {
+    await page.evaluate(() => { const m = window.__api.mobsPos()[0]; if (m) window.__api.center(m.tx, m.ty); });
+    await page.waitForTimeout(250);
+  }
 }
 await page.mouse.click(mpos.sx, mpos.sy);
 await page.waitForFunction(() => window.__LS().mi >= 20, null, { timeout: 15000 });

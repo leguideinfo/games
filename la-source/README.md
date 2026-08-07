@@ -118,12 +118,17 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   propriétaire, pixel pour pixel). Les autres bâtiments suivront au même
   format : un PNG fond transparent dans `assets/sprites/`, un appel
   `regSprite` par bâtiment.
-- **Plateau-terrain définitif (v7.3)** : la zone de départ 9×9 est le
-  **plateau illustré du propriétaire** (`assets/terrain-plateau.png`,
-  embarqué en WebP détouré) — mappé en perspective sur la grille
-  (transformation affine losange→losange), falaises baked en bordure,
-  **découpe de grille légère** par-dessus pour garder les cases lisibles.
-  Les anneaux d'expansion au-delà du 9×9 restent procéduraux.
+- **Carte-monde (v7.4, test validé en cours)** : la map illustrée du
+  propriétaire (`assets/map-test.png`, WebP embarqué) couvre **tout le
+  champ de jeu** — plus aucun bord de plateau visible : les bords de la
+  map sont les bords de l'écran. La **caméra est bornée** à l'image
+  (zoom minimal dynamique) et démarre légèrement zoomée pour laisser du
+  déplacement. Seul le **territoire débloqué** montre la découpe de
+  grille ; les expansions ajoutent des anneaux sur la même map (les 4
+  paliers actuels tiennent dedans). À terme (idée propriétaire) :
+  l'agrandissement ne sera plus des anneaux perpétuels mais une
+  **extension des côtés de la map**. (`terrain-plateau.png` = ancien
+  essai plateau, conservé en référence.)
 
 ## Contrôles
 
