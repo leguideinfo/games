@@ -23,6 +23,7 @@ Les jeux d'arcade sont considérés comme **la clef du succès et de l'adhérenc
 | `docs/jeux/powershell-hero.md` | Fiche du jeu existant PowerShell Hero |
 | `docs/jeux/the-flux.md` | Fiche du jeu existant The Flux |
 | `docs/jeux/backlog-idees.md` | Backlog d'idées de nouveaux jeux (propositions à valider) |
+| `docs/atelier-memoire.md` | Proposition « Atelier de Mémoire » : puzzle à niveaux = reconstruction des pictogrammes de la civilisation, Fresque collective (à valider) |
 
 ## Prochaine session (prévue : à la maison, avec accès au code du site)
 
