@@ -127,11 +127,14 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   grille. **Échelle (retour propriétaire)** : la map couvre **~11,4
   cases de large** pour des cases et bâtiments imposants ; l'expansion
   en anneaux est bornée à **11×11**. **Ancrage exact des sprites
-  (v7.5)** : les métriques de la plateforme (largeur du losange, coin
-  sud, compression verticale — mesurées : 232 px, 0,442) sont déclarées
-  par sprite et le rendu cale la plateforme pixel sur pixel sur la
-  cellule 2:1 (étirement vertical compensatoire ~13 %). Prochains
-  assets : viser une base en 2:1 exact (chute coins→sud = largeur/4).
+  (v7.5)** : chaque sprite déclare les coins gauche/droit de sa PLAQUE
+  colorée (mesurés au contour dur : Extracteur = x 18→245,7, hauteur
+  101,5) ; le rendu pose ces coins sur les coins ouest/est de la
+  cellule — la base tient dans la case (la plaque de l'Extracteur est
+  asymétrique, sommet sud décentré : il tombe sur l'arête sud-est).
+  Prochains assets : viser une base en losange 2:1 **symétrique**
+  (sommet sud au centre, chute coins→sud = largeur/4) pour un calage
+  parfait des quatre coins.
   À terme (idée propriétaire) :
   l'agrandissement ne sera plus des anneaux perpétuels mais une
   **extension des côtés de la map**. (`terrain-plateau.png` = ancien
