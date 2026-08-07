@@ -118,7 +118,15 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   propriétaire, pixel pour pixel). Les autres bâtiments suivront au même
   format : un PNG fond transparent dans `assets/sprites/`, un appel
   `regSprite` par bâtiment.
-- **Carte-monde (v7.4, test validé en cours)** : la map illustrée du
+- **Terrain infini (v8)** : la map fixe est remplacée par la **tuile
+  seamless du propriétaire** répétée en pattern GPU + **variations
+  procédurales** (teintes par blocs, fissures/cailloux/plaques par case,
+  stables par graine — exemples canvas remplaçables par des decals) +
+  **décor** (cristaux et rochers du propriétaire partout, éboulis en
+  jeu = rocher). Caméra libre bornée autour du territoire, zoom
+  0,55–2,4 avec LOD (decals masqués de loin), expansion débornée.
+  Voir `docs/terrain-infini.md`.
+- **Carte-monde (v7.4, remplacée par la v8 ci-dessus)** : la map illustrée du
   propriétaire (`assets/map-test.png`, WebP embarqué) couvre **tout le
   champ de jeu** — plus aucun bord de plateau visible : les bords de la
   map sont les bords de l'écran. La **caméra est bornée** à l'image

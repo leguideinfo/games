@@ -50,9 +50,20 @@ Supreme Commander.
 - **2-3 rochers** en sprites transparents (mêmes règles que les bâtiments :
   base posée au sol, éclairage cohérent).
 
-## État
+## État — IMPLÉMENTÉ (2026-08-07, v8)
 
-- Concept validé, exemple de tuile fourni en conversation (non commité).
-- Implémentation : à brancher quand la tuile définitive + premiers decals
-  sont dans `la-source/assets/` (remplacement du fond fixe par le pattern,
-  suppression de la borne caméra et du plafond d'expansion).
+- **Tuile en prod** : `assets/sprites/sol-tuile.png` (1254², seamless
+  vérifié, embarquée en WebP 1024 q72 ≈ 242 Ko, période monde 1050 px
+  ≈ 11,4 cases). Plus de map fixe : pattern infini.
+- **Variations procédurales v1 (exemples canvas, à remplacer par les
+  decals du propriétaire)** : plaques de teinte claire/sombre par blocs
+  de 3×3 cases (~34 %), et par case (17 % au total) fissures / semis de
+  cailloux / plaques sombres — stables par graine, masquées sous zoom
+  0,75 (premier étage de LOD).
+- **Décor hors territoire** : cristaux (sprite) + rochers
+  (`assets/sprites/rocher.png`) posés par le procédural existant ;
+  en territoire, les éboulis à déblayer utilisent aussi le rocher.
+- **Caméra libre** : bornée souplement autour du territoire (+7 cases),
+  zoom 0,55–2,4 ; expansion débornée (4 paliers → 17×17, extensible).
+- La map-image (`assets/map-test.png`, `terrain-plateau.png`) reste en
+  archive de référence.
