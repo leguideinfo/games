@@ -113,9 +113,11 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
 - **Pipeline de sprites (v7.2)** : `regSprite(type, dataURI, fumées)` branche
   une image iso sur un type de bâtiment — dessinée à l'ancre du socle,
   y-sortée, mise à l'échelle avec le niveau, fumée animée par cheminée.
-  Démonstration sur la **Forge** avec une recréation canvas du style des
-  assets du propriétaire (graphite/or/cyan). Les PNG définitifs remplacent
-  la recréation à l'identique (data-URI, un appel par bâtiment).
+  **Premier asset définitif intégré : l'Extracteur de matériaux**
+  (`assets/sprites/extracteur.png`, embarqué en data-URI — le fichier du
+  propriétaire, pixel pour pixel). Les autres bâtiments suivront au même
+  format : un PNG fond transparent dans `assets/sprites/`, un appel
+  `regSprite` par bâtiment.
 
 ## Contrôles
 
