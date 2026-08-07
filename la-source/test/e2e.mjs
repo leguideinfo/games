@@ -38,7 +38,10 @@ for (let tries = 0; tries < 20 && collected < 3; tries++) {
   await page.waitForFunction(() => window.__api.orbsPos().length > 0, null, { timeout: 15000 });
   const o = await page.evaluate(() =>
     window.__api.orbsPos().find((p) => p.sx > 20 && p.sx < 340 && p.sy > 145 && p.sy < 690) || null);
-  if (!o) { await page.waitForTimeout(1200); continue; }
+  if (!o) {
+    await page.evaluate(() => { const f = window.__api.orbsPos()[0]; if (f) window.__api.center(f.tx, f.ty); });
+    await page.waitForTimeout(1200); continue;
+  }
   await page.mouse.click(o.sx, o.sy);
   await page.waitForTimeout(250);
   collected = await page.evaluate(() => window.__LS().orbsCollected);
@@ -49,6 +52,8 @@ await page.waitForTimeout(700);
 await page.waitForFunction(() => document.querySelector("#frenzy").hidden, null, { timeout: 12000 });
 
 // M1 : menu construire = extracteur seul, construction par tap réel
+await page.evaluate(() => window.__api.center(4, 4));
+await page.waitForTimeout(200);
 const target = await page.evaluate(() => {
   for (let y = 2; y <= 6; y++) for (let x = 2; x <= 6; x++) {
     if (window.__api.buildableAt(x, y)) {
