@@ -53,17 +53,17 @@ Supreme Commander.
 ## État — IMPLÉMENTÉ (2026-08-07, v8)
 
 - **Tuile en prod** : `assets/sprites/sol-tuile.png` (1254², seamless
-  vérifié, embarquée en WebP 1024 q72 ≈ 242 Ko, période monde 1050 px
-  ≈ 11,4 cases). Plus de map fixe : pattern infini.
-- **Variations procédurales v1 (exemples canvas, à remplacer par les
-  decals du propriétaire)** : plaques de teinte claire/sombre par blocs
-  de 3×3 cases (~34 %), et par case (17 % au total) fissures / semis de
-  cailloux / plaques sombres — stables par graine, masquées sous zoom
-  0,75 (premier étage de LOD).
-- **Décor hors territoire** : cristaux (sprite) + rochers
-  (`assets/sprites/rocher.png`) posés par le procédural existant ;
-  en territoire, les éboulis à déblayer utilisent aussi le rocher.
+  vérifié, WebP 1024 embarqué). **Échelle actée par le propriétaire
+  (2026-08-07) : 1 répétition = 1 case** — densité de pixels alignée
+  sur les bâtiments (~11-13 px image / px monde). Rendu net à tout zoom
+  par **mip-mapping maison** (128/256/512/1024, niveau choisi selon
+  zoom×DPR, patterns mis en cache).
+- **Décor volontairement épars (retour propriétaire : « plus simple
+  pour commencer »)** : hors territoire, ~3 % de cases avec cristaux et
+  ~1,5 % avec rocher (jamais retourné/miroir) ; les decals canvas
+  (fissures/cailloux/plaques/teintes) ont été retirés — ils reviendront
+  en assets du propriétaire. En territoire, éboulis = rocher.
 - **Caméra libre** : bornée souplement autour du territoire (+7 cases),
-  zoom 0,55–2,4 ; expansion débornée (4 paliers → 17×17, extensible).
+  **zoom 0,55–4,5** (fort zoom demandé) ; expansion débornée.
 - La map-image (`assets/map-test.png`, `terrain-plateau.png`) reste en
   archive de référence.
