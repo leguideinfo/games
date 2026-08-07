@@ -44,6 +44,9 @@ for (let tries = 0; tries < 20 && collected < 3; tries++) {
   collected = await page.evaluate(() => window.__LS().orbsCollected);
 }
 console.log("après 3 éclats, mission:", await page.evaluate(() => window.__LS().mi));
+// si la Pluie d'éclats s'est déclenchée (3 récoltes rapides), on la laisse passer
+await page.waitForTimeout(700);
+await page.waitForFunction(() => document.querySelector("#frenzy").hidden, null, { timeout: 12000 });
 
 // M1 : menu construire = extracteur seul, construction par tap réel
 const target = await page.evaluate(() => {
@@ -183,6 +186,28 @@ await page.locator("#arch-list button", { hasText: "DÉCRYPTER" }).click();
 await page.waitForTimeout(400);
 const arch3 = await page.evaluate(() => ({ dec: window.__LS().archives[0].dec, missionsDone: document.querySelector("#missions").hidden }));
 console.log("fragment décrypté (quête annexe finie):", JSON.stringify(arch3));
+
+// Atelier de Mémoire : reconstitution du Feu (mono-tuile, toutes les cases)
+await page.waitForTimeout(400);
+await page.locator("#arch-list button", { hasText: "RECONSTITUER" }).click();
+await page.waitForTimeout(300);
+await page.locator("#at-tray .at-piece").first().click(); // mono-tuile
+await page.waitForTimeout(150);
+for (let i = 0; i < 30; i++) {
+  const cell = await page.evaluate(() => {
+    const c = [...document.querySelectorAll(".acell[data-need]")].find((el) => !el.classList.contains("fill"));
+    if (!c) return null;
+    const r = c.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  });
+  if (!cell) break;
+  await page.mouse.click(cell.x, cell.y);
+  await page.waitForTimeout(60);
+}
+await page.waitForTimeout(600);
+const atlRes = await page.evaluate(() => ({ memories: window.__LS().memories, eo: Math.round(window.__LS().eo) }));
+console.log("mémoire du Feu reconstituée:", JSON.stringify(atlRes));
+await page.screenshot({ path: shots + "/atl-reveal.png" });
 await page.evaluate(() => { for (const s of document.querySelectorAll(".sheet")) s.hidden = true; });
 
 // persistance

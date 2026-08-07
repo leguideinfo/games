@@ -269,6 +269,26 @@
   .pcell.gemEo::after { content: "💾"; }
   #cave-score { text-align: center; color: var(--amber); font-size: 15px; min-height: 20px; }
 
+  /* ---------- atelier de mémoire ---------- */
+  #at-tray { display: flex; gap: 8px; margin-bottom: 10px; }
+  .at-piece { border: 1px solid var(--line); background: var(--panel2); border-radius: 10px; padding: 7px; }
+  .at-piece.sel { border-color: var(--blue); background: #0c1a30; }
+  .at-mini { display: grid; grid-template-columns: repeat(3, 10px); grid-auto-rows: 10px; gap: 2px; }
+  .at-mini-c { background: linear-gradient(180deg, #e8e6e0, #9aa0a8); border-radius: 2px; }
+  #at-grid {
+    display: grid; gap: 3px;
+    background: rgba(6, 9, 19, .5);
+    border: 1px solid rgba(255, 255, 255, .07);
+    border-radius: 14px; padding: 8px;
+  }
+  .acell { aspect-ratio: 1; border-radius: 5px; }
+  .acell.void { background: none; }
+  .acell.need { background: #10182b; border: 1px dashed rgba(120, 160, 220, .28); }
+  .acell.fill { background: linear-gradient(180deg, #e8e6e0, #9aa0a8); border: 1px solid #6c7178; }
+  .acell.glow { animation: aglow .8s; border-style: solid; }
+  @keyframes aglow { 50% { transform: scale(1.15); filter: brightness(1.6); } }
+  #at-score { text-align: center; margin-top: 8px; color: var(--amber); font-size: 13.5px; min-height: 20px; }
+
   /* ---------- pluie d'éclats ---------- */
   #frenzy {
     position: absolute; inset: 0; z-index: 45;
@@ -533,6 +553,15 @@
     <div class="actrow"><button id="asm-boot">DÉMARRER · 200 💠 + 20 Eo</button></div>
   </div>
 
+  <div class="sheet" id="sh-atelier" hidden>
+    <button class="close">✕</button>
+    <h3>🧩 Atelier de Mémoire</h3>
+    <div class="sub">Reconstitue le motif corrompu — pose les tuiles dans la forme.</div>
+    <div id="at-tray"></div>
+    <div id="at-grid"></div>
+    <div id="at-score"></div>
+  </div>
+
   <div class="sheet" id="sh-tech" hidden>
     <button class="close">✕</button>
     <h3>Technologies</h3>
@@ -700,7 +729,7 @@ function newSave() {
     v: 2, mat: 50, eo: 0, buildings: [], techs: [], seenIntro: false,
     mi: 0, orbsCollected: 0, lastSeen: Date.now(), buffLeft: 0, buffMult: 1,
     ext: 0, cleared: [], units: [], archives: [], reader: false,
-    rubble: [], lastRubble: Date.now(),
+    rubble: [], lastRubble: Date.now(), memories: [],
   };
 }
 function load() {
@@ -721,6 +750,7 @@ if (!S.units) S.units = [];
 if (!S.archives) S.archives = [];
 if (!S.rubble) S.rubble = [];
 if (!S.lastRubble) S.lastRubble = Date.now();
+if (!S.memories) S.memories = [];
 if (S.reader == null) S.reader = false;
 S.units.forEach((u) => { delete u.busy; });
 window.__LS = () => S;
@@ -1628,6 +1658,7 @@ function closeSheets() {
   for (const s of document.querySelectorAll(".sheet")) s.hidden = true;
   selTile = null;
   cave = null;
+  atl = null;
 }
 for (const b of document.querySelectorAll(".sheet .close")) b.onclick = closeSheets;
 
@@ -2139,7 +2170,136 @@ function openArch() {
       list.appendChild(card);
     }
   }
+  // Atelier de Mémoire (quand le Lecteur est en ligne)
+  if (S.reader) {
+    const ah = document.createElement("div");
+    ah.className = "sl-nm";
+    ah.style.margin = "12px 0 6px";
+    ah.textContent = "🧩 QUÊTE · L'ATELIER DE MÉMOIRE";
+    list.appendChild(ah);
+    const done = S.memories.includes(1);
+    const card = document.createElement("div");
+    card.className = "bcard";
+    card.innerHTML = "<div class='ic'>" + (done ? "🔥" : "🧩") + "</div><div class='grow'>" +
+      "<div class='nm'>" + (done ? "Le feu" : "Mémoire 001") + "</div>" +
+      "<div class='ds'>" + (done ? "Première énergie maîtrisée par l'humanité." : "Signal visuel corrompu — à reconstituer.") + "</div></div>";
+    const b = document.createElement("button");
+    b.textContent = done ? "REVOIR" : "RECONSTITUER";
+    if (!done) b.classList.add("guide");
+    b.onclick = () => openAtelier(1);
+    card.appendChild(b);
+    list.appendChild(card);
+  }
   $("#sh-arch").hidden = false;
+}
+
+/* ---------- atelier de mémoire ---------- */
+const ATL = {
+  1: {
+    nm: "Le feu",
+    savoir: "Première énergie maîtrisée par l'humanité.",
+    pic: [
+      "..1...",
+      ".11.1.",
+      ".1121.",
+      "112211",
+      "12221.",
+      ".111..",
+    ],
+    col: { "1": "#ff7a1a", "2": "#ffc857" },
+  },
+};
+const ATL_PIECES = [
+  [[0, 0]],
+  [[0, 0], [1, 0]],
+  [[0, 0], [1, 0], [2, 0]],
+  [[0, 0], [1, 0], [0, 1]],
+];
+let atl = null;
+function openAtelier(id) {
+  closeSheets();
+  const m = ATL[id];
+  atl = { id, m, filled: new Set(), sel: 0, rot: ATL_PIECES.map((pp) => pp.map((c) => [...c])) };
+  const g = $("#at-grid");
+  g.innerHTML = "";
+  const H = m.pic.length, W = m.pic[0].length;
+  g.style.gridTemplateColumns = "repeat(" + W + ", 1fr)";
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const d = document.createElement("div");
+    const need = m.pic[y][x] !== ".";
+    d.className = "acell" + (need ? " need" : " void");
+    d.dataset.x = x; d.dataset.y = y;
+    if (need) { d.dataset.need = "1"; d.onclick = () => atlPlace(x, y); }
+    g.appendChild(d);
+  }
+  atlTray();
+  $("#at-score").textContent = "";
+  $("#sh-atelier").hidden = false;
+}
+function atlTray() {
+  const tr = $("#at-tray");
+  tr.innerHTML = "";
+  atl.rot.forEach((pp, i) => {
+    const b = document.createElement("button");
+    b.className = "at-piece" + (atl.sel === i ? " sel" : "");
+    const mini = document.createElement("div");
+    mini.className = "at-mini";
+    for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) {
+      const c = document.createElement("div");
+      if (pp.some(([px, py]) => px === x && py === y)) c.className = "at-mini-c";
+      mini.appendChild(c);
+    }
+    b.appendChild(mini);
+    b.onclick = () => { atl.sel = i; sfx.ui(); atlTray(); };
+    tr.appendChild(b);
+  });
+  const rot = document.createElement("button");
+  rot.className = "at-piece";
+  rot.textContent = "🔄";
+  rot.style.fontSize = "17px";
+  rot.onclick = () => { atl.rot[atl.sel] = rotP(atl.rot[atl.sel]); sfx.ui(); atlTray(); };
+  tr.appendChild(rot);
+}
+function atlPlace(ax, ay) {
+  if (!atl) return;
+  const m = atl.m, H = m.pic.length, W = m.pic[0].length;
+  const cells = atl.rot[atl.sel].map(([dx, dy]) => [ax + dx, ay + dy]);
+  const ok = cells.every(([x, y]) =>
+    x >= 0 && x < W && y >= 0 && y < H && m.pic[y][x] !== "." && !atl.filled.has(y * W + x));
+  if (!ok) { sfx.deny(); return; }
+  for (const [x, y] of cells) {
+    atl.filled.add(y * W + x);
+    $("#at-grid").children[y * W + x].classList.add("fill");
+  }
+  beep(360 + atl.filled.size * 10, 0.06, "square", 0.03);
+  let need = 0;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (m.pic[y][x] !== ".") need++;
+  $("#at-score").textContent = atl.filled.size + " / " + need + " tuiles";
+  if (atl.filled.size >= need) atlReveal();
+}
+function atlReveal() {
+  const m = atl.m, id = atl.id, H = m.pic.length, W = m.pic[0].length;
+  const g = $("#at-grid");
+  let i = 0;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const ch = m.pic[y][x];
+    if (ch === ".") continue;
+    const cell = g.children[y * W + x];
+    setTimeout(() => {
+      cell.style.background = m.col[ch];
+      cell.style.borderColor = m.col[ch];
+      cell.classList.add("glow");
+    }, 45 * i++);
+  }
+  sfx.tech();
+  $("#at-score").textContent = "🔥 " + m.nm + " — " + m.savoir;
+  if (!S.memories.includes(id)) {
+    S.memories.push(id);
+    S.eo = Math.min(eoCap(), S.eo + 10);
+    setTimeout(() => toast("🧩 Mémoire reconstituée : <b>" + m.nm + "</b> +10 Eo — la Fresque s'agrandit.", true), 1400);
+  }
+  save();
+  setTimeout(() => { if (!$("#sh-atelier").hidden) openArch(); }, 3200);
 }
 
 function openAsm() {

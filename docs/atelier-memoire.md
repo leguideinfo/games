@@ -54,6 +54,21 @@ La communauté reconstruit littéralement la mémoire de l'humanité, ensemble.
 Projet collectif fondateur du MMO : non-violent, tous âges, à progression
 visible, aligné avec les fédérations et la vision (« couches » 1 à 4).
 
+## Prototype (2026-08-07 — dérogation ponctuelle au gel, validée par le propriétaire)
+
+- **Mémoire 001 « Le feu »** jouable dans la slice : section « Atelier de
+  Mémoire » de l'onglet QUÊTES (visible quand le Lecteur d'Archives est en
+  ligne). Grille 6×6, tuiles mono/domino/tromino + rotation, pose libre dans
+  la silhouette (pas de gravité : c'est une fresque murale). Complétion →
+  révélation animée du pictogramme + ligne de savoir + 10 Eo (première fois),
+  rejouable en « REVOIR ».
+- **Décision visuels (Claude, validée « à toi de trancher ») : produits en
+  interne, en mosaïque data-driven** (grille de caractères + palette par
+  Mémoire, ~6 lignes de code chacune). Raisons : la révélation cellule par
+  cellule EST la mécanique (impossible avec une image téléchargée) ; zéro
+  contrainte de licence/attribution CC-BY dans un jeu commercial ; style
+  cohérent avec la charte et recolorable par l'artiste plus tard.
+
 ## À trancher avec le propriétaire
 
 - La liste exacte des Mémoires (concepts) et leurs lignes de savoir.
