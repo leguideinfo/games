@@ -49,6 +49,15 @@
   }
   #cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
+  /* ---------- PC / grands écrans : monde plein cadre ---------- */
+  @media (min-width: 760px) {
+    #app { max-width: none; }
+    .sheet { left: 0; right: 0; margin-inline: auto; width: min(92vw, 560px); }
+    #tabs { left: 0; right: 0; margin-inline: auto; width: min(92vw, 620px); }
+    .toast { max-width: 480px; }
+    #missions { max-width: 300px; }
+  }
+
   /* ---------- HUD ---------- */
   #hud {
     position: absolute; top: 0; left: 0; right: 0;
@@ -984,6 +993,13 @@ function centerCam() {
   const c = { x: ((SRC.x - SRC.y) * TW / 2), y: ((SRC.x + SRC.y) * TH / 2) };
   cam.x = W / 2 - c.x * cam.z;
   cam.y = H / 2 - c.y * cam.z - 20;
+}
+function fitCam() {
+  if (W > 760) {
+    const bw = GRID * TW, bh = GRID * TH + 150; // plateau + falaises/faisceau
+    cam.z = Math.min(2, Math.max(0.8, Math.min((W * 0.86) / bw, (H * 0.76) / bh)));
+  }
+  centerCam();
 }
 
 /* ---------- rendu colonie ---------- */
@@ -3552,7 +3568,7 @@ window.__api = {
 
 /* ---------- démarrage ---------- */
 resize();
-centerCam();
+fitCam();
 offlineGains();
 if (S.techs.includes("dns")) unlockMap();
 missionUI();
