@@ -3267,6 +3267,35 @@ function drawIntro(t) {
     g0.addColorStop(1, "rgba(0,0,0,0)");
     ictx.fillStyle = g0; ictx.fillRect(0, 0, w, h);
     const pw = Math.min(w * 0.44, 190), ph = Math.min(h * 0.6, 330);
+    // hublot au-dessus du caisson : l'espace défile, la planète-destination avec lui
+    const hy = (cy - ph / 2) / 2, hr = Math.min(46, (cy - ph / 2) * 0.42, w * 0.13);
+    ictx.save();
+    ictx.beginPath(); ictx.arc(cx, hy, hr, 0, Math.PI * 2); ictx.clip();
+    ictx.fillStyle = "#020409"; ictx.fillRect(cx - hr, hy - hr, hr * 2, hr * 2);
+    for (const st of STARS) {
+      const layer = st.s > 1.4 ? 2 : st.s > 0.9 ? 1 : 0.5;
+      const sx2 = cx - hr + (((st.x * 4 * hr - t * 0.006 * layer) % (2 * hr)) + 2 * hr) % (2 * hr);
+      ictx.globalAlpha = 0.35 + 0.4 * Math.sin(t / 900 + st.tw);
+      ictx.fillStyle = "#cfe6ff";
+      ictx.fillRect(sx2, hy - hr + st.y * 2 * hr, st.s, st.s);
+    }
+    ictx.globalAlpha = 1;
+    // la planète glisse au même rythme que les étoiles, re-rentre par la droite
+    const pr2 = hr * 0.42, per = 2 * (hr + pr2) + hr;
+    const px2 = (cx - hr - pr2) + (((hr + pr2 + hr * 0.3 - sc * 6) % per) + per) % per;
+    drawPlanet(px2, hy + hr * 0.18, pr2, t);
+    ictx.restore();
+    // cerclage métallique
+    ictx.beginPath(); ictx.arc(cx, hy, hr, 0, Math.PI * 2);
+    ictx.strokeStyle = "rgba(160,180,205,.85)"; ictx.lineWidth = 4; ictx.stroke();
+    ictx.beginPath(); ictx.arc(cx, hy, hr + 4.5, 0, Math.PI * 2);
+    ictx.strokeStyle = "rgba(90,105,125,.6)"; ictx.lineWidth = 2; ictx.stroke();
+    for (let a = 0; a < 6; a++) {
+      const ba = a * Math.PI / 3 + 0.26;
+      ictx.beginPath();
+      ictx.arc(cx + Math.cos(ba) * (hr + 2.2), hy + Math.sin(ba) * (hr + 2.2), 1.6, 0, Math.PI * 2);
+      ictx.fillStyle = "#aeb8c6"; ictx.fill();
+    }
     // caisson
     capsulePath(ictx, cx - pw / 2, cy - ph / 2, pw, ph);
     ictx.fillStyle = "rgba(22,48,74,.35)"; ictx.fill();
