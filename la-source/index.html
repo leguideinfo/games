@@ -3267,54 +3267,65 @@ function drawIntro(t) {
     g0.addColorStop(1, "rgba(0,0,0,0)");
     ictx.fillStyle = g0; ictx.fillRect(0, 0, w, h);
     const pw = Math.min(w * 0.44, 190), ph = Math.min(h * 0.6, 330);
-    // hublot au-dessus du caisson : l'espace défile, la planète-destination avec lui
-    const hy = (cy - ph / 2) / 2, hr = Math.min(46, (cy - ph / 2) * 0.42, w * 0.13);
-    ictx.save();
-    ictx.beginPath(); ictx.arc(cx, hy, hr, 0, Math.PI * 2); ictx.clip();
-    ictx.fillStyle = "#020409"; ictx.fillRect(cx - hr, hy - hr, hr * 2, hr * 2);
+    // la vitre principale : l'espace défile derrière la baie
+    const capX = cx - pw / 2, capY = cy - ph / 2;
+    capsulePath(ictx, capX, capY, pw, ph);
+    ictx.save(); ictx.clip();
+    ictx.fillStyle = "#030510"; ictx.fillRect(capX, capY, pw, ph);
     for (const st of STARS) {
       const layer = st.s > 1.4 ? 2 : st.s > 0.9 ? 1 : 0.5;
-      const sx2 = cx - hr + (((st.x * 4 * hr - t * 0.006 * layer) % (2 * hr)) + 2 * hr) % (2 * hr);
+      const sx2 = capX + (((st.x * 3 * pw - t * 0.006 * layer) % pw) + pw) % pw;
       ictx.globalAlpha = 0.35 + 0.4 * Math.sin(t / 900 + st.tw);
       ictx.fillStyle = "#cfe6ff";
-      ictx.fillRect(sx2, hy - hr + st.y * 2 * hr, st.s, st.s);
+      ictx.fillRect(sx2, capY + st.y * ph, st.s, st.s);
     }
     ictx.globalAlpha = 1;
-    // la planète glisse au même rythme que les étoiles, re-rentre par la droite
-    const pr2 = hr * 0.42, per = 2 * (hr + pr2) + hr;
-    const px2 = (cx - hr - pr2) + (((hr + pr2 + hr * 0.3 - sc * 6) % per) + per) % per;
-    drawPlanet(px2, hy + hr * 0.18, pr2, t);
+    // la planète-destination : un point qui dérive au rythme de la couche du fond
+    const dotY = capY + ph * 0.16;
+    const dotX = capX + (((pw * 0.62 - sc * 3) % pw) + pw) % pw;
+    ictx.beginPath(); ictx.arc(dotX, dotY, 3, 0, Math.PI * 2);
+    ictx.fillStyle = "#e8b26a"; ictx.shadowColor = "#e8b26a"; ictx.shadowBlur = 9; ictx.fill(); ictx.shadowBlur = 0;
+    // réticule sur le point + ligne d'appel vers la loupe
+    const zr = Math.min(pw * 0.36, ph * 0.22), zy = cy + ph * 0.1;
+    ictx.strokeStyle = "rgba(78,242,224,.6)"; ictx.lineWidth = 1.2;
+    ictx.setLineDash([3, 3]);
+    ictx.beginPath(); ictx.arc(dotX, dotY, 8 + Math.sin(t / 400), 0, Math.PI * 2); ictx.stroke();
+    const ang = Math.atan2(zy - dotY, cx - dotX);
+    ictx.beginPath();
+    ictx.moveTo(dotX + Math.cos(ang) * 11, dotY + Math.sin(ang) * 11);
+    ictx.lineTo(cx - Math.cos(ang) * (zr + 7), zy - Math.sin(ang) * (zr + 7));
+    ictx.stroke();
+    ictx.setLineDash([]);
+    // hublot-loupe : zoom sur la planète, au centre de la vitre
+    ictx.save();
+    ictx.beginPath(); ictx.arc(cx, zy, zr, 0, Math.PI * 2); ictx.clip();
+    ictx.fillStyle = "#020409"; ictx.fillRect(cx - zr, zy - zr, zr * 2, zr * 2);
+    drawPlanet(cx, zy, zr * 0.62, t);
     ictx.restore();
-    // cerclage métallique
-    ictx.beginPath(); ictx.arc(cx, hy, hr, 0, Math.PI * 2);
-    ictx.strokeStyle = "rgba(160,180,205,.85)"; ictx.lineWidth = 4; ictx.stroke();
-    ictx.beginPath(); ictx.arc(cx, hy, hr + 4.5, 0, Math.PI * 2);
-    ictx.strokeStyle = "rgba(90,105,125,.6)"; ictx.lineWidth = 2; ictx.stroke();
-    for (let a = 0; a < 6; a++) {
-      const ba = a * Math.PI / 3 + 0.26;
-      ictx.beginPath();
-      ictx.arc(cx + Math.cos(ba) * (hr + 2.2), hy + Math.sin(ba) * (hr + 2.2), 1.6, 0, Math.PI * 2);
-      ictx.fillStyle = "#aeb8c6"; ictx.fill();
-    }
-    // caisson
+    ictx.beginPath(); ictx.arc(cx, zy, zr, 0, Math.PI * 2);
+    ictx.strokeStyle = "rgba(140,210,255,.8)"; ictx.lineWidth = 2; ictx.stroke();
+    ictx.setLineDash([6, 8]); ictx.lineDashOffset = -t / 60;
+    ictx.beginPath(); ictx.arc(cx, zy, zr + 5, 0, Math.PI * 2);
+    ictx.strokeStyle = "rgba(78,242,224,.45)"; ictx.lineWidth = 1.4; ictx.stroke();
+    ictx.setLineDash([]);
+    // teinte de la vitre
+    ictx.fillStyle = "rgba(22,48,74,.16)"; ictx.fillRect(capX, capY, pw, ph);
+    ictx.restore();
+    // cadre de la baie vitrée
     capsulePath(ictx, cx - pw / 2, cy - ph / 2, pw, ph);
-    ictx.fillStyle = "rgba(22,48,74,.35)"; ictx.fill();
     ictx.strokeStyle = "rgba(140,210,255,.85)"; ictx.lineWidth = 2.5;
     ictx.shadowColor = "#4ef2e0"; ictx.shadowBlur = 10 + 12 * breath;
     ictx.stroke(); ictx.shadowBlur = 0;
     capsulePath(ictx, cx - pw / 2 + 9, cy - ph / 2 + 9, pw - 18, ph - 18);
     ictx.strokeStyle = "rgba(140,210,255,.25)"; ictx.lineWidth = 1; ictx.stroke();
-    // cœur battant (double pulsation)
-    const beat = Math.pow(Math.max(0, Math.sin(t / 480)), 6);
-    ictx.beginPath();
-    ictx.arc(cx, cy - ph * 0.1, 6 + 5 * beat, 0, Math.PI * 2);
-    ictx.fillStyle = "#bfeaff";
-    ictx.shadowColor = "#bfeaff"; ictx.shadowBlur = 22;
-    ictx.fill(); ictx.shadowBlur = 0;
-    // scan vertical
+    // scan vertical (par-dessus la vitre, clippé au cadre)
     const scanY = cy - ph / 2 + ((t / 2400) % 1) * ph;
+    ictx.save();
+    capsulePath(ictx, capX, capY, pw, ph);
+    ictx.clip();
     ictx.fillStyle = "rgba(78,242,224,.16)";
     ictx.fillRect(cx - pw / 2 + 6, scanY, pw - 12, 3);
+    ictx.restore();
     // givre qui remonte
     for (const f of FROST) {
       const fy = (f.y * h - (t / 1000) * f.v) % h;
