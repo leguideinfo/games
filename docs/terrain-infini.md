@@ -135,9 +135,13 @@ Supreme Commander.
   (`tuile-balise.png`) — bake dédié : structure + anneau de débris
   préservé (halo elliptique bas), **faisceau détouré par matte de
   différence** (fond uni, référence par ligne, pixels bleutés seulement),
-  sol mesuré et aligné. Posée à **0,85 case** (contenue dans sa case,
-  retour propriétaire), ancre au pied de l'anneau ; l'ancien dessin
-  canvas reste en secours de chargement.
+  sol mesuré et aligné. Posée à **0,72 case** (contenue dans sa case,
+  retour propriétaire), ancre au centre de l'empreinte ; l'ancien dessin
+  canvas reste en secours de chargement. **Découpe au pixel (retour
+  2026-08-08)** : la matte de différence couvre toute la zone structure
+  (sous le sommet mesuré des tours) avec **contrainte de proximité**
+  (~30 px autour du masque couleur) — les antennes et panneaux ambrés
+  troués par le masque sont réparés, le sol lointain reste au sol.
 - **Étalonnage remonté (retour 2026-08-08)** : multiply 252/233/202 et
   désaturation 0,30 (avant : 236/216/187 × 0,34) — sol en jeu mesuré
   **164,8/96/38,3** (cible de tous les bakes de decals).
