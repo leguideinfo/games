@@ -25,7 +25,7 @@ Les jeux d'arcade sont considérés comme **la clef du succès et de l'adhérenc
 | `docs/jeux/backlog-idees.md` | Backlog d'idées de nouveaux jeux (propositions à valider) |
 | `docs/atelier-memoire.md` | Proposition « Atelier de Mémoire » : puzzle à niveaux = reconstruction des pictogrammes de la civilisation, Fresque collective (à valider) |
 | `docs/terrain-infini.md` | Terrain infini **VALIDÉ** : tuiles seamless + decals + décor en couches, LOD multi-vues — à implémenter quand la tuile définitive arrive |
-| `docs/si-reseau.md` | Proposition « SI de la colonie » : pont jeu ↔ informatique réelle — couches OSI, interface schéma type Packet Tracer bridgée à la carte, migration des technos en équipements (à valider) |
+| `docs/si-reseau.md` | « SI de la colonie » **VALIDÉ, v1 implémentée** : pont jeu ↔ informatique réelle — chapitre 🔌 missions 8-11, câblage monde + schéma en couches OSI + simulation de trame, DHCP en équipement |
 
 ## Prochaine session (prévue : à la maison, avec accès au code du site)
 

@@ -49,6 +49,38 @@
   }
   #cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
+  /* ---------- SI / réseau ---------- */
+  #wirebtn {
+    position: absolute; right: 10px; top: 152px;
+    width: 38px; height: 38px; border-radius: 9px;
+    border: 1px solid var(--line); background: rgba(11, 17, 32, .88);
+    font-size: 16px; z-index: 9;
+  }
+  #wirebtn.on { border-color: var(--cyan); box-shadow: 0 0 12px rgba(78, 242, 224, .6); }
+  #net-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  #net-actions button {
+    border: 1px solid var(--line); background: rgba(11, 17, 32, .8); color: var(--txt);
+    border-radius: 9px; padding: 8px 10px; font-size: 12px;
+  }
+  .net-band {
+    border: 1px solid rgba(255, 255, 255, .07); border-radius: 10px;
+    padding: 6px 8px; margin-bottom: 6px; background: rgba(6, 9, 19, .35);
+  }
+  .net-band .bn { font-size: 10px; letter-spacing: .1em; color: var(--dim); text-transform: uppercase; }
+  .net-band .bn b { color: var(--cyan); font-weight: normal; }
+  .net-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
+  .net-chip {
+    border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px;
+    font-size: 11.5px; background: rgba(11, 17, 32, .8); color: var(--txt); text-align: left;
+  }
+  .net-chip.off { opacity: .45; }
+  #sim-path { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+  .sim-node { border: 1px solid var(--line); border-radius: 9px; padding: 6px 9px; font-size: 12px; background: rgba(11, 17, 32, .8); }
+  .sim-node.cur { border-color: var(--cyan); box-shadow: 0 0 10px rgba(78, 242, 224, .5); }
+  .sim-arrow { color: var(--dim); }
+  #sim-stack { font-size: 12px; }
+  .enc { border: 1.5px solid; border-radius: 8px; padding: 6px 8px; margin-top: 4px; }
+
   /* ---------- PC / grands écrans : monde plein cadre ---------- */
   @media (min-width: 760px) {
     #app { max-width: none; }
@@ -526,11 +558,13 @@
 
   <div class="overlay-note" id="mapnote" hidden>SECTEUR K-7 · fédérations à venir (v1 asynchrone)</div>
 
+  <button id="wirebtn" hidden>🔌</button>
   <div id="tabs">
     <button id="tab-col" class="on">COLONIE</button>
     <button id="tab-map" disabled>CARTE 🔒</button>
     <button id="tab-arch" hidden>QUÊTES</button>
     <button id="tab-tech">TECHNOS</button>
+    <button id="tab-net" hidden>RÉSEAU</button>
   </div>
 
   <div class="sheet" id="sh-build" hidden>
@@ -608,6 +642,23 @@
     <div id="re-tray"></div>
     <div id="re-board"></div>
     <div id="re-cap"></div>
+  </div>
+
+  <div class="sheet" id="sh-net" hidden>
+    <button class="close">✕</button>
+    <h3>🔌 Le SI de la colonie</h3>
+    <div class="sub">Deux vues, un seul réseau : le schéma en couches ici, les câbles sur la carte.</div>
+    <div id="net-actions"></div>
+    <div id="net-bands"></div>
+  </div>
+
+  <div class="sheet" id="sh-sim" hidden>
+    <button class="close">✕</button>
+    <h3 id="sim-title">▶ Simulation</h3>
+    <div class="sub" id="sim-msg"></div>
+    <div id="sim-path"></div>
+    <div id="sim-stack"></div>
+    <div style="text-align:center;margin-top:12px"><button id="sim-next" class="forge-asm">SUIVANT ▶</button></div>
   </div>
 
   <div class="sheet" id="sh-tech" hidden>
@@ -713,29 +764,39 @@ const BT = {
     game: null,
   },
   ferme: {
-    nm: "Ferme de serveurs", ic: "🖥", col: "#38a9ff", base: 60, conso: 8, mAt: 8,
+    nm: "Ferme de serveurs", ic: "🖥", col: "#38a9ff", base: 60, conso: 8, mAt: 12,
     ds: "Calcule les données (Eo).",
     game: "Admin Rush",
   },
   datacenter: {
-    nm: "Datacenter", ic: "💾", col: "#a06bff", base: 50, conso: 6, mAt: 10,
+    nm: "Datacenter", ic: "💾", col: "#a06bff", base: 50, conso: 6, mAt: 14,
     ds: "Conserve les données.",
     game: null,
   },
   reseau: {
-    nm: "Baie réseau", ic: "📡", col: "#57e389", base: 90, eo: 15, conso: 5, tech: "dns", mAt: 14,
+    nm: "Baie réseau", ic: "📡", col: "#57e389", base: 90, eo: 15, conso: 5, tech: "dns", mAt: 18,
     ds: "Contrats de matériaux du réseau galactique.",
     game: "The Flux",
   },
   forge: {
-    nm: "Forge d'assemblage", ic: "🔧", col: "#ff9a4d", base: 100, conso: 6, mAt: 17,
+    nm: "Forge d'assemblage", ic: "🔧", col: "#ff9a4d", base: 100, conso: 6, mAt: 21,
     ds: "Assemble les unités.",
     game: null,
   },
   console: {
-    nm: "Console de commandement", ic: "🖲", col: "#e6eef5", base: 120, eo: 10, conso: 5, mAt: 16,
+    nm: "Console de commandement", ic: "🖲", col: "#e6eef5", base: 120, eo: 10, conso: 5, mAt: 20,
     ds: "PowerShell : +4 % de production par niveau.",
     game: "PowerShell Hero",
+  },
+  switchhub: {
+    nm: "Switch réseau", ic: "🔀", col: "#57e389", base: 30, conso: 2, mAt: 10,
+    ds: "Commute les trames : 8 ports pour relier tes machines.",
+    game: null,
+  },
+  dhcpsrv: {
+    nm: "Serveur DHCP", ic: "🪪", col: "#38a9ff", base: 40, eo: 5, conso: 3, mAt: 15,
+    ds: "Attribue une adresse IP à chaque machine raccordée.",
+    game: null,
   },
 };
 const UT = {
@@ -745,7 +806,6 @@ const UT = {
     ds: "Élimine les parasites (tape-les)." },
 };
 const TECHS = {
-  dhcp: { nm: "DHCP", col: "#38a9ff", eo: 15, ds: "Les éclats se collectent seuls." },
   dns: { nm: "DNS", col: "#4ef2e0", eo: 40, ds: "Débloque la Carte et la Baie réseau." },
   firewall: { nm: "FIREWALL", col: "#ff5c5c", eo: 90, needs: "dns", ds: "−15 % de consommation ⚡." },
   backup: { nm: "BACKUP", col: "#a06bff", eo: 60, ds: "Hors-ligne compté sur 24 h." },
@@ -761,12 +821,17 @@ const MISSIONS = [
   { t: "Pose un 2e Extracteur", rm: 40, k: "ext2", c: () => bcount("extracteur") >= 2 },
   { t: "⚡ La réserve de la soute a des limites — pose une Centrale", rm: 50, k: "build_centrale" },
   { t: "Améliore ta Centrale (NIV 2)", rm: 50, k: "centrale2", c: () => S.buildings.some((b) => b.t === "centrale" && b.l >= 2) },
+  // — chapitre 🔌 Le réseau de la colonie —
+  { t: "🔌 Câble ton Extracteur à la Source (bouton 🔌)", rm: 40, k: "link1", c: () => S.links.length >= 1 },
+  { t: "Raccorde tous tes bâtiments au réseau", rm: 50, k: "linkall", c: allLinked },
+  { t: "Plus de ports libres — pose un Switch réseau", rm: 50, k: "build_switchhub" },
+  { t: "Suis ta première trame (onglet RÉSEAU → SIMULATION)", re: 5, k: "sim1" },
   // — chapitre 💾 Données —
   { t: "Pose une Ferme de serveurs : elle calcule des Données 💾", re: 5, k: "build_ferme" },
   { t: "Regarde-la calculer : accumule 12 Eo 💾", re: 5, k: "eo12", c: () => S.eo >= 12 },
   { t: "20 Eo max, c'est peu — pose un Datacenter", rm: 60, k: "build_datacenter" },
-  // — chapitre 🌐 Réseau & technologies —
-  { t: "Recherche DHCP (onglet TECHNOS)", rm: 60, k: "tech_dhcp" },
+  // — chapitre 🌐 Services & technologies —
+  { t: "Pose un Serveur DHCP et câble-le : des adresses pour tous", rm: 60, k: "build_dhcpsrv" },
   { t: "Recherche DNS", rm: 80, k: "tech_dns" },
   { t: "Ouvre la Carte du secteur", rm: 100, k: "map" },
   { t: "Pose une Baie réseau", rm: 100, k: "build_reseau" },
@@ -783,7 +848,7 @@ const MISSIONS = [
 let S = null;
 function newSave() {
   return {
-    v: 3, mat: 50, eo: 0, buildings: [], techs: [], seenIntro: false,
+    v: 4, mat: 50, eo: 0, buildings: [], techs: [], links: [], seenIntro: false,
     mi: 0, orbsCollected: 0, lastSeen: Date.now(), buffLeft: 0, buffMult: 1,
     ext: 0, cleared: [], units: [], archives: [], reader: false,
     rubble: [], lastRubble: Date.now(), memories: [], restored: [],
@@ -798,6 +863,10 @@ function load() {
         const remap = [0, 1, 2, 4, 6, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
         sv.mi = remap[Math.min(sv.mi, 17)];
         sv.v = 3;
+      }
+      if (sv.v < 4) { // v4 : chapitre 🔌 Réseau inséré aux missions 8-11
+        if (sv.mi >= 8) sv.mi += 4;
+        sv.v = 4;
       }
       return sv;
     }
@@ -818,6 +887,7 @@ if (!S.lastRubble) S.lastRubble = Date.now();
 if (!S.memories) S.memories = [];
 if (!S.restored) S.restored = [];
 if (S.reader == null) S.reader = false;
+if (!S.links) S.links = [];
 S.units.forEach((u) => { delete u.busy; });
 window.__LS = () => S;
 
@@ -827,15 +897,15 @@ const bsum = (t) => S.buildings.filter((b) => b.t === t).reduce((a, b) => a + b.
 function globalMult() { return (1 + 0.04 * bsum("console")) * S.buffMult; }
 function matRate() {
   const ex = S.buildings.filter((b) => b.t === "extracteur")
-    .reduce((a, b) => a + 0.7 * Math.pow(b.l, 1.4) * (1 + 0.15 * crysAdj(b.x, b.y)), 0);
-  const net = 0.35 * bsum("reseau");
+    .reduce((a, b) => a + 0.7 * Math.pow(b.l, 1.4) * (1 + 0.15 * crysAdj(b.x, b.y)) * netFactor(b), 0);
+  const net = 0.35 * S.buildings.filter((b) => b.t === "reseau").reduce((a, b) => a + b.l * netFactor(b), 0);
   const dr = 0.6 * S.units.filter((u) => u.t === "recolteur").length;
   const malus = mobs.length ? 0.85 : 1;
   return (ex + net + dr) * globalMult() * malus;
 }
 function eoRate() {
   return 0.05 * S.buildings.filter((b) => b.t === "ferme")
-    .reduce((a, b) => a + Math.pow(b.l, 1.3), 0) * globalMult();
+    .reduce((a, b) => a + Math.pow(b.l, 1.3) * netFactor(b), 0) * globalMult();
 }
 function matCap() { return 300 + S.buildings.filter((b) => b.t === "entrepot").reduce((a, b) => a + 250 * Math.pow(b.l, 1.2), 0); }
 function eoCap() { return 20 + S.buildings.filter((b) => b.t === "datacenter").reduce((a, b) => a + 40 * Math.pow(b.l, 1.2), 0); }
@@ -848,6 +918,63 @@ function enUse(extra) {
 function buildCost(t) { return Math.round(BT[t].base * Math.pow(1.6, bcount(t))); }
 function buildCostEo(t) { return BT[t].eo ? Math.round(BT[t].eo * Math.pow(1.6, bcount(t))) : 0; }
 function upCost(b) { return Math.round(BT[b.t].base * 0.8 * Math.pow(1.6, b.l)); }
+/* ---------- SI de la colonie (v1) : câbles, connectivité, équipements ---------- */
+const nkey = (x, y) => x + "," + y;
+const PORTS = { src: 3, switchhub: 8, dhcpsrv: 1, bld: 2 };
+function nodeAt(k) {
+  if (k === "src") return { k, t: "src", x: SRC.x, y: SRC.y, nm: "La Source" };
+  const [x, y] = k.split(",").map(Number);
+  const b = S.buildings.find((b2) => b2.x === x && b2.y === y);
+  return b ? { k, t: b.t, x, y, nm: BT[b.t].nm, b } : null;
+}
+function portMax(k) { const n = nodeAt(k); return n ? (PORTS[n.t] || PORTS.bld) : 0; }
+function portUsed(k) { return S.links.filter((l) => l.a === k || l.b === k).length; }
+let netDirty = true, netSet = new Set(["src"]);
+function netRecalc() {
+  netSet = new Set(["src"]);
+  let moved = true;
+  while (moved) {
+    moved = false;
+    for (const l of S.links) {
+      if (netSet.has(l.a) && !netSet.has(l.b)) { netSet.add(l.b); moved = true; }
+      if (netSet.has(l.b) && !netSet.has(l.a)) { netSet.add(l.a); moved = true; }
+    }
+  }
+  netDirty = false;
+}
+function netConnected(k) { if (netDirty) netRecalc(); return netSet.has(k); }
+function netFactor(b) { // malus doux une fois le réseau éveillé (mission 9+)
+  if (S.mi < 9) return 1;
+  return netConnected(nkey(b.x, b.y)) ? 1 : 0.7;
+}
+function allLinked() {
+  return S.buildings.length > 0 && S.buildings.every((b) => netConnected(nkey(b.x, b.y)));
+}
+function dhcpOnline() {
+  return S.buildings.some((b) => b.t === "dhcpsrv" && netConnected(nkey(b.x, b.y)));
+}
+function ipOf(k) { const n = nodeAt(k); return n ? "10.7." + ((n.x + 9) % 250) + "." + ((n.y + 9) % 250) : "?"; }
+function macOf(k) {
+  const n = nodeAt(k);
+  if (!n) return "?";
+  const h = hash2(n.x + 101, n.y + 47).toString(16).padStart(8, "0");
+  return ("aw:07:" + h.slice(0, 2) + ":" + h.slice(2, 4) + ":" + h.slice(4, 6) + ":" + h.slice(6, 8)).toUpperCase();
+}
+function addLink(ka, kb) {
+  if (ka === kb) return "une machine ne se câble pas à elle-même.";
+  if (!nodeAt(ka) || !nodeAt(kb)) return "câble un bâtiment ou la Source.";
+  if (S.links.some((l) => (l.a === ka && l.b === kb) || (l.a === kb && l.b === ka))) return "déjà câblés.";
+  if (portUsed(ka) >= portMax(ka)) return "plus de ports libres sur " + nodeAt(ka).nm + ".";
+  if (portUsed(kb) >= portMax(kb)) return "plus de ports libres sur " + nodeAt(kb).nm + ".";
+  if (S.mat < 10) return "il faut 10 💠 pour un câble.";
+  S.mat -= 10;
+  S.links.push({ a: ka, b: kb });
+  netDirty = true;
+  sfx.build();
+  save();
+  return null;
+}
+
 function colonyLevel() { return 1 + Math.floor(bsum("extracteur") / 2 + S.buildings.length / 2 + S.techs.length); }
 function fmt(n) {
   if (n >= 1e6) return (n / 1e6).toFixed(2) + "M";
@@ -909,7 +1036,7 @@ function missionDone(k) {
   if (S.mi === 3) {
     setTimeout(() => toast("🕳 Le sol tremble… des <b>crevasses</b> se sont ouvertes ! Tape-en une pour sonder."), 1500);
   }
-  if (S.mi === 19) {
+  if (S.mi === 23) {
     spawnMob();
     setTimeout(() => toast("🕷 Un <b>parasite de données</b> rôde à la frontière ! Il ralentit ton extraction (−15 %)."), 1500);
   }
@@ -1007,6 +1134,8 @@ let lastGatesT = 0;
 let view = "col"; // col | map
 let selTile = null;
 let placing = null; // {t:"recolteur"} en attente d'un tap sur cristaux
+let wire = null; // mode câblage : { a: clé du premier nœud ou null }
+let sim = null; // simulation de trame en cours
 let orbs = []; // {x,y,val,born}
 let mobs = []; // {x,y,born,atk:{u,t0}|null,sx,sy}
 let mobT = 0;
@@ -1368,6 +1497,31 @@ function drawLink(b, t) {
   ctx.stroke();
   ctx.setLineDash([]); ctx.globalAlpha = 1;
 }
+function drawCable(l, t) {
+  const na = nodeAt(l.a), nb = nodeAt(l.b);
+  if (!na || !nb) return;
+  const a = w2s(na.x, na.y), b = w2s(nb.x, nb.y), z = cam.z;
+  const my = (a.y + b.y) / 2 + 10 * z;
+  ctx.strokeStyle = "#e8a24d";
+  ctx.globalAlpha = 0.8;
+  ctx.lineWidth = 1.8 * z;
+  ctx.beginPath();
+  ctx.moveTo(a.x, a.y + 6 * z);
+  ctx.quadraticCurveTo((a.x + b.x) / 2, my, b.x, b.y + 6 * z);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  if (netConnected(l.a) && netConnected(l.b)) {
+    const ph = ((t / 900) + (na.x * 3 + nb.y * 7) * 0.137) % 1;
+    const inv = 1 - ph;
+    const qx = inv * inv * a.x + 2 * inv * ph * ((a.x + b.x) / 2) + ph * ph * b.x;
+    const qy = inv * inv * (a.y + 6 * z) + 2 * inv * ph * my + ph * ph * (b.y + 6 * z);
+    ctx.beginPath();
+    ctx.arc(qx, qy, 2.4 * z, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffe9b0";
+    ctx.shadowColor = "#ffd27a"; ctx.shadowBlur = 6;
+    ctx.fill(); ctx.shadowBlur = 0;
+  }
+}
 function drawOrb(o, t) {
   const p = w2s(o.x, o.y), z = cam.z;
   const oy = p.y - 34 * z - Math.sin((t + o.born) / 350) * 5 * z;
@@ -1451,7 +1605,7 @@ function drawUnit(u, t) {
 }
 
 /* ---------- guidage nouveau joueur ---------- */
-const GUIDE_BUILD = { 1: "extracteur", 4: "entrepot", 5: "extracteur", 6: "centrale", 8: "ferme", 10: "datacenter", 14: "reseau", 16: "console", 17: "forge" };
+const GUIDE_BUILD = { 1: "extracteur", 4: "entrepot", 5: "extracteur", 6: "centrale", 10: "switchhub", 12: "ferme", 14: "datacenter", 15: "dhcpsrv", 18: "reseau", 20: "console", 21: "forge" };
 function nearestTile(pred) {
   let best = null, bd = 1e9;
   for (let y = bmin(); y <= bmax(); y++) for (let x = bmin(); x <= bmax(); x++) {
@@ -1471,10 +1625,11 @@ function guideWorldTarget() {
   if (mi === 2) { const b = S.buildings.find((b) => b.t === "extracteur"); return b && { x: b.x, y: b.y, kind: "bld" }; }
   if (mi === 3) { const o = orbs[0]; return o && { x: o.x, y: o.y, kind: "orb" }; }
   if (mi === 7) { const b = S.buildings.find((b) => b.t === "centrale"); return b && { x: b.x, y: b.y, kind: "bld" }; }
-  if (mi === 9) { const b = S.buildings.find((b) => b.t === "ferme"); return b && { x: b.x, y: b.y, kind: "bld" }; }
-  if (mi === 15) { const b = S.buildings.find((b) => BT[b.t].game); return b && { x: b.x, y: b.y, kind: "bld" }; }
-  if (mi === 18) { const b = S.buildings.find((b) => b.t === "forge"); return b && { x: b.x, y: b.y, kind: "bld" }; }
-  if (mi === 19) {
+  if (mi === 8 || mi === 9) { const b = S.buildings.find((b2) => !netConnected(nkey(b2.x, b2.y))); return b && { x: b.x, y: b.y, kind: "bld" }; }
+  if (mi === 13) { const b = S.buildings.find((b) => b.t === "ferme"); return b && { x: b.x, y: b.y, kind: "bld" }; }
+  if (mi === 19) { const b = S.buildings.find((b) => BT[b.t].game); return b && { x: b.x, y: b.y, kind: "bld" }; }
+  if (mi === 22) { const b = S.buildings.find((b) => b.t === "forge"); return b && { x: b.x, y: b.y, kind: "bld" }; }
+  if (mi === 23) {
     if (!S.units.some((u) => u.t === "chasseur")) {
       const b = S.buildings.find((b) => b.t === "forge");
       return b && { x: b.x, y: b.y, kind: "bld" };
@@ -1482,7 +1637,7 @@ function guideWorldTarget() {
     const m = mobs[0];
     return m && { x: m.x, y: m.y, kind: "mob" };
   }
-  if (mi === 20) return { x: SRC.x, y: SRC.y, kind: "src" };
+  if (mi === 24) return { x: SRC.x, y: SRC.y, kind: "src" };
   return null;
 }
 function drawCrevasseHint(t) {
@@ -1620,7 +1775,7 @@ function frame(t) {
     }
   }
   // parasites aux frontières (après la mission 15)
-  if (S.mi >= 19) {
+  if (S.mi >= 23) {
     mobT += dt;
     if (mobT > 55 && mobs.length < 2) { mobT = 0; spawnMob(); }
   }
@@ -1644,7 +1799,7 @@ function frame(t) {
       save();
     }
   }
-  if (S.techs.includes("dhcp")) {
+  if (S.techs.includes("dhcp") || dhcpOnline()) {
     for (const o of [...orbs]) {
       if (t - o.born > 3500) collectOrb(o, true);
     }
@@ -1662,6 +1817,7 @@ function frame(t) {
     drawTerrainTex();
     for (let y = bmin(); y <= bmax(); y++) for (let x = bmin(); x <= bmax(); x++) drawTile(x, y, t);
     for (const b of S.buildings) drawLink(b, t);
+    for (const l of S.links) drawCable(l, t);
     const drawables = S.buildings.map((b) => ({ d: b.x + b.y, b }));
     for (let y = bmin(); y <= bmax(); y++) for (let x = bmin(); x <= bmax(); x++) {
       const k2 = tileAt(x, y).kind;
@@ -1802,6 +1958,25 @@ cv.addEventListener("pointerup", (e) => {
     }
     return;
   }
+  // mode câblage : relier deux machines
+  if (wire) {
+    const tpw = s2w(sx, sy);
+    let k = null;
+    if (tpw.x === SRC.x && tpw.y === SRC.y) k = "src";
+    else if (S.buildings.some((b) => b.x === tpw.x && b.y === tpw.y)) k = nkey(tpw.x, tpw.y);
+    if (!k) { toast("Tape un <b>bâtiment</b> ou la <b>Source</b> à câbler."); return; }
+    if (!wire.a) {
+      wire.a = k;
+      sfx.ui();
+      toast("🔌 <b>" + nodeAt(k).nm + "</b> — choisis l'autre extrémité.");
+      return;
+    }
+    const err = addLink(wire.a, k);
+    if (err) { sfx.deny(); toast("🔌 " + err); }
+    else toast("🔌 Câble posé <b>(10 💠)</b>.");
+    wire.a = null;
+    return;
+  }
   // placement d'un drone récolteur
   if (placing) {
     const tp0 = s2w(sx, sy);
@@ -1880,6 +2055,11 @@ function zoomAt(f) {
   clampCam();
 }
 $("#z-in").onclick = () => zoomAt(1.25);
+$("#wirebtn").onclick = () => {
+  wire = wire ? null : { a: null };
+  $("#wirebtn").classList.toggle("on", !!wire);
+  toast(wire ? "🔌 <b>Mode câblage</b> : tape deux machines à relier (10 💠 le câble)." : "Mode câblage terminé.");
+};
 $("#z-out").onclick = () => zoomAt(0.8);
 
 /* ---------- feuilles ---------- */
@@ -1889,6 +2069,7 @@ function closeSheets() {
   cave = null;
   atl = null;
   rest = null;
+  sim = null;
 }
 for (const b of document.querySelectorAll(".sheet .close")) b.onclick = closeSheets;
 
@@ -1947,6 +2128,12 @@ function openBld(b) {
   $("#bl-name").innerHTML = def.ic + " " + def.nm + " <span style='color:var(--dim);font-size:12px'>· NIV " + b.l + "</span>";
   $("#bl-desc").textContent = def.ds;
   let stats = "";
+  if (S.mi >= 8 && b.t !== "switchhub" && b.t !== "dhcpsrv") {
+    const con = netConnected(nkey(b.x, b.y));
+    stats += "<div class='stat'><span>Réseau</span><b>" + (con ? "🔌 raccordé" : "⚠ non raccordé · −30 %") + "</b></div>";
+  } else if (b.t === "switchhub" || b.t === "dhcpsrv") {
+    stats += "<div class='stat'><span>Ports</span><b>" + portUsed(nkey(b.x, b.y)) + " / " + portMax(nkey(b.x, b.y)) + "</b></div>";
+  }
   if (b.t === "extracteur") {
     const cb = crysAdj(b.x, b.y);
     stats += "<div class='stat'><span>Extraction</span><b>+" + fmt(0.7 * Math.pow(b.l, 1.4) * (1 + 0.15 * cb) * 60) + " 💠/min</b></div>";
@@ -1972,8 +2159,8 @@ function openBld(b) {
       row.innerHTML = u.ic + " " + u.nm + " · " + u.cost + " 💠" + (u.ceo ? " + " + u.ceo + " Eo" : "") +
         "<div class='ds2'>" + u.ds + "</div>";
       row.disabled = S.units.length >= cap || S.mat < u.cost || S.eo < u.ceo;
-      if (!row.disabled && ((S.mi === 18 && k === "recolteur") ||
-          (S.mi === 19 && k === "chasseur" && !S.units.some((v) => v.t === "chasseur"))))
+      if (!row.disabled && ((S.mi === 22 && k === "recolteur") ||
+          (S.mi === 23 && k === "chasseur" && !S.units.some((v) => v.t === "chasseur"))))
         row.classList.add("guide");
       row.onclick = () => assemble(k, b);
       fa.appendChild(row);
@@ -2016,7 +2203,7 @@ function openBld(b) {
     };
   }
   const tb = $("#bl-turbo");
-  tb.classList.toggle("guide", S.mi === 15 && !!def.game);
+  tb.classList.toggle("guide", S.mi === 19 && !!def.game);
   if (def.game && S.mi >= 11) {
     tb.hidden = false;
     tb.textContent = "⚡ SURCHARGE";
@@ -2075,7 +2262,7 @@ function openSource() {
     };
     act.parentElement.insertBefore(cb, act);
   }
-  if (S.mi < 16) {
+  if (S.mi < 20) {
     act.innerHTML = "<div class='sub' style='margin:0'>L'Étincelle grandit avec ta colonie…</div>";
     $("#sh-source").hidden = false;
     return;
@@ -2089,7 +2276,7 @@ function openSource() {
     const ns = GRID + 2 * (S.ext + 1);
     btn.textContent = "ÉTENDRE LE TERRITOIRE → " + ns + "×" + ns + " · " + fmt(cost) + " 💠";
     btn.disabled = S.mat < cost;
-    if (S.mi === 20 && !btn.disabled) btn.classList.add("guide");
+    if (S.mi === 24 && !btn.disabled) btn.classList.add("guide");
     btn.onclick = () => {
       if (S.mat < cost) { sfx.deny(); return; }
       S.mat -= cost;
@@ -3183,7 +3370,7 @@ function openTech() {
     else {
       btn.textContent = fmt(def.eo) + " Eo";
       btn.disabled = locked || S.eo < def.eo;
-      if (!btn.disabled && ((S.mi === 7 && key === "dhcp") || (S.mi === 8 && key === "dns")))
+      if (!btn.disabled && S.mi === 16 && key === "dns")
         btn.classList.add("guide");
       btn.onclick = () => {
         if (S.eo < def.eo) { sfx.deny(); return; }
@@ -3206,13 +3393,17 @@ function unlockMap() { refreshGates(); }
 function refreshGates() {
   $("#hud-eo").style.display = (bcount("ferme") || S.eo > 0.5) ? "" : "none";
   $("#hud-en").style.display = enUse() > 0 ? "" : "none";
-  $("#tab-tech").hidden = S.mi < 11;
-  $("#tab-tech").classList.toggle("guide", S.mi === 11 || S.mi === 12);
+  $("#tab-tech").hidden = S.mi < 16;
+  $("#tab-tech").classList.toggle("guide", S.mi === 16);
+  $("#tab-net").hidden = S.mi < 8;
+  $("#tab-net").classList.toggle("guide", S.mi === 11);
+  $("#wirebtn").hidden = S.mi < 8;
+  $("#wirebtn").classList.toggle("guide", (S.mi === 8 || S.mi === 9) && !wire);
   const dns = S.techs.includes("dns");
   $("#tab-map").hidden = !dns;
   $("#tab-map").disabled = !dns;
   $("#tab-map").textContent = "CARTE";
-  $("#tab-map").classList.toggle("guide", S.mi === 13);
+  $("#tab-map").classList.toggle("guide", S.mi === 17);
   $("#tab-arch").hidden = !(S.archives.length || S.mi >= 2);
   $("#tab-arch").classList.toggle("guide", S.mi >= 2 && S.mi <= 4 && !S.memories.length);
 }
@@ -3237,6 +3428,165 @@ $("#tab-map").onclick = () => {
   missionDone("map");
 };
 $("#tab-tech").onclick = () => { setTab("col"); view = "col"; openTech(); };
+$("#tab-net").onclick = () => { setTab("col"); view = "col"; openNet(); };
+const NET_LAYERS = [
+  { id: "app", nm: "Application", osi: "OSI 7 · les services", ds: "Ce que font les machines : distribuer des adresses (DHCP), nommer (DNS)…" },
+  { id: "tra", nm: "Transport", osi: "OSI 4 · TCP / UDP", ds: "Découpe et fiabilise les échanges — bientôt dans la colonie." },
+  { id: "res", nm: "Réseau", osi: "OSI 3 · IP, routage", ds: "Les adresses IP et le chemin d'un réseau à l'autre." },
+  { id: "lia", nm: "Liaison", osi: "OSI 2 · trames, MAC, switch", ds: "Les trames vont de machine à machine, commutées par les switchs." },
+  { id: "phy", nm: "Physique", osi: "OSI 1 · câbles, bits", ds: "Les câbles portent des bits. Sans lien physique, rien ne passe." },
+];
+function openNet() {
+  closeSheets();
+  const acts = $("#net-actions");
+  acts.innerHTML = "";
+  const bw = document.createElement("button");
+  bw.textContent = (wire ? "🔌 Câblage en cours…" : "🔌 Câbler sur la carte");
+  bw.onclick = () => { closeSheets(); if (!wire) $("#wirebtn").onclick(); };
+  if (S.mi === 8 || S.mi === 9) bw.classList.add("guide");
+  acts.appendChild(bw);
+  const bs = document.createElement("button");
+  bs.textContent = "▶ SIMULATION : suivre une trame";
+  bs.disabled = !S.links.length;
+  bs.onclick = () => openSim();
+  if (S.mi === 11 && !bs.disabled) bs.classList.add("guide");
+  acts.appendChild(bs);
+  for (const tt of ["switchhub", "dhcpsrv"]) {
+    if ((BT[tt].mAt || 0) > S.mi) continue;
+    const b = document.createElement("button");
+    b.textContent = "+ " + BT[tt].nm + " · " + fmt(buildCost(tt)) + " 💠" + (BT[tt].eo ? " + " + buildCostEo(tt) + " Eo" : "");
+    b.onclick = () => { closeSheets(); toast(BT[tt].ic + " Tape une <b>case libre</b> puis choisis <b>" + BT[tt].nm + "</b>."); };
+    acts.appendChild(b);
+  }
+  const bands = $("#net-bands");
+  bands.innerHTML = "";
+  const dhcp = dhcpOnline();
+  for (const L of NET_LAYERS) {
+    const d = document.createElement("div");
+    d.className = "net-band";
+    d.innerHTML = "<div class='bn'><b>" + L.nm + "</b> · " + L.osi + "</div>";
+    const chips = document.createElement("div");
+    chips.className = "net-chips";
+    const chip = (html, on, info) => {
+      const c = document.createElement("button");
+      c.className = "net-chip" + (on ? "" : " off");
+      c.innerHTML = html;
+      c.onclick = () => { sfx.ui(); toast(info, true); };
+      chips.appendChild(c);
+    };
+    if (L.id === "phy") {
+      chip("⚡ La Source · " + portUsed("src") + "/" + portMax("src"), true, "Le cœur du réseau. " + portUsed("src") + "/" + portMax("src") + " ports utilisés — un Switch en offre 8 de plus.");
+      for (const b of S.buildings) {
+        const k = nkey(b.x, b.y);
+        const on = netConnected(k);
+        chip(BT[b.t].ic + " " + BT[b.t].nm, on, on ? BT[b.t].nm + " : raccordé · " + portUsed(k) + "/" + portMax(k) + " ports." : "Non raccordé : −30 % de production. Tire un câble avec 🔌.");
+      }
+      chip("〰 " + S.links.length + " câble" + (S.links.length > 1 ? "s" : ""), S.links.length > 0, L.ds);
+    } else if (L.id === "lia") {
+      const sws = S.buildings.filter((b) => b.t === "switchhub");
+      if (!sws.length) chip("Aucun switch — les trames se partagent les mêmes fils", false, L.ds);
+      for (const sw of sws) {
+        const k = nkey(sw.x, sw.y);
+        chip("🔀 Switch · " + portUsed(k) + "/8 ports", netConnected(k), "Le switch tient une table MAC : il apprend qui est branché sur quel port et n'envoie chaque trame qu'au bon endroit.");
+      }
+      chip("MAC Source : " + macOf("src"), true, "Chaque interface réseau a une adresse MAC unique, en couche Liaison.");
+    } else if (L.id === "res") {
+      if (!dhcp) chip("Pas d'adresses IP — il faut un Serveur DHCP", false, "Sans adresse de couche 3, pas de vrai ping : les machines n'ont pas de nom logique.");
+      else {
+        chip("🪪 DHCP en ligne", true, "Le Serveur DHCP attribue automatiquement une adresse IP à chaque machine raccordée.");
+        chip("⚡ " + ipOf("src"), true, "L'adresse IP de la Source, attribuée par le DHCP.");
+        for (const b of S.buildings) {
+          const k = nkey(b.x, b.y);
+          if (netConnected(k) && b.t !== "switchhub") chip(BT[b.t].ic + " " + ipOf(k), true, "Adresse IP de " + BT[b.t].nm + " (un switch, lui, n'a pas besoin d'IP pour commuter).");
+        }
+      }
+    } else if (L.id === "tra") {
+      chip("À venir : TCP / UDP", false, L.ds);
+    } else {
+      chip(dhcp ? "🪪 Service DHCP" : "Aucun service en ligne", dhcp, L.ds);
+    }
+    d.appendChild(chips);
+    bands.appendChild(d);
+  }
+  $("#sh-net").hidden = false;
+}
+function simPath() {
+  if (netDirty) netRecalc();
+  const keys = S.buildings.map((b) => nkey(b.x, b.y)).filter((k) => netSet.has(k));
+  const target = keys.find((k) => { const n = nodeAt(k); return n.t !== "switchhub" && n.t !== "dhcpsrv"; }) || keys[0];
+  if (!target) return null;
+  const prev = { src: null }, q = ["src"];
+  while (q.length) {
+    const cur = q.shift();
+    if (cur === target) break;
+    for (const l of S.links) {
+      const nx = l.a === cur ? l.b : l.b === cur ? l.a : null;
+      if (nx && !(nx in prev)) { prev[nx] = cur; q.push(nx); }
+    }
+  }
+  if (!(target in prev)) return null;
+  const path = [];
+  for (let k = target; k !== null; k = prev[k]) path.unshift(k);
+  return path;
+}
+function openSim() {
+  const path = simPath();
+  if (!path || path.length < 2) { toast("Câble d'abord un bâtiment à la Source (🔌)."); return; }
+  closeSheets();
+  const dhcp = dhcpOnline();
+  const last = path[path.length - 1];
+  const steps = [];
+  const nmOf = (k) => nodeAt(k).nm;
+  steps.push({ at: 0, msg: "⚡ La Source prépare des <b>données</b> pour " + nmOf(last) + ".", stack: ["data"] });
+  if (dhcp) steps.push({ at: 0, msg: "Couche <b>Réseau</b> : le paquet reçoit ses adresses IP — <b>" + ipOf("src") + " → " + ipOf(last) + "</b>.", stack: ["ip", "data"] });
+  else steps.push({ at: 0, msg: "Pas de Serveur DHCP : <b>aucune adresse IP</b>. Ce sera une trame de test, couche Liaison uniquement.", stack: ["data"] });
+  steps.push({ at: 0, msg: "Couche <b>Liaison</b> : encapsulation dans une <b>trame</b> — MAC " + macOf("src") + " → " + macOf(last) + ".", stack: dhcp ? ["mac", "ip", "data"] : ["mac", "data"] });
+  for (let i = 1; i < path.length; i++) {
+    steps.push({ at: i, msg: "Couche <b>Physique</b> : les bits filent dans le câble ⚡", stack: null });
+    if (i < path.length - 1 && nodeAt(path[i]).t === "switchhub")
+      steps.push({ at: i, msg: "🔀 Le <b>Switch</b> lit la MAC de destination dans sa table et commute la trame vers le bon port.", stack: null });
+  }
+  steps.push({ at: path.length - 1, msg: "📬 " + nmOf(last) + " <b>désencapsule</b> : trame" + (dhcp ? " ➜ paquet IP" : "") + " ➜ données. <b>Livraison réussie ✓</b>", stack: ["done"] });
+  sim = { path, steps, i: 0 };
+  renderSim();
+  $("#sh-sim").hidden = false;
+}
+function renderSim() {
+  const st = sim.steps[sim.i];
+  $("#sim-title").textContent = "▶ Simulation · étape " + (sim.i + 1) + " / " + sim.steps.length;
+  $("#sim-msg").innerHTML = st.msg;
+  const pd = $("#sim-path");
+  pd.innerHTML = "";
+  sim.path.forEach((k, idx) => {
+    if (idx) { const a = document.createElement("span"); a.className = "sim-arrow"; a.textContent = "──"; pd.appendChild(a); }
+    const nd = nodeAt(k);
+    const n = document.createElement("span");
+    n.className = "sim-node" + (idx === st.at ? " cur" : "");
+    n.textContent = (k === "src" ? "⚡" : BT[nd.t].ic) + " " + nd.nm;
+    pd.appendChild(n);
+  });
+  if (st.stack) {
+    const enc = { data: ["#a06bff", "DONNÉES"], ip: ["#38a9ff", "PAQUET IP"], mac: ["#57e389", "TRAME · MAC"], done: ["#57e389", "✓ DONNÉES LIVRÉES"] };
+    const build = (list) => !list.length ? "" :
+      "<div class='enc' style='border-color:" + enc[list[0]][0] + "'><span style='color:" + enc[list[0]][0] + "'>" + enc[list[0]][1] + "</span>" + build(list.slice(1)) + "</div>";
+    $("#sim-stack").innerHTML = build(st.stack);
+  }
+  $("#sim-next").textContent = sim.i >= sim.steps.length - 1 ? "TERMINER ✓" : "SUIVANT ▶";
+}
+$("#sim-next").onclick = () => {
+  if (!sim) return;
+  if (sim.i >= sim.steps.length - 1) {
+    $("#sh-sim").hidden = true;
+    sim = null;
+    sfx.tech();
+    missionDone("sim1");
+    save();
+    return;
+  }
+  sim.i++;
+  sfx.ui();
+  renderSim();
+};
 $("#tab-arch").onclick = () => { setTab("col"); view = "col"; openArch(); };
 function setTab(v) {
   $("#tab-col").classList.toggle("on", v === "col");
@@ -3608,6 +3958,20 @@ window.__api = {
   orbsPos() { return orbs.filter((o) => o.sx != null).map((o) => ({ sx: o.sx, sy: o.sy, tx: o.x, ty: o.y })); },
   mobsPos() { return mobs.filter((m) => m.sx != null && !m.atk).map((m) => ({ sx: m.sx, sy: m.sy, tx: m.x, ty: m.y })); },
   center(x, y) { const c = w2s(x, y); cam.x += W / 2 - c.x; cam.y += H / 2 - c.y; clampCam(); },
+  link(ax, ay, bx, by) { return addLink(ax === "src" ? "src" : nkey(ax, ay), bx === "src" ? "src" : nkey(bx, by)); },
+  autolink() {
+    for (const b of S.buildings) {
+      const k = nkey(b.x, b.y);
+      if (netConnected(k)) continue;
+      if (!addLink(k, "src")) continue;
+      for (const o of S.buildings) {
+        const ko = nkey(o.x, o.y);
+        if (ko !== k && netConnected(ko) && !addLink(k, ko)) break;
+      }
+    }
+  },
+  simDone() { missionDone("sim1"); },
+  netInfo() { if (netDirty) netRecalc(); return { links: S.links.length, connected: netSet.size }; },
   assemble(k) { const f = S.buildings.find((b) => b.t === "forge"); if (f) assemble(k, f); },
   asmOk() { return ASM.map((sl) => sl.opts.findIndex((o) => o.ok)); },
   crystalsAll() {

@@ -4,7 +4,8 @@
 bridger le jeu avec l'informatique réelle de façon fun, tôt et bien plus
 poussée que le seul choix des composants serveur — une architecture de SI
 parallèle, avec révision des couches (OSI/TCP), via une interface type
-« Cisco Packet Tracer d'un nouveau genre » bridgée au jeu. **À valider.***
+« Cisco Packet Tracer d'un nouveau genre » bridgée au jeu.
+**VALIDÉ par le propriétaire (2026-08-08) — v1 implémentée dans la slice.***
 
 ## Principe fondateur : la colonie EST la couche 1
 
@@ -71,6 +72,43 @@ l'arbre de recherche.
 - 4 premières missions du chapitre 🔌.
 - **Data-driven** (ELEMENTS / LAYERS / MISSIONS en tableaux) pour injecter
   ensuite le vrai contenu de formation du propriétaire, comme Admin Rush.
+
+## v1 IMPLÉMENTÉE (2026-08-08)
+
+- **Arbitrages validés** : 5 bandes (OSI précisé dans les fiches) ;
+  apparition mission 8 (chapitre 🔌 après la Centrale NIV 2) ; malus doux
+  −30 % pour un bâtiment non raccordé (dès la mission 9) ; DHCP migré en
+  équipement posé/câblé (DNS/FIREWALL suivront en v2).
+- **Face monde** : bouton 🔌 (mode câblage tap-tap, 10 💠 le câble),
+  câbles cuivre dessinés entre bâtiments, particules de trafic quand le
+  lien est relié à la Source. Ports limités : Source 3, bâtiment 2,
+  Switch 8, Serveur DHCP 1 — la pénurie de ports amène le Switch.
+- **Équipements** : Switch réseau (30 💠) et Serveur DHCP (40 💠 + 5 Eo)
+  dans le roster BT (menu Construire + palette de l'onglet RÉSEAU).
+  DHCP en ligne = adresses IP visibles + auto-collecte des éclats
+  (ancien effet de la techno, retirée de TECHNOS).
+- **Face schéma** (onglet RÉSEAU) : 5 bandes Application/Transport/
+  Réseau/Liaison/Physique, chips d'état tapables (chaque tap = une
+  ligne de savoir), MAC et IP réelles dérivées des coordonnées.
+- **Mode Simulation** : suivi pas à pas d'une trame Source → bâtiment,
+  pile d'encapsulation visuelle (DONNÉES → [PAQUET IP] → TRAME), étape
+  switch « lit la table MAC », désencapsulation à l'arrivée. Sans DHCP :
+  trame de test couche 2 et message pédagogique ; avec DHCP : paquet IP
+  complet.
+- **Missions 8-11** (chapitre 🔌) : câbler l'Extracteur, tout raccorder,
+  poser un Switch, suivre une trame. Mission 15 : poser le Serveur DHCP.
+  25 missions au total, migration de sauvegarde v3→v4.
+- **Data-driven** : NET_LAYERS (bandes + savoirs), PORTS, équipements en
+  BT — prêt à recevoir le contenu de formation du propriétaire.
+
+## Suite (v2+)
+
+- DNS et FIREWALL en équipements (résolution de noms jouée, pare-feu
+  placé contre les parasites-attaques).
+- Pannes-enquêtes (câble coupé, conflit d'adresses) et outils de
+  diagnostic (ping ciblé, table MAC détaillée).
+- Routeur + second segment à l'expansion ; VLAN → VPN vers l'académie.
+- Assets propriétaire pour les équipements (icônes/sprites charte).
 
 ## À trancher avec le propriétaire
 
