@@ -1178,7 +1178,7 @@ function drawTile(x, y, t) {
     const dh = hash2(x + 1213, y + 733);
     if (dh % 100 < 6) {
       const r = mulberry32(dh);
-      const dw = (1.1 + r() * 0.8) * TW * z;
+      const dw = (0.4 + r() * 0.3) * TW * z; // petites craquelures : ~2 par 6 cases
       ctx.globalAlpha = 0.85;
       ctx.drawImage(DECAL.img, p.x - dw / 2 + (r() - 0.5) * TW * 0.3 * z, p.y - dw / 4 + (r() - 0.5) * TH * 0.3 * z, dw, dw / 2);
       ctx.globalAlpha = 1;
