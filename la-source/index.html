@@ -1212,8 +1212,11 @@ function tileAt(x, y) {
           k: 0.55 + r() * 0.55,
         });
       }
-      // fissures du propriétaire : plus rares, décalées elles aussi
-      if (r() < 0.10) semis.push({ f: r() < 0.5 ? 0 : 1, ox: (r() - 0.5) * 0.6, oy: (r() - 0.5) * 0.6, k: 0.30 + r() * 0.16 });
+      // LA fissure et LES fissures : une seule de chaque, à leur place fixe
+      for (let fi = 0; fi < FISS_SPOTS.length; fi++) {
+        if (FISS_SPOTS[fi][0] === x && FISS_SPOTS[fi][1] === y)
+          semis.push({ f: fi, ox: -0.06, oy: 0.04, k: 0.38 });
+      }
     }
     t = { kind, j: j2, semis, dj: r() };
     tcache.set(k, t);
@@ -1732,7 +1735,11 @@ const D_EBOULIS = [6, 7, 8, 15];                     // éboulis : déblayable
 const D_CREVASSE = [21, 23, 19];                     // crevasse : colmatage Tetris
 // decals au sol : petites formes sèches, semées en plusieurs exemplaires par
 // case, décalées et de tailles variées (jamais centrées — retour propriétaire)
-const D_PLAT = [0, 1, 2, 17, 24, 27, 30, 32, 35];
+// uniquement les petits cailloux : aucun décor qui dessine une « zone »
+// (craquelures, flaques asséchées, cratères) — retour propriétaire
+const D_PLAT = [0, 1, 2, 17, 30, 32, 35];
+// UNE seule fissure de chaque type sur toute la carte, à un emplacement fixe
+const FISS_SPOTS = [[2, 6], [6, 1]];
 const DECO_K = 0.62; // les décors sont nettement plus petits qu'à l'échelle nominale
 
 /* ---------- LE GRAND LAC (asset du propriétaire) ----------
