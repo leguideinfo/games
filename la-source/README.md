@@ -32,6 +32,16 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   récolter au doigt, surtout près des cristaux — la toute première activité
   d'Aurore, avant tout bâtiment (couche « bambin »). Découplés de
   l'Extracteur, qui est l'automatisation.
+- **Drones de soute & tuiles cristaux (v8.3)** : les amas de cristaux sont
+  les **2 assets du propriétaire** (`sol-tuile-cristaux-1/2.png`) — bake
+  « sprite » : cristaux préservés par masque couleur, **halo de sol compact**
+  au pied aligné sur l'étalonnage du plateau (aucun débordement gênant en
+  bordure) ; amas 1 petit, amas 2 large, tailles variées par graine.
+  **2 drones ouvriers en soute dès le départ** : taper un amas envoie un
+  drone le récolter (vol animé depuis la Source) — les premières ressources
+  arrivent **avant** le premier Extracteur, avec une mission tuto dédiée
+  (26 missions, migration de sauvegarde v4→v5). La Forge en assemble
+  d'autres ensuite ; les drones de soute ne comptent pas contre sa capacité.
 - **Découverte pas-à-pas (v3)** : au départ, l'écran ne montre que le terrain,
   la Source et le compteur de matériaux. Les 14 missions déroulent la
   découverte dans un ordre logique : éclats → Extracteur (⚡ apparaît) →
@@ -68,7 +78,7 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   AMÉLIORER, SURCHARGE, assemblage, technologie, ÉTENDRE). Un enfant suit
   la lumière.
 - **Forge d'assemblage & unités (v4)** : la Forge assemble les premières
-  unités (capacité = niveaux de Forge + 1) —
+  unités (capacité = niveaux de Forge + 3, dont les 2 drones de soute) —
   **Drone récolteur 🛸** (80 💠) : se pose sur un champ de cristaux et le
   récolte (+36 💠/min) — les cristaux deviennent une ressource exploitable,
   en plus du bonus d'adjacence des Extracteurs ;

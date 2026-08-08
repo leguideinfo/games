@@ -17,7 +17,8 @@
 >   Récompense en Eo croissante (5+5×id), légendes lore placeholder.
 >   **Gating (retour propriétaire 2026-08-07) : le verrou « Lecteur
 >   d'Archives » est retiré des images** — ce sont les photos du module
->   d'Aurore, jouables dès l'ouverture de QUÊTES (mission 2) ; seule la
+>   d'Aurore, jouables dès l'ouverture de QUÊTES (mission 3 depuis
+  l'insertion du tuto drone, 2026-08-08) ; seule la
 >   **chaîne** demeure (restaurer la précédente débloque la suivante).
 >   **Difficulté croissante actée** (la fille du propriétaire fait déjà du
 >   100 pièces IRL — ici on reste progressif) : 3×3 → 3×3 → 4×4 → 5×5,
@@ -89,7 +90,8 @@ visible, aligné avec les fédérations et la vision (« couches » 1 à 4).
   construit sous les yeux. Complétion → vague de révélation + ligne de
   savoir + 60 💠, rejouable en « REVOIR ».
 - **Disponible tôt** (retour propriétaire : après la quête serveur c'était
-  trop tard) : l'onglet QUÊTES s'ouvre dès la **mission 2** avec l'Atelier.
+  trop tard) : l'onglet QUÊTES s'ouvre dès la **mission 3** (après le
+  premier Extracteur) avec l'Atelier.
   Cohérence lore : les **mémoires visuelles** sont dans le module d'Aurore
   (à elle, accessibles d'emblée) ; seules les **Archives textuelles**
   (l'intrigue) exigent le système d'époque.
@@ -106,7 +108,7 @@ visible, aligné avec les fédérations et la vision (« couches » 1 à 4).
   souvenirs**. Son panneau a désormais **deux postes de travail distincts** :
   « 🛠 Production d'unités » (drone ouvrier, chasseur) et « 🧩 Atelier de
   Mémoire » (la prochaine Mémoire à reconstituer, ou la Fresque à revoir).
-- **L'entrée QUÊTES est conservée** (accès précoce dès la mission 2 + vue
+- **L'entrée QUÊTES est conservée** (accès précoce dès la mission 3 + vue
   Fresque/liste) — la Forge est l'ancrage diégétique dans la colonie.
 - **Piste d'intégration profonde (à valider)** : les premières Mémoires
   (1-4) s'assemblent dans le module d'Aurore ; à partir de la 005, « les

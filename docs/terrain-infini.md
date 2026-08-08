@@ -84,6 +84,17 @@ Supreme Commander.
   coins : aucun carré visible). En jeu : ~7 % des carreaux du pattern,
   graine stable, mips dédiées. Le decal découpé (`decal-fissure.png`)
   reste en archive — la tuile-variante donne un meilleur raccord.
+- **Amas de cristaux (2026-08-08)** : remplacés par les **2
+  tuiles-variantes du propriétaire** (`sol-tuile-cristaux-1/2.png`) —
+  bake « sprite » : cristaux préservés par **masque couleur** (teintes
+  cyan/bleu saturées), **halo de sol compact** au pied (radial aplati
+  ~perspective), sol du halo passé par les **ratios exacts de
+  l'étalonnage du plateau** (186/99/21 → 147/85/37) : raccord invisible,
+  sûr même en bordure de plateau. Amas 1 petit (~0,78 case), amas 2
+  large (~1,22 case), variation par graine, mips dédiées, tri en
+  profondeur conservé (un amas devant un bâtiment passe devant).
+  Gameplay associé : **2 drones ouvriers en soute** au départ, tap sur un
+  amas = envoi d'un drone (mission tuto insérée en 1, 26 missions).
 - **Caméra** : bornée autour du plateau (+4 cases), **zoom 1,6–5,2**
   (dézoom resserré) ; expansion débornée.
 - **Prochain chantier relief (2 étages)** : ① relief par décor — assets

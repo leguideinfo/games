@@ -95,9 +95,10 @@ l'arbre de recherche.
   switch « lit la table MAC », désencapsulation à l'arrivée. Sans DHCP :
   trame de test couche 2 et message pédagogique ; avec DHCP : paquet IP
   complet.
-- **Missions 8-11** (chapitre 🔌) : câbler l'Extracteur, tout raccorder,
-  poser un Switch, suivre une trame. Mission 15 : poser le Serveur DHCP.
-  25 missions au total, migration de sauvegarde v3→v4.
+- **Missions 9-12** (chapitre 🔌, décalées de +1 depuis l'insertion du
+  tuto « drone de soute » en mission 1, 2026-08-08) : câbler l'Extracteur,
+  tout raccorder, poser un Switch, suivre une trame. Mission 16 : poser le
+  Serveur DHCP. 26 missions au total, migrations de sauvegarde v3→v4→v5.
 - **Data-driven** : NET_LAYERS (bandes + savoirs), PORTS, équipements en
   BT — prêt à recevoir le contenu de formation du propriétaire.
 
