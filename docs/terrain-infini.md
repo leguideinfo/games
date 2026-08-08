@@ -101,10 +101,12 @@ Supreme Commander.
 - **Tuiles-bâtiments (2026-08-08)** : Extracteur et Centrale remplacés
   par les assets-tuiles du propriétaire (`tuile-extracteur/centrale.png`),
   même bake que les cristaux + **composante connexe depuis le centre**
-  (les cristaux/roches décoratifs de la tuile sont jetés) ; le sol du halo
+  (cristaux/roches décoratifs et gros caillou jetés) ; le sol de la frange
   est **mesuré par asset** puis mappé vers la teinte étalonnée (les fonds
-  de ces tuiles diffèrent de la tuile de base). Contenu ≤ 1 case (bord
-  intérieur ~6 %), ancre = centre du halo sur le centre de case.
+  de ces tuiles diffèrent de la tuile de base). **Découpe serrée (retour
+  2026-08-08)** : plus de halo — bâtiment + fine frange de sol adoucie
+  (~15 px), largeur = 1 case pile (le bâtiment colle aux bords de la
+  tuile), ancre = pied avant posé vers le coin sud de la case.
 - **Étalonnage remonté (retour 2026-08-08)** : multiply 252/233/202 et
   désaturation 0,30 (avant : 236/216/187 × 0,34) — sol en jeu mesuré
   **164,8/96/38,3** (cible de tous les bakes de decals).
