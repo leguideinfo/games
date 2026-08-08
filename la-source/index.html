@@ -380,16 +380,24 @@
   @keyframes frzin { from { transform: scale(.8); opacity: 0; } }
   #frz-title { text-align: center; font-weight: 700; font-size: 16px; color: var(--cyan); margin-bottom: 8px; }
   #frz-zone { position: relative; height: 240px; border-radius: 14px; background: rgba(6, 9, 19, .5); overflow: hidden; }
-  .frz-hub {
-    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-    width: 58px; height: 58px; border-radius: 50%;
-    border: 2px solid var(--cyan); background: rgba(6, 9, 19, .7);
-    display: grid; place-items: center; font-size: 26px;
-    box-shadow: 0 0 18px rgba(78, 242, 224, .5);
+  .frz-dev {
+    position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%);
+    width: 118px; padding: 12px 10px 8px;
+    background: linear-gradient(180deg, #1a2030, #0c1120);
+    border: 1px solid #3a4358; border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .6);
     pointer-events: none; z-index: 1;
   }
-  .frz-hub.rx { animation: hubrx .3s; }
-  @keyframes hubrx { 40% { transform: translate(-50%, -50%) scale(1.2); box-shadow: 0 0 30px rgba(78, 242, 224, .9); } }
+  .frz-dev.rx { animation: devrx .25s; }
+  @keyframes devrx { 40% { transform: translate(-50%, -50%) scale(1.06); } }
+  .dev-leds { display: flex; gap: 7px; justify-content: center; }
+  .dev-leds span { width: 11px; height: 11px; border-radius: 50%; background: #232b3d; transition: background .15s; }
+  .dev-leds span.amber { background: #ffc857; box-shadow: 0 0 8px #ffc857; }
+  .dev-leds span.on { background: #57e389; box-shadow: 0 0 10px #57e389; }
+  .dev-label { text-align: center; font-size: 9px; color: var(--dim); letter-spacing: .14em; margin-top: 7px; }
+  .frz-gauge { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); display: flex; gap: 4px; z-index: 1; pointer-events: none; }
+  .frz-gauge i { width: 17px; height: 9px; border-radius: 3px; background: #232b3d; }
+  .frz-gauge i.f { background: #ffc857; box-shadow: 0 0 7px rgba(255, 200, 87, .7); }
   .pkt {
     position: absolute; width: 14px; height: 14px; border-radius: 50%;
     background: #ffe9b0; box-shadow: 0 0 10px #ffd27a;
@@ -695,7 +703,7 @@
 
   <div id="frenzy" hidden>
     <div id="frz-panel">
-      <div id="frz-title">📡 Rafale de paquets !</div>
+      <div id="frz-title">⚡ Amorçage du hub !</div>
       <div id="frz-zone"></div>
       <div id="frz-score"></div>
     </div>
@@ -1950,10 +1958,14 @@ let frz = null, collectTimes = [], frzCooldownUntil = 0;
 function startFrenzy() {
   frzCooldownUntil = performance.now() + 90000;
   collectTimes = [];
-  frz = { mat: 0 };
+  frz = { mat: 0, fill: 0, booted: false };
   const zone = $("#frz-zone");
-  zone.innerHTML = "<div class='frz-hub' id='frz-hub'>📡</div>";
-  $("#frz-score").textContent = "Route les éclats vers le hub !";
+  zone.innerHTML = "<div class='frz-dev' id='frz-dev'>" +
+    "<div class='dev-leds' id='frz-leds'><span></span><span></span><span></span><span></span></div>" +
+    "<div class='dev-label'>HUB-01 · HORS TENSION</div></div>" +
+    "<div class='frz-gauge' id='frz-gauge'>" + "<i></i>".repeat(8) + "</div>";
+  $("#frz-title").textContent = "⚡ Amorçage du hub !";
+  $("#frz-score").textContent = "Injecte l'énergie récoltée !";
   $("#frenzy").hidden = false;
   [660, 880, 1100].forEach((f, i) => beep(f, 0.1, "sine", 0.05, i * 0.09));
   const myFrz = frz;
@@ -1969,7 +1981,7 @@ function startFrenzy() {
       if (frz !== myFrz) return;
       frz.mat += 5 + colonyLevel();
       sfx.collect();
-      // le paquet file vers le hub central
+      // l'éclat d'énergie file dans la prise du hub
       const pkt = document.createElement("div");
       pkt.className = "pkt";
       pkt.style.left = (parseFloat(b.style.left) + 19) + "px";
@@ -1977,15 +1989,42 @@ function startFrenzy() {
       zone.appendChild(pkt);
       requestAnimationFrame(() => {
         pkt.style.left = (zone.clientWidth / 2 - 7) + "px";
-        pkt.style.top = (zone.clientHeight / 2 - 7) + "px";
+        pkt.style.top = (zone.clientHeight * 0.4 - 7) + "px";
       });
       setTimeout(() => {
+        if (frz !== myFrz) { pkt.remove(); return; }
         pkt.remove();
-        const hub = $("#frz-hub");
-        if (hub) { hub.classList.remove("rx"); void hub.offsetWidth; hub.classList.add("rx"); beep(880, 0.05, "square", 0.03); }
+        const dev = $("#frz-dev");
+        if (dev) { dev.classList.remove("rx"); void dev.offsetWidth; dev.classList.add("rx"); }
+        frz.fill++;
+        const cells = $("#frz-gauge").children;
+        if (frz.fill <= 8) cells[frz.fill - 1].classList.add("f");
+        const leds = $("#frz-leds").children;
+        if (!frz.booted) {
+          const li = frz.fill % 4;
+          leds[li].classList.add("amber");
+          setTimeout(() => { leds[li].classList.remove("amber"); }, 180);
+        }
+        beep(500 + frz.fill * 55, 0.06, "square", 0.035);
+        if (frz.fill >= 8 && !frz.booted) {
+          frz.booted = true;
+          frz.mat += 25;
+          dev.querySelector(".dev-label").textContent = "HUB-01 · DÉMARRAGE…";
+          for (let li2 = 0; li2 < 4; li2++) {
+            setTimeout(() => {
+              leds[li2].classList.remove("amber");
+              leds[li2].classList.add("on");
+              beep(660 + li2 * 140, 0.09, "sine", 0.05);
+            }, 220 + li2 * 200);
+          }
+          setTimeout(() => {
+            if (dev.isConnected) dev.querySelector(".dev-label").textContent = "HUB-01 · EN LIGNE ✓";
+            $("#frz-title").textContent = "✓ Hub en ligne !";
+          }, 1100);
+        }
       }, 290);
       b.remove();
-      $("#frz-score").textContent = "+" + frz.mat + " 💠 routés";
+      $("#frz-score").textContent = "+" + frz.mat + " 💠" + (frz.booted ? " · HUB EN LIGNE ✓" : "");
     };
     zone.appendChild(b);
     setTimeout(() => b.remove(), 1000);
@@ -1998,10 +2037,10 @@ function startFrenzy() {
     $("#frenzy").hidden = true;
     if (m > 0) {
       S.mat = Math.min(matCap(), S.mat + m);
-      toast("📡 Rafale routée : <b>+" + m + " 💠</b> !", true);
+      toast("⚡ Hub alimenté : <b>+" + m + " 💠</b>" + (myFrz.booted ? " · <b>démarrage réussi ✓</b>" : "") + " !", true);
       if (!S.frzSeen) {
         S.frzSeen = true;
-        setTimeout(() => toast("Chaque donnée voyage vers un point central : le <b>hub</b>. Bientôt, tu câbleras ton vrai réseau (🔌)."), 1800);
+        setTimeout(() => toast("Règle n°1 du technicien : <b>vérifier l'alimentation</b>. Un équipement sans courant, c'est un réseau mort. Bientôt : le câblage (🔌)."), 1800);
       }
     }
     save();

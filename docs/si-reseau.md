@@ -101,6 +101,19 @@ l'arbre de recherche.
 - **Data-driven** : NET_LAYERS (bandes + savoirs), PORTS, équipements en
   BT — prêt à recevoir le contenu de formation du propriétaire.
 
+## Amorçage du hub (2026-08-08 — remplace la « Pluie d'éclats »)
+
+Retour propriétaire : « router des paquets » n'a pas de sens en tout début
+de colonie — la première interaction réseau réelle, c'est **l'alimentation**.
+Le mini-jeu éclair (3 éclats récoltés en rafale) devient **« ⚡ Amorçage du
+hub »** : un équipement HORS TENSION dans le popup (boîtier, 4 LED
+éteintes, jauge 8 segments), chaque éclat tapé est injecté dans sa prise
+(vol animé, segment de jauge, LED ambre) ; jauge pleine → **séquence de
+boot** (LED vertes une à une, +25 💠 bonus, « HUB-01 · EN LIGNE ✓ »).
+Leçon à la première réussite : *« Règle n°1 du technicien : vérifier
+l'alimentation »* — la couche 0 avant la couche 1, cohérent avec le
+chapitre 🔌 qui suit.
+
 ## Suite (v2+)
 
 - DNS et FIREWALL en équipements (résolution de noms jouée, pare-feu
