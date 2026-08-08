@@ -63,8 +63,11 @@ Supreme Commander.
   clippé au losange du territoire, falaises de bordure dessinées, le
   reste est le vide spatial. Le pattern infini reste le moteur : chaque
   expansion agrandit le plateau sans limite. Décor uniquement en
-  territoire (cristaux, rochers — jamais en miroir) ; les decals canvas
-  ont été retirés (reviendront en assets).
+  territoire (cristaux, rochers — jamais en miroir). **Premier decal
+  asset intégré : la fissure** (`assets/sprites/decal-fissure.png`,
+  écrasée 2:1 sur le plan du sol, ~6 % des cases de sable intérieures,
+  échelle 1,1–1,9 case, graine stable). Les autres decals (semis de
+  cailloux, plaque sombre) suivront au même format.
 - **Caméra** : bornée autour du plateau (+4 cases), **zoom 1,6–5,2**
   (dézoom resserré) ; expansion débornée.
 - **Prochain chantier relief (2 étages)** : ① relief par décor — assets
