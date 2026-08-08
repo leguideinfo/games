@@ -95,11 +95,15 @@ Supreme Commander.
   profondeur conservé (un amas devant un bâtiment passe devant).
   Gameplay associé : **2 drones ouvriers en soute** au départ, tap sur un
   amas = envoi d'un drone (mission tuto insérée en 1, 26 missions).
-  **Taille recadrée (retour 2026-08-08)** : petits amas au sol —
-  amas 1 ≈ 0,52 case, amas 2 ≈ 0,80 case (cohérents avec les
-  tuiles-bâtiments qui restent dominantes).
-- **Tuiles-bâtiments (2026-08-08)** : Extracteur et Centrale remplacés
-  par les assets-tuiles du propriétaire (`tuile-extracteur/centrale.png`),
+  **Taille recadrée (retour 2026-08-08)** : petits amas au sol,
+  cohérents avec les tuiles-bâtiments qui restent dominantes.
+  **Découpe serrée (retour 2026-08-08)** : plus de halo — cristaux +
+  frange de socle adoucie (rochers proches en fondu) ; et **clip au
+  pentagone du plateau** (bords-falaises exacts, ouvert vers le haut)
+  sur cristaux et tuiles-bâtiments : plus aucun débordement en bordure.
+- **Tuiles-bâtiments (2026-08-08)** : Extracteur, Centrale et Entrepôt
+  remplacés par les assets-tuiles du propriétaire
+  (`tuile-extracteur/centrale/entrepot.png`),
   même bake que les cristaux + **composante connexe depuis le centre**
   (cristaux/roches décoratifs et gros caillou jetés) ; le sol de la frange
   est **mesuré par asset** puis mappé vers la teinte étalonnée (les fonds

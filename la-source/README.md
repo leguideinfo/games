@@ -123,10 +123,10 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
 - **Pipeline de sprites (v7.2)** : `regSprite(type, dataURI, fumées)` branche
   une image iso sur un type de bâtiment — dessinée à l'ancre du socle,
   y-sortée, mise à l'échelle avec le niveau, fumée animée par cheminée.
-  **Tuiles-bâtiments définitives (v8.4)** : l'Extracteur et la Centrale
-  sont les **assets-tuiles du propriétaire**
-  (`assets/sprites/tuile-extracteur/centrale.png`, remplacent les anciens
-  sprites) — bake « sprite » comme les cristaux : bâtiment préservé par
+  **Tuiles-bâtiments définitives (v8.4)** : l'Extracteur, la Centrale et
+  l'Entrepôt sont les **assets-tuiles du propriétaire**
+  (`assets/sprites/tuile-extracteur/centrale/entrepot.png`, remplacent
+  les anciens sprites) — bake « sprite » comme les cristaux : bâtiment préservé par
   masque couleur + composante connexe (les décorations éloignées de la
   tuile sont jetées), halo de sol compact dont la teinte est mesurée puis
   alignée sur l'étalonnage du plateau. **Tout tient dans la case** (léger
