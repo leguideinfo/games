@@ -118,8 +118,19 @@ Supreme Commander.
   2026-08-08)** : plus de halo — bâtiment + fine frange de sol adoucie
   (~15 px), ancre = pied avant posé vers le coin sud de la case.
   **Échelle finale (retour 2026-08-08)** : bâtiments à **0,75 case**,
-  balise centrale à **0,62 case** — chacun tient nettement dans les
-  limites de sa case, plus aucun chevauchement entre voisins.
+  balise centrale à **0,92 case** — chacun tient dans les limites de sa
+  case, plus aucun chevauchement entre voisins. **Ancrage exact** : le
+  point d'ancre est le centre du losange d'empreinte au sol (centroïde X
+  du socle, Y = pointe avant − largeur de socle/4), posé pile au centre
+  de la case — plus de réglage à l'œil.
+- **Chemins de terre (2026-08-08)** : des sentiers de sable tassé se
+  créent entre chaque bâtiment et son voisin le plus proche (ou la
+  balise) — procédural (ellipses multiply, tracé stable par graine,
+  clip plateau), remplaçable par un decal du propriétaire.
+- **Crevasses/éboulis visibles dès le départ (retour 2026-08-08)** :
+  plus de « cases sombres » avant la mission 4 — les assets s'affichent
+  immédiatement, seule l'interaction reste gatée. La case en diagonale
+  derrière la balise (3,3) est verrouillée sans décor.
 - **Balise centrale (2026-08-08)** : la Source a son asset définitif
   (`tuile-balise.png`) — bake dédié : structure + anneau de débris
   préservé (halo elliptique bas), **faisceau détouré par matte de
