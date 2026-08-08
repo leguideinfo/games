@@ -49,7 +49,7 @@ for (let tries = 0; tries < 20 && collected < 3; tries++) {
 console.log("après 3 éclats, mission:", await page.evaluate(() => window.__LS().mi));
 // si la Pluie d'éclats s'est déclenchée (3 récoltes rapides), on la laisse passer
 await page.waitForTimeout(700);
-await page.waitForFunction(() => document.querySelector("#frenzy").hidden, null, { timeout: 12000 });
+await page.waitForFunction(() => document.querySelector("#frenzy").hidden, null, { timeout: 15000 });
 
 // M1 : menu construire = extracteur seul, construction par tap réel
 await page.evaluate(() => window.__api.center(4, 4));

@@ -407,12 +407,12 @@
     pointer-events: none; z-index: 2;
   }
   .spark-btn {
-    position: absolute; width: 52px; height: 52px;
+    position: absolute; width: 46px; height: 46px;
     border: none; background: none; padding: 0;
-    font-size: 30px; line-height: 52px;
-    filter: drop-shadow(0 0 8px rgba(78, 242, 224, .9));
-    animation: gempop 1s forwards;
+    filter: drop-shadow(0 0 9px rgba(78, 242, 224, .9));
+    animation: gempop 1.7s forwards;
   }
+  .spark-btn img, .spark-btn svg { width: 100%; height: 100%; pointer-events: none; }
   #frz-score { text-align: center; color: var(--amber); font-size: 15px; font-weight: 700; min-height: 22px; margin-top: 6px; }
 
   /* ---------- toasts ---------- */
@@ -2040,9 +2040,21 @@ function startFrenzy() {
     if (zone.querySelectorAll(".spark-btn").length >= 3) return;
     const b = document.createElement("button");
     b.className = "spark-btn";
-    b.textContent = Math.random() < 0.25 ? "✨" : "💠";
-    b.style.left = (6 + Math.random() * (zone.clientWidth - 60)) + "px";
-    b.style.top = (6 + Math.random() * (zone.clientHeight - 60)) + "px";
+    b.innerHTML = ORBIMG.ok
+      ? "<img src='" + ORBIMG.img.src + "' alt=''>"
+      : "<svg viewBox='0 0 24 24' fill='none' stroke='#ffc857' stroke-width='2' stroke-linejoin='round'><path d='M13 3L6 13h5l-1 8 7-10h-5z'/></svg>";
+    // position : dans le cadre, hors du boîtier central et de la jauge
+    const zw = zone.clientWidth, zh = zone.clientHeight;
+    let lx = 10, ly = 10;
+    for (let tries = 0; tries < 10; tries++) {
+      lx = 10 + Math.random() * (zw - 66);
+      ly = 10 + Math.random() * (zh - 92);
+      const cxs = lx + 23, cys = ly + 23;
+      if (Math.abs(cxs - zw / 2) < 92 && Math.abs(cys - zh * 0.4) < 66) continue; // boîtier
+      break;
+    }
+    b.style.left = lx + "px";
+    b.style.top = ly + "px";
     b.onclick = () => {
       if (frz !== myFrz) return;
       frz.mat += 5 + colonyLevel();
@@ -2074,6 +2086,7 @@ function startFrenzy() {
         beep(500 + frz.fill * 55, 0.06, "square", 0.035);
         if (frz.fill >= 8 && !frz.booted) {
           frz.booted = true;
+          frz.bootAt = performance.now();
           frz.mat += 25;
           dev.querySelector(".dev-label").textContent = "HUB-01 · DÉMARRAGE…";
           for (let li2 = 0; li2 < 4; li2++) {
@@ -2093,11 +2106,18 @@ function startFrenzy() {
       $("#frz-score").textContent = "+" + frz.mat + " 💠" + (frz.booted ? " · HUB EN LIGNE ✓" : "");
     };
     zone.appendChild(b);
-    setTimeout(() => b.remove(), 1000);
-  }, 330);
-  setTimeout(() => {
+    setTimeout(() => b.remove(), 1700);
+  }, 380);
+  const t0f = performance.now();
+  const endCheck = setInterval(() => {
+    if (frz !== myFrz) { clearInterval(endCheck); return; }
+    const el = performance.now() - t0f;
+    // fermeture : hub démarré (+2,5 s de rab), ou ignoré (8 s sans tap), ou garde-fou 25 s
+    const done = frz.booted && el > (frz.bootAt - t0f) + 2500;
+    const ignored = frz.mat === 0 && el > 8000;
+    if (!done && !ignored && el < 25000) return;
+    clearInterval(endCheck);
     clearInterval(spawn);
-    if (frz !== myFrz) return;
     const m = frz.mat;
     frz = null;
     $("#frenzy").hidden = true;
@@ -2110,7 +2130,7 @@ function startFrenzy() {
       }
     }
     save();
-  }, 6000);
+  }, 500);
 }
 
 /* ---------- entrées canvas ---------- */
