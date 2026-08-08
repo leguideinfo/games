@@ -1271,7 +1271,7 @@ function drawTile(x, y, t) {
       ctx.lineTo(p.x - TW / 2 * z, p.y + 26 * z);
     }
     ctx.closePath();
-    ctx.fillStyle = "hsl(25 45% 24%)"; ctx.fill();
+    ctx.fillStyle = "hsl(25 32% 21%)"; ctx.fill();
     if (x === bmax()) {
       ctx.beginPath();
       ctx.moveTo(p.x + TW / 2 * z, p.y);
@@ -1279,7 +1279,7 @@ function drawTile(x, y, t) {
       ctx.lineTo(p.x, p.y + TH / 2 * z + 26 * z);
       ctx.lineTo(p.x + TW / 2 * z, p.y + 26 * z);
       ctx.closePath();
-      ctx.fillStyle = "hsl(23 45% 19%)"; ctx.fill();
+      ctx.fillStyle = "hsl(23 32% 15%)"; ctx.fill();
     }
   }
   // décor
@@ -1495,6 +1495,19 @@ function drawTerrainTex() {
   ctx.setTransform(DPR * k, 0, 0, DPR * k, DPR * cam.x, DPR * cam.y);
   ctx.fillStyle = mp.pat;
   ctx.fillRect(-cam.x / k, -cam.y / k, W / k, H / k);
+  // étalonnage : accorder le plateau à l'ambiance du fond (clip toujours actif)
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.globalCompositeOperation = "multiply";
+  ctx.fillStyle = "rgb(226, 204, 196)"; // calme l'orange saturé
+  ctx.fillRect(0, 0, W, H);
+  const lg = ctx.createLinearGradient(W, 0, W * 0.25, H);
+  lg.addColorStop(0, "rgba(255, 200, 130, .30)"); // lumière du levant (haut droit)
+  lg.addColorStop(0.5, "rgba(255, 200, 130, .08)");
+  lg.addColorStop(1, "rgba(30, 40, 70, .16)"); // ombre bleutée à l'opposé
+  ctx.globalCompositeOperation = "overlay";
+  ctx.fillStyle = lg;
+  ctx.fillRect(0, 0, W, H);
+  ctx.globalCompositeOperation = "source-over";
   ctx.restore();
 }
 function drawRockSprite(x, y) {
