@@ -95,6 +95,19 @@ Supreme Commander.
   profondeur conservé (un amas devant un bâtiment passe devant).
   Gameplay associé : **2 drones ouvriers en soute** au départ, tap sur un
   amas = envoi d'un drone (mission tuto insérée en 1, 26 missions).
+  **Taille recadrée (retour 2026-08-08)** : petits amas au sol —
+  amas 1 ≈ 0,52 case, amas 2 ≈ 0,80 case (cohérents avec les
+  tuiles-bâtiments qui restent dominantes).
+- **Tuiles-bâtiments (2026-08-08)** : Extracteur et Centrale remplacés
+  par les assets-tuiles du propriétaire (`tuile-extracteur/centrale.png`),
+  même bake que les cristaux + **composante connexe depuis le centre**
+  (les cristaux/roches décoratifs de la tuile sont jetés) ; le sol du halo
+  est **mesuré par asset** puis mappé vers la teinte étalonnée (les fonds
+  de ces tuiles diffèrent de la tuile de base). Contenu ≤ 1 case (bord
+  intérieur ~6 %), ancre = centre du halo sur le centre de case.
+- **Étalonnage remonté (retour 2026-08-08)** : multiply 252/233/202 et
+  désaturation 0,30 (avant : 236/216/187 × 0,34) — sol en jeu mesuré
+  **164,8/96/38,3** (cible de tous les bakes de decals).
 - **Caméra** : bornée autour du plateau (+4 cases), **zoom 1,6–5,2**
   (dézoom resserré) ; expansion débornée.
 - **Prochain chantier relief (2 étages)** : ① relief par décor — assets

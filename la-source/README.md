@@ -123,11 +123,15 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
 - **Pipeline de sprites (v7.2)** : `regSprite(type, dataURI, fumées)` branche
   une image iso sur un type de bâtiment — dessinée à l'ancre du socle,
   y-sortée, mise à l'échelle avec le niveau, fumée animée par cheminée.
-  **Premier asset définitif intégré : l'Extracteur de matériaux**
-  (`assets/sprites/extracteur.png`, embarqué en data-URI — le fichier du
-  propriétaire, pixel pour pixel). Les autres bâtiments suivront au même
-  format : un PNG fond transparent dans `assets/sprites/`, un appel
-  `regSprite` par bâtiment.
+  **Tuiles-bâtiments définitives (v8.4)** : l'Extracteur et la Centrale
+  sont les **assets-tuiles du propriétaire**
+  (`assets/sprites/tuile-extracteur/centrale.png`, remplacent les anciens
+  sprites) — bake « sprite » comme les cristaux : bâtiment préservé par
+  masque couleur + composante connexe (les décorations éloignées de la
+  tuile sont jetées), halo de sol compact dont la teinte est mesurée puis
+  alignée sur l'étalonnage du plateau. **Tout tient dans la case** (léger
+  bord intérieur, jamais de débordement). Les autres bâtiments suivront
+  au même format de tuile.
 - **Terrain infini (v8)** : la map fixe est remplacée par la **tuile
   seamless du propriétaire** répétée en pattern GPU + **variations
   procédurales** (teintes par blocs, fissures/cailloux/plaques par case,
