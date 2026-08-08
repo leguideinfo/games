@@ -118,7 +118,7 @@ Supreme Commander.
   2026-08-08)** : plus de halo — bâtiment + fine frange de sol adoucie
   (~15 px), ancre = pied avant posé vers le coin sud de la case.
   **Échelle finale (retour 2026-08-08)** : bâtiments à **0,75 case**,
-  balise centrale à **0,92 case** — chacun tient dans les limites de sa
+  balise centrale à **0,72 case** (contenue dans sa cellule) — chacun tient dans les limites de sa
   case, plus aucun chevauchement entre voisins. **Ancrage exact** : le
   point d'ancre est le centre du losange d'empreinte au sol (centroïde X
   du socle, Y = pointe avant − largeur de socle/4), posé pile au centre
@@ -141,8 +141,10 @@ Supreme Commander.
 - **Étalonnage remonté (retour 2026-08-08)** : multiply 252/233/202 et
   désaturation 0,30 (avant : 236/216/187 × 0,34) — sol en jeu mesuré
   **164,8/96/38,3** (cible de tous les bakes de decals).
-- **Caméra** : bornée autour du plateau (+4 cases), **zoom 1,6–5,2**
-  (dézoom resserré) ; expansion débornée.
+- **Caméra** : bornée autour du plateau (+4 cases), **zoom max 8,1**
+  (+2 crans, retour 2026-08-08) ; **arrivée très rapprochée** (~5 cases
+  PC, ~3,2 mobile — on découvre la balise et ses environs) ; expansion
+  débornée.
 - **Prochain chantier relief (2 étages)** : ① relief par décor — assets
   propriétaire : mesas (1/2/3 cases), arêtes rocheuses orientées NE-SO
   et NO-SE, cratères, dunes en decal ; Claude : placement en chaînes
