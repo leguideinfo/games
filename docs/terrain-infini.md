@@ -118,6 +118,13 @@ Supreme Commander.
   2026-08-08)** : plus de halo — bâtiment + fine frange de sol adoucie
   (~15 px), largeur = 1 case pile (le bâtiment colle aux bords de la
   tuile), ancre = pied avant posé vers le coin sud de la case.
+- **Balise centrale (2026-08-08)** : la Source a son asset définitif
+  (`tuile-balise.png`) — bake dédié : structure + anneau de débris
+  préservé (halo elliptique bas), **faisceau détouré par matte de
+  différence** (fond uni, référence par ligne, pixels bleutés seulement),
+  sol mesuré et aligné. Posée à **0,85 case** (contenue dans sa case,
+  retour propriétaire), ancre au pied de l'anneau ; l'ancien dessin
+  canvas reste en secours de chargement.
 - **Étalonnage remonté (retour 2026-08-08)** : multiply 252/233/202 et
   désaturation 0,30 (avant : 236/216/187 × 0,34) — sol en jeu mesuré
   **164,8/96/38,3** (cible de tous les bakes de decals).

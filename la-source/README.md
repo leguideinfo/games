@@ -12,8 +12,9 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
 - **Colonie isométrique** (canvas, charte respectée : désert ocre, cristaux
   cyan, bâtiments titane blanc/graphite à énergie bleue, niveaux visuels
   progressifs — hauteur, antennes, balises).
-- **La Source** au centre : faisceau bleu, cœur pulsant, tout bâtiment s'y
-  relie par un conduit d'énergie animé.
+- **La Source** au centre : la **balise centrale**, asset définitif du
+  propriétaire (`tuile-balise.png`, faisceau détouré en matte de
+  différence) — tout bâtiment s'y relie par un conduit d'énergie animé.
 - **Économie du vrai jeu (v2)** — alignée sur console.awoui.com :
   **Matériaux 💠** extraits, **Énergie ⚡** en capacité (Centrale) consommée
   par chaque bâtiment, **Données Eo 💾** calculées (Fermes) et stockées
