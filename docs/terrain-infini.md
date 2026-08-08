@@ -64,7 +64,14 @@ Supreme Commander.
   reste est le vide spatial. Le pattern infini reste le moteur : chaque
   expansion agrandit le plateau sans limite. Décor uniquement en
   territoire (cristaux, rochers — jamais en miroir). **Variation par
-  tuiles-variantes (méthode actée 2026-08-08)** : le propriétaire
+  tuiles-variantes (méthode actée 2026-08-08, v3)** : masque par
+  **composante connexe** — seule la crevasse reliée au centre est
+  gardée (branches opaques jusqu'au bout, bruit isolé jeté), teinte
+  auto-alignée, **une fissure = une tuile** (alignée au carreau,
+  4 rotations par graine, ~5 % des carreaux, jamais sous un bâtiment).
+  Trois assets : `sol-tuile-fissure`, `sol-tuile-fissures` (décor) et
+  `sol-tuile-crevasse` (**remplace le visuel des crevasses de jeu**,
+  colmatage Tetris conservé). Ancienne méthode : le propriétaire
   fournit des tuiles complètes (ex. `sol-tuile-fissure.png`) ; à
   l'intégration, la teinte est alignée automatiquement sur la tuile de
   base (ratios mesurés par canal — ici ×1,07/×1,10/×1,23) et un masque
