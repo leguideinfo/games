@@ -1,4 +1,4 @@
-// Test E2E de La Source — parcours complet des 26 missions par interactions réelles.
+// Test E2E de La Source — parcours complet des 25 missions par interactions réelles.
 // Usage : node test/e2e.mjs   (depuis la-source/ ; nécessite playwright + Chromium)
 // Chromium : CHROMIUM_PATH sinon /opt/pw-browsers/chromium-1194/chrome-linux/chrome
 import { chromium } from "playwright";
@@ -111,9 +111,12 @@ await page.waitForTimeout(500);
 // M8-M11 : chapitre 🔌 — câbles, switch, simulation de trame
 await page.evaluate(() => { window.__LS().mat = 500; window.__api.autolink(); });
 await page.waitForTimeout(600);
-console.log("réseau câblé (attendu mi 11):", await page.evaluate(() => ({ mi: window.__LS().mi, ...window.__api.netInfo() })));
+console.log("réseau câblé (attendu mi 9):", await page.evaluate(() => ({ mi: window.__LS().mi, ...window.__api.netInfo() })));
 await buildFirst("switchhub");
 await page.waitForTimeout(400);
+// le Switch posé doit être câblé pour terminer « raccorde tout »
+await page.evaluate(() => { window.__LS().mat = 500; window.__api.autolink(); });
+await page.waitForTimeout(500);
 await page.evaluate(() => window.__api.simDone());
 await page.waitForTimeout(400);
 
@@ -124,7 +127,7 @@ await page.evaluate(() => window.__api.giveEo(15));
 await page.waitForTimeout(500);
 await buildFirst("datacenter");
 await page.waitForTimeout(400);
-console.log("après la séquence ressources (attendu mi 16):", await page.evaluate(() => ({ mi: window.__LS().mi })));
+console.log("après la séquence ressources (attendu mi 15):", await page.evaluate(() => ({ mi: window.__LS().mi })));
 
 // M15 : serveur DHCP posé et câblé ; M16 : DNS
 await page.evaluate(() => window.__api.giveEo(20));
@@ -158,7 +161,7 @@ for (const t of ["console", "forge"]) {
   }, t);
 }
 await page.waitForTimeout(300);
-console.log("après forge (attendu 23):", await page.evaluate(() => window.__LS().mi));
+console.log("après forge (attendu 22):", await page.evaluate(() => window.__LS().mi));
 
 // M18 : drone récolteur posé sur cristaux par tap réel (dézoome si hors vue)
 await page.evaluate(() => { window.__LS().mat = 300; window.__api.assemble("recolteur"); });
@@ -186,7 +189,7 @@ for (let tries = 0; tries < 6 && !mpos; tries++) {
   }
 }
 await page.mouse.click(mpos.sx, mpos.sy);
-await page.waitForFunction(() => window.__LS().mi >= 25, null, { timeout: 15000 });
+await page.waitForFunction(() => window.__LS().mi >= 24, null, { timeout: 15000 });
 console.log("parasite éliminé:", await page.evaluate(() => ({ mi: window.__LS().mi, mobs: window.__api.mobsPos().length })));
 
 // M20 : expansion via UI (réessaie le tap Source si besoin)

@@ -40,7 +40,8 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   **2 drones ouvriers en soute dès le départ** : taper un amas envoie un
   drone le récolter (vol animé depuis la Source) — les premières ressources
   arrivent **avant** le premier Extracteur, avec une mission tuto dédiée
-  (26 missions, migration de sauvegarde v4→v5). La Forge en assemble
+  (25 missions, migrations de sauvegarde v4→v5→v6 — la mission « 2e
+  Extracteur » a été retirée au passage). La Forge en assemble
   d'autres ensuite ; les drones de soute ne comptent pas contre sa capacité.
 - **Découverte pas-à-pas (v3)** : au départ, l'écran ne montre que le terrain,
   la Source et le compteur de matériaux. Les 14 missions déroulent la
@@ -64,7 +65,7 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
 - **Missions guidées** (21 étapes, re-séquencées v7) : elles SONT le système
   de déblocage, organisées en chapitres de ressources — 💠 Matériaux
   (éclats → Extracteur → amélioration → **palier « atteins 250 💠 »** →
-  Entrepôt), ⚡ Énergie (**2e Extracteur** → Centrale → **Centrale NIV 2**),
+  Entrepôt), ⚡ Énergie (Centrale → **Centrale NIV 2**),
   💾 Données (Ferme → **palier « accumule 12 Eo »** → Datacenter), 🌐 Réseau
   & technologies, 🔧 Commandement & unités. Chaque bâtiment n'arrive
   qu'après un moment passé à **ressentir** la ressource qu'il sert

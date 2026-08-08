@@ -780,7 +780,7 @@ const BT = {
     game: "Regex Invaders",
   },
   centrale: {
-    nm: "Centrale énergétique", ic: "⚡", col: "#ffc857", base: 40, conso: 0, mAt: 7,
+    nm: "Centrale énergétique", ic: "⚡", col: "#ffc857", base: 40, conso: 0, mAt: 6,
     ds: "Alimente l'infrastructure.",
     game: null,
   },
@@ -790,37 +790,37 @@ const BT = {
     game: null,
   },
   ferme: {
-    nm: "Ferme de serveurs", ic: "🖥", col: "#38a9ff", base: 60, conso: 8, mAt: 13,
+    nm: "Ferme de serveurs", ic: "🖥", col: "#38a9ff", base: 60, conso: 8, mAt: 12,
     ds: "Calcule les données (Eo).",
     game: "Admin Rush",
   },
   datacenter: {
-    nm: "Datacenter", ic: "💾", col: "#a06bff", base: 50, conso: 6, mAt: 15,
+    nm: "Datacenter", ic: "💾", col: "#a06bff", base: 50, conso: 6, mAt: 14,
     ds: "Conserve les données.",
     game: null,
   },
   reseau: {
-    nm: "Baie réseau", ic: "📡", col: "#57e389", base: 90, eo: 15, conso: 5, tech: "dns", mAt: 19,
+    nm: "Baie réseau", ic: "📡", col: "#57e389", base: 90, eo: 15, conso: 5, tech: "dns", mAt: 18,
     ds: "Contrats de matériaux du réseau galactique.",
     game: "The Flux",
   },
   forge: {
-    nm: "Forge d'assemblage", ic: "🔧", col: "#ff9a4d", base: 100, conso: 6, mAt: 22,
+    nm: "Forge d'assemblage", ic: "🔧", col: "#ff9a4d", base: 100, conso: 6, mAt: 21,
     ds: "Assemble les unités.",
     game: null,
   },
   console: {
-    nm: "Console de commandement", ic: "🖲", col: "#e6eef5", base: 120, eo: 10, conso: 5, mAt: 21,
+    nm: "Console de commandement", ic: "🖲", col: "#e6eef5", base: 120, eo: 10, conso: 5, mAt: 20,
     ds: "PowerShell : +4 % de production par niveau.",
     game: "PowerShell Hero",
   },
   switchhub: {
-    nm: "Switch réseau", ic: "🔀", col: "#57e389", base: 30, conso: 2, mAt: 11,
+    nm: "Switch réseau", ic: "🔀", col: "#57e389", base: 30, conso: 2, mAt: 9,
     ds: "Commute les trames : 8 ports pour relier tes machines.",
     game: null,
   },
   dhcpsrv: {
-    nm: "Serveur DHCP", ic: "🪪", col: "#38a9ff", base: 40, eo: 5, conso: 3, mAt: 16,
+    nm: "Serveur DHCP", ic: "🪪", col: "#38a9ff", base: 40, eo: 5, conso: 3, mAt: 15,
     ds: "Attribue une adresse IP à chaque machine raccordée.",
     game: null,
   },
@@ -864,13 +864,12 @@ const MISSIONS = [
   { t: "Regarde-le forer : atteins 250 💠 (le stock plafonne à 300)", rm: 30, k: "mat250", c: () => S.mat >= 250 },
   { t: "Le stock est trop petit — pose un Entrepôt de matériaux", rm: 40, k: "build_entrepot", c: () => bcount("entrepot") >= 1 },
   // — chapitre ⚡ Énergie —
-  { t: "Pose un 2e Extracteur", rm: 40, k: "ext2", c: () => bcount("extracteur") >= 2 },
   { t: "⚡ La réserve de la soute a des limites — pose une Centrale", rm: 50, k: "build_centrale", c: () => bcount("centrale") >= 1 },
   { t: "Améliore ta Centrale (NIV 2)", rm: 50, k: "centrale2", c: () => S.buildings.some((b) => b.t === "centrale" && b.l >= 2) },
   // — chapitre 🔌 Le réseau de la colonie —
   { t: "🔌 Câble ton Extracteur à la Source (bouton 🔌)", rm: 40, k: "link1", c: () => S.links.length >= 1 },
-  { t: "Raccorde tous tes bâtiments au réseau", rm: 50, k: "linkall", c: allLinked },
   { t: "La Source n'a que 3 prises : pose un Switch (menu Construire)", rm: 50, k: "build_switchhub", c: () => bcount("switchhub") >= 1 },
+  { t: "Raccorde tous tes bâtiments au réseau (via le Switch !)", rm: 50, k: "linkall", c: allLinked },
   { t: "Suis ta première trame (onglet RÉSEAU → SIMULATION)", re: 5, k: "sim1" },
   // — chapitre 💾 Données —
   { t: "Pose une Ferme de serveurs : elle calcule des Données 💾", re: 5, k: "build_ferme", c: () => bcount("ferme") >= 1 },
@@ -905,7 +904,7 @@ function skipSatisfied() {
 let S = null;
 function newSave() {
   return {
-    v: 5, mat: 50, eo: 0, buildings: [], techs: [], links: [], seenIntro: false,
+    v: 6, mat: 50, eo: 0, buildings: [], techs: [], links: [], seenIntro: false,
     mi: 0, orbsCollected: 0, lastSeen: Date.now(), buffLeft: 0, buffMult: 1,
     ext: 0, cleared: [], units: [], archives: [], reader: false,
     rubble: [], lastRubble: Date.now(), memories: [], restored: [], dr: 2, fr: 0,
@@ -929,6 +928,10 @@ function load() {
         if (sv.mi >= 1) sv.mi += 1;
         sv.fr = (sv.units || []).filter((u) => u.t === "recolteur").length;
         sv.v = 5;
+      }
+      if (sv.v < 6) { // v6 : « 2e Extracteur » retirée, Switch avant le raccordement
+        if (sv.mi >= 7) sv.mi -= 1;
+        sv.v = 6;
       }
       return sv;
     }
@@ -1098,13 +1101,13 @@ function missionDone(k) {
   if (S.mi === 3) {
     setTimeout(() => toast("🧩 <b>L'Atelier de Mémoire</b> est ouvert — onglet QUÊTES."), 1500);
   }
-  if (S.mi === 11) {
+  if (S.mi === 9) {
     setTimeout(() => toast("🔀 Le <b>Switch</b> se construit comme un bâtiment (tape une case libre) et offre <b>8 ports</b> pour tout brancher."), 1500);
   }
   if (S.mi === 4) {
     setTimeout(() => toast("🕳 Le sol tremble… des <b>crevasses</b> se sont ouvertes ! Tape-en une pour sonder."), 1500);
   }
-  if (S.mi === 24) {
+  if (S.mi === 23) {
     spawnMob();
     setTimeout(() => toast("🕷 Un <b>parasite de données</b> rôde à la frontière ! Il ralentit ton extraction (−15 %)."), 1500);
   }
@@ -1851,7 +1854,7 @@ function drawUnit(u, t) {
 }
 
 /* ---------- guidage nouveau joueur ---------- */
-const GUIDE_BUILD = { 2: "extracteur", 5: "entrepot", 6: "extracteur", 7: "centrale", 11: "switchhub", 13: "ferme", 15: "datacenter", 16: "dhcpsrv", 19: "reseau", 21: "console", 22: "forge" };
+const GUIDE_BUILD = { 2: "extracteur", 5: "entrepot", 6: "centrale", 9: "switchhub", 12: "ferme", 14: "datacenter", 15: "dhcpsrv", 18: "reseau", 20: "console", 21: "forge" };
 function nearestTile(pred) {
   let best = null, bd = 1e9;
   for (let y = bmin(); y <= bmax(); y++) for (let x = bmin(); x <= bmax(); x++) {
@@ -1872,12 +1875,12 @@ function guideWorldTarget() {
   if (GUIDE_BUILD[mi]) { const t = nearestTile(buildable); return t && { x: t.x, y: t.y, kind: "tile" }; }
   if (mi === 3) { const b = S.buildings.find((b) => b.t === "extracteur"); return b && { x: b.x, y: b.y, kind: "bld" }; }
   if (mi === 4) { const o = orbs[0]; return o && { x: o.x, y: o.y, kind: "orb" }; }
-  if (mi === 8) { const b = S.buildings.find((b) => b.t === "centrale"); return b && { x: b.x, y: b.y, kind: "bld" }; }
-  if (mi === 9 || mi === 10) { const b = S.buildings.find((b2) => !netConnected(nkey(b2.x, b2.y))); return b && { x: b.x, y: b.y, kind: "bld" }; }
-  if (mi === 14) { const b = S.buildings.find((b) => b.t === "ferme"); return b && { x: b.x, y: b.y, kind: "bld" }; }
-  if (mi === 20) { const b = S.buildings.find((b) => BT[b.t].game); return b && { x: b.x, y: b.y, kind: "bld" }; }
-  if (mi === 23) { const b = S.buildings.find((b) => b.t === "forge"); return b && { x: b.x, y: b.y, kind: "bld" }; }
-  if (mi === 24) {
+  if (mi === 7) { const b = S.buildings.find((b) => b.t === "centrale"); return b && { x: b.x, y: b.y, kind: "bld" }; }
+  if (mi === 8 || mi === 10) { const b = S.buildings.find((b2) => !netConnected(nkey(b2.x, b2.y))); return b && { x: b.x, y: b.y, kind: "bld" }; }
+  if (mi === 13) { const b = S.buildings.find((b) => b.t === "ferme"); return b && { x: b.x, y: b.y, kind: "bld" }; }
+  if (mi === 19) { const b = S.buildings.find((b) => BT[b.t].game); return b && { x: b.x, y: b.y, kind: "bld" }; }
+  if (mi === 22) { const b = S.buildings.find((b) => b.t === "forge"); return b && { x: b.x, y: b.y, kind: "bld" }; }
+  if (mi === 23) {
     if (!S.units.some((u) => u.t === "chasseur")) {
       const b = S.buildings.find((b) => b.t === "forge");
       return b && { x: b.x, y: b.y, kind: "bld" };
@@ -1885,7 +1888,7 @@ function guideWorldTarget() {
     const m = mobs[0];
     return m && { x: m.x, y: m.y, kind: "mob" };
   }
-  if (mi === 25) return { x: SRC.x, y: SRC.y, kind: "src" };
+  if (mi === 24) return { x: SRC.x, y: SRC.y, kind: "src" };
   return null;
 }
 function drawCrevasseHint(t) {
@@ -2023,7 +2026,7 @@ function frame(t) {
     }
   }
   // parasites aux frontières (fin de chaîne de missions)
-  if (S.mi >= 24) {
+  if (S.mi >= 23) {
     mobT += dt;
     if (mobT > 55 && mobs.length < 2) { mobT = 0; spawnMob(); }
   }
@@ -2464,7 +2467,7 @@ function openBld(b) {
   $("#bl-name").innerHTML = def.ic + " " + def.nm + " <span style='color:var(--dim);font-size:12px'>· NIV " + b.l + "</span>";
   $("#bl-desc").textContent = def.ds;
   let stats = "";
-  if (S.mi >= 9 && b.t !== "switchhub" && b.t !== "dhcpsrv") {
+  if (S.mi >= 8 && b.t !== "switchhub" && b.t !== "dhcpsrv") {
     const con = netConnected(nkey(b.x, b.y));
     stats += "<div class='stat'><span>Réseau</span><b>" + (con ? "🔌 raccordé" : "⚠ non raccordé · −30 %") + "</b></div>";
   } else if (b.t === "switchhub" || b.t === "dhcpsrv") {
@@ -2495,8 +2498,8 @@ function openBld(b) {
       row.innerHTML = u.ic + " " + u.nm + " · " + u.cost + " 💠" + (u.ceo ? " + " + u.ceo + " Eo" : "") +
         "<div class='ds2'>" + u.ds + "</div>";
       row.disabled = S.units.length >= cap || S.mat < u.cost || S.eo < u.ceo;
-      if (!row.disabled && ((S.mi === 23 && k === "recolteur") ||
-          (S.mi === 24 && k === "chasseur" && !S.units.some((v) => v.t === "chasseur"))))
+      if (!row.disabled && ((S.mi === 22 && k === "recolteur") ||
+          (S.mi === 23 && k === "chasseur" && !S.units.some((v) => v.t === "chasseur"))))
         row.classList.add("guide");
       row.onclick = () => assemble(k, b);
       fa.appendChild(row);
@@ -2524,7 +2527,7 @@ function openBld(b) {
   }
   const uc = upCost(b);
   const upBtn = $("#bl-up");
-  upBtn.classList.toggle("guide", (S.mi === 3 && b.t === "extracteur" || S.mi === 8 && b.t === "centrale") && S.mat >= uc);
+  upBtn.classList.toggle("guide", (S.mi === 3 && b.t === "extracteur" || S.mi === 7 && b.t === "centrale") && S.mat >= uc);
   if (b.l >= 10) { upBtn.textContent = "NIV MAX"; upBtn.disabled = true; }
   else {
     upBtn.textContent = "AMÉLIORER · " + fmt(uc) + " 💠";
@@ -2539,8 +2542,8 @@ function openBld(b) {
     };
   }
   const tb = $("#bl-turbo");
-  tb.classList.toggle("guide", S.mi === 20 && !!def.game);
-  if (def.game && S.mi >= 12) {
+  tb.classList.toggle("guide", S.mi === 19 && !!def.game);
+  if (def.game && S.mi >= 11) {
     tb.hidden = false;
     tb.textContent = "⚡ SURCHARGE";
     tb.onclick = () => openTurbo(b);
@@ -2598,7 +2601,7 @@ function openSource() {
     };
     act.parentElement.insertBefore(cb, act);
   }
-  if (S.mi < 21) {
+  if (S.mi < 20) {
     act.innerHTML = "<div class='sub' style='margin:0'>L'Étincelle grandit avec ta colonie…</div>";
     $("#sh-source").hidden = false;
     return;
@@ -2612,7 +2615,7 @@ function openSource() {
     const ns = GRID + 2 * (S.ext + 1);
     btn.textContent = "ÉTENDRE LE TERRITOIRE → " + ns + "×" + ns + " · " + fmt(cost) + " 💠";
     btn.disabled = S.mat < cost;
-    if (S.mi === 25 && !btn.disabled) btn.classList.add("guide");
+    if (S.mi === 24 && !btn.disabled) btn.classList.add("guide");
     btn.onclick = () => {
       if (S.mat < cost) { sfx.deny(); return; }
       S.mat -= cost;
@@ -3706,7 +3709,7 @@ function openTech() {
     else {
       btn.textContent = fmt(def.eo) + " Eo";
       btn.disabled = locked || S.eo < def.eo;
-      if (!btn.disabled && S.mi === 17 && key === "dns")
+      if (!btn.disabled && S.mi === 16 && key === "dns")
         btn.classList.add("guide");
       btn.onclick = () => {
         if (S.eo < def.eo) { sfx.deny(); return; }
@@ -3729,17 +3732,17 @@ function unlockMap() { refreshGates(); }
 function refreshGates() {
   $("#hud-eo").style.display = (bcount("ferme") || S.eo > 0.5) ? "" : "none";
   $("#hud-en").style.display = enUse() > 0 ? "" : "none";
-  $("#tab-tech").hidden = S.mi < 17;
-  $("#tab-tech").classList.toggle("guide", S.mi === 17);
-  $("#tab-net").hidden = S.mi < 9;
-  $("#tab-net").classList.toggle("guide", S.mi === 12);
-  $("#wirebtn").hidden = S.mi < 9;
-  $("#wirebtn").classList.toggle("guide", (S.mi === 9 || S.mi === 10) && !wire);
+  $("#tab-tech").hidden = S.mi < 16;
+  $("#tab-tech").classList.toggle("guide", S.mi === 16);
+  $("#tab-net").hidden = S.mi < 8;
+  $("#tab-net").classList.toggle("guide", S.mi === 11);
+  $("#wirebtn").hidden = S.mi < 8;
+  $("#wirebtn").classList.toggle("guide", (S.mi === 8 || S.mi === 10) && !wire);
   const dns = S.techs.includes("dns");
   $("#tab-map").hidden = !dns;
   $("#tab-map").disabled = !dns;
   $("#tab-map").textContent = "CARTE";
-  $("#tab-map").classList.toggle("guide", S.mi === 18);
+  $("#tab-map").classList.toggle("guide", S.mi === 17);
   $("#tab-arch").hidden = !(S.archives.length || S.mi >= 3);
   $("#tab-arch").classList.toggle("guide", S.mi >= 3 && S.mi <= 5 && !S.memories.length);
 }
@@ -3779,13 +3782,13 @@ function openNet() {
   const bw = document.createElement("button");
   bw.textContent = (wire ? "🔌 Câblage en cours…" : "🔌 Câbler sur la carte");
   bw.onclick = () => { closeSheets(); if (!wire) $("#wirebtn").onclick(); };
-  if (S.mi === 9 || S.mi === 10) bw.classList.add("guide");
+  if (S.mi === 8 || S.mi === 10) bw.classList.add("guide");
   acts.appendChild(bw);
   const bs = document.createElement("button");
   bs.textContent = "▶ SIMULATION : suivre une trame";
   bs.disabled = !S.links.length;
   bs.onclick = () => openSim();
-  if (S.mi === 12 && !bs.disabled) bs.classList.add("guide");
+  if (S.mi === 11 && !bs.disabled) bs.classList.add("guide");
   acts.appendChild(bs);
   for (const tt of ["switchhub", "dhcpsrv"]) {
     if ((BT[tt].mAt || 0) > S.mi) continue;

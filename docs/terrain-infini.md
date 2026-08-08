@@ -94,7 +94,7 @@ Supreme Commander.
   large (~1,22 case), variation par graine, mips dédiées, tri en
   profondeur conservé (un amas devant un bâtiment passe devant).
   Gameplay associé : **2 drones ouvriers en soute** au départ, tap sur un
-  amas = envoi d'un drone (mission tuto insérée en 1, 26 missions).
+  amas = envoi d'un drone (mission tuto insérée en 1, 25 missions).
   **Taille recadrée (retour 2026-08-08)** : petits amas au sol,
   cohérents avec les tuiles-bâtiments qui restent dominantes.
   **Découpe serrée (retour 2026-08-08)** : plus de halo — cristaux +
