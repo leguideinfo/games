@@ -1,4 +1,4 @@
-// Test E2E de La Source — parcours complet des 25 missions par interactions réelles.
+// Test E2E de La Source — parcours complet des 26 missions par interactions réelles.
 // Usage : node test/e2e.mjs   (depuis la-source/ ; nécessite playwright + Chromium)
 // Chromium : CHROMIUM_PATH sinon /opt/pw-browsers/chromium-1194/chrome-linux/chrome
 import { chromium } from "playwright";
@@ -51,7 +51,19 @@ console.log("après 3 éclats, mission:", await page.evaluate(() => window.__LS(
 await page.waitForTimeout(700);
 await page.waitForFunction(() => document.querySelector("#frenzy").hidden, null, { timeout: 15000 });
 
-// M1 : envoyer un drone ouvrier de la soute sur un amas de cristaux (tap réel)
+// M1 : poser le Coffret réseau (HUB-01) — via api (le menu exige le hub amorcé)
+await page.evaluate(() => {
+  for (let y = 3; y <= 6; y++) for (let x = 3; x <= 6; x++)
+    if (window.__api.buildableAt(x, y)) { window.__api.build("coffret", x, y); return; }
+});
+await page.waitForTimeout(500);
+console.log("coffret posé (attendu mi 2 + lien src):", await page.evaluate(() =>
+  ({ mi: window.__LS().mi, links: window.__LS().links.length })));
+// l'Amorçage non réussi peut se relancer : on le laisse se refermer
+await page.waitForTimeout(1000);
+await page.waitForFunction(() => document.querySelector("#frenzy").hidden, null, { timeout: 30000 });
+
+// M2 : envoyer un drone ouvrier de la soute sur un amas de cristaux (tap réel)
 let cpos0 = null;
 for (let tries = 0; tries < 6 && !cpos0; tries++) {
   cpos0 = await page.evaluate(() =>
@@ -61,7 +73,7 @@ for (let tries = 0; tries < 6 && !cpos0; tries++) {
 }
 await page.mouse.click(cpos0.x, cpos0.y);
 await page.waitForTimeout(400);
-console.log("drone de soute envoyé (attendu mi 2, dr 1):", await page.evaluate(() =>
+console.log("drone de soute envoyé (attendu mi 3, dr 1):", await page.evaluate(() =>
   ({ mi: window.__LS().mi, dr: window.__LS().dr, units: window.__LS().units.length })));
 
 // M2 : menu construire = extracteur seul, construction par tap réel
@@ -111,7 +123,7 @@ await page.waitForTimeout(500);
 // M8-M11 : chapitre 🔌 — câbles, switch, simulation de trame
 await page.evaluate(() => { window.__LS().mat = 500; window.__api.autolink(); });
 await page.waitForTimeout(600);
-console.log("réseau câblé (attendu mi 9):", await page.evaluate(() => ({ mi: window.__LS().mi, ...window.__api.netInfo() })));
+console.log("réseau câblé (attendu mi 10):", await page.evaluate(() => ({ mi: window.__LS().mi, ...window.__api.netInfo() })));
 await buildFirst("switchhub");
 await page.waitForTimeout(400);
 // le Switch posé doit être câblé pour terminer « raccorde tout »
@@ -127,7 +139,7 @@ await page.evaluate(() => window.__api.giveEo(15));
 await page.waitForTimeout(500);
 await buildFirst("datacenter");
 await page.waitForTimeout(400);
-console.log("après la séquence ressources (attendu mi 15):", await page.evaluate(() => ({ mi: window.__LS().mi })));
+console.log("après la séquence ressources (attendu mi 16):", await page.evaluate(() => ({ mi: window.__LS().mi })));
 
 // M15 : serveur DHCP posé et câblé ; M16 : DNS
 await page.evaluate(() => window.__api.giveEo(20));
@@ -161,7 +173,7 @@ for (const t of ["console", "forge"]) {
   }, t);
 }
 await page.waitForTimeout(300);
-console.log("après forge (attendu 22):", await page.evaluate(() => window.__LS().mi));
+console.log("après forge (attendu 23):", await page.evaluate(() => window.__LS().mi));
 
 // M18 : drone récolteur posé sur cristaux par tap réel (dézoome si hors vue)
 await page.evaluate(() => { window.__LS().mat = 300; window.__api.assemble("recolteur"); });
@@ -189,7 +201,7 @@ for (let tries = 0; tries < 6 && !mpos; tries++) {
   }
 }
 await page.mouse.click(mpos.sx, mpos.sy);
-await page.waitForFunction(() => window.__LS().mi >= 24, null, { timeout: 15000 });
+await page.waitForFunction(() => window.__LS().mi >= 25, null, { timeout: 15000 });
 console.log("parasite éliminé:", await page.evaluate(() => ({ mi: window.__LS().mi, mobs: window.__api.mobsPos().length })));
 
 // M20 : expansion via UI (réessaie le tap Source si besoin)

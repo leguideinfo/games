@@ -104,6 +104,18 @@ l'arbre de recherche.
 - **Data-driven** : NET_LAYERS (bandes + savoirs), PORTS, équipements en
   BT — prêt à recevoir le contenu de formation du propriétaire.
 
+## Coffret réseau — HUB-01 posé au sol (2026-08-08, v1.1)
+
+L'Amorçage débouche désormais sur du concret : dès que le HUB-01 est
+démarré (mini-jeu ⚡ ci-dessous), la **mission 1 fait poser le Coffret
+réseau** dans la colonie (asset `coffret-reseau.png`, 10 💠, 6 ports).
+À la pose, il est **auto-relié à la Source** et devient **le cœur du
+câblage de début de partie** (la pénurie des 3 prises de la Source
+arrive plus tard, avec plus de bâtiments → Switch). Tant que le hub
+n'est pas amorcé, le Coffret n'apparaît pas au menu Construire, et
+l'Amorçage se relance automatiquement (toutes les ~12 s) pendant la
+mission 1. 26 missions, migration v6→v7.
+
 ## Amorçage du hub (2026-08-08 — remplace la « Pluie d'éclats »)
 
 Retour propriétaire : « router des paquets » n'a pas de sens en tout début

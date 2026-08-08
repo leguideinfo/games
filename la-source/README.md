@@ -14,7 +14,13 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   progressifs — hauteur, antennes, balises).
 - **La Source** au centre : la **balise centrale**, asset définitif du
   propriétaire (`tuile-balise.png`, faisceau détouré en matte de
-  différence) — tout bâtiment s'y relie par un conduit d'énergie animé.
+  différence, halo animé léger le long du faisceau) — tout bâtiment s'y
+  relie par un conduit d'énergie animé. Le **Coffret réseau HUB-01**
+  (asset `coffret-reseau.png`) se pose en mission 1 après l'Amorçage et
+  devient le cœur du câblage (6 ports, auto-relié à la Source) ; le
+  **drone ouvrier** vole en sprite définitif (`drone-ouvrier.png`,
+  vibration légère, sans ballant) ; les amas de cristaux utilisent le
+  modèle unique `sol-tuile-cristaux-3.png` (deux classes de taille).
 - **Économie du vrai jeu (v2)** — alignée sur console.awoui.com :
   **Matériaux 💠** extraits, **Énergie ⚡** en capacité (Centrale) consommée
   par chaque bâtiment, **Données Eo 💾** calculées (Fermes) et stockées
