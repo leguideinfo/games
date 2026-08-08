@@ -57,6 +57,32 @@
     font-size: 16px; z-index: 9;
   }
   #wirebtn.on { border-color: var(--cyan); box-shadow: 0 0 12px rgba(78, 242, 224, .6); }
+  #buildbtn {
+    position: absolute; right: 10px; top: 196px; width: 38px; height: 38px;
+    border-radius: 9px; border: 1px solid var(--line); background: rgba(11, 17, 32, .88);
+    color: var(--fg); font-size: 16px; z-index: 9;
+  }
+  #buildbtn.on { border-color: #3cdc82; box-shadow: 0 0 12px rgba(60, 220, 130, .6); }
+  #buildbtn.empty { opacity: .45; }
+  #placebar {
+    position: absolute; left: 0; right: 0; bottom: 56px; z-index: 25;
+    background: rgba(6, 9, 19, .94); border-top: 1px solid var(--line);
+    padding: 8px 12px; display: flex; flex-direction: column; gap: 6px;
+  }
+  #placebar[hidden] { display: none; }
+  #placebar .pb-info { display: flex; justify-content: space-between; font-size: 13px; }
+  #placebar .pb-nm { font-weight: 600; }
+  #placebar .pb-cost { color: var(--cyan); }
+  #placebar .pb-row { display: flex; gap: 8px; }
+  #placebar .cancel { flex: 36; }
+  #placebar .ok { flex: 64; min-height: 50px; font-size: 15px; background: #3cdc82; color: #06210f; font-weight: 700; }
+  #placebar .ok:disabled { background: #3a4150; color: var(--dim); font-weight: 500; }
+  /* la palette doit défiler au doigt : body{touch-action:none} l'en empêchait */
+  #buildlist { touch-action: pan-y; overscroll-behavior: contain; }
+  .sheet.dragging { transform: translateY(calc(100% - 44px)); pointer-events: none; }
+  .bcard { touch-action: none; }
+  body.placing #cv { cursor: crosshair; }
+  body.placing #toasts { bottom: 160px; }
   #net-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
   #net-actions button {
     border: 1px solid var(--line); background: rgba(11, 17, 32, .8); color: var(--txt);
@@ -585,6 +611,11 @@
   <div class="overlay-note" id="mapnote" hidden>SECTEUR K-7 · fédérations à venir (v1 asynchrone)</div>
 
   <button id="wirebtn" hidden>🔌</button>
+  <button id="buildbtn" hidden>🔨</button>
+  <div id="placebar" hidden>
+    <div class="pb-info"><span class="pb-nm"></span><span class="pb-cost"></span></div>
+    <div class="pb-row"><button class="cancel">✕ ANNULER</button><button class="ok">✅ POSER ICI</button></div>
+  </div>
   <div id="tabs">
     <button id="tab-col" class="on">COLONIE</button>
     <button id="tab-map" disabled>CARTE 🔒</button>
@@ -608,6 +639,7 @@
     <div id="bl-forge"></div>
     <div class="actrow">
       <button id="bl-up"></button>
+      <button id="bl-move"></button>
       <button id="bl-turbo" class="warn"></button>
     </div>
   </div>
@@ -970,6 +1002,7 @@ if (S.hubBoot == null) S.hubBoot = false;
 if (!S.links) S.links = [];
 S.units.forEach((u) => { delete u.busy; delete u.fly; });
 window.__LS = () => S;
+setTimeout(initDragPose, 0);
 
 /* ---------- économie ---------- */
 const bcount = (t) => S.buildings.filter((b) => b.t === t).length;
@@ -996,6 +1029,9 @@ function enUse(extra) {
   return u;
 }
 function buildCost(t) { return Math.round(BT[t].base * Math.pow(1.6, bcount(t))); }
+// Déplacer coûte cher : 60 % du prix courant du bâtiment, plancher 60 💠.
+// On ne rembourse rien, on paie la grue — mais on ne perd pas ses niveaux.
+function moveCost(b) { return Math.max(60, Math.round(buildCost(b.t) * 0.6)); }
 function buildCostEo(t) { return BT[t].eo ? Math.round(BT[t].eo * Math.pow(1.6, bcount(t))) : 0; }
 function upCost(b) { return Math.round(BT[b.t].base * 0.8 * Math.pow(1.6, b.l)); }
 /* ---------- SI de la colonie (v1) : câbles, connectivité, équipements ---------- */
@@ -1195,8 +1231,8 @@ function fpOf(kind, x, y) {
     const info = tileAt(x, y);
     return CRT.w[((info.j * 13) % 1) > 0.55 ? 1 : 0] * 0.91;
   }
-  if (kind === "caillou" || kind === "roche") {
-    const fam = kind === "caillou" ? D_EBOULIS : D_ROCHE;
+  if (kind === "caillou" || kind === "roche" || kind === "crevasse") {
+    const fam = kind === "caillou" ? D_EBOULIS : kind === "roche" ? D_ROCHE : D_CREVASSE;
     const info = tileAt(x, y);
     return DECO_M[fam[Math.floor(info.j * fam.length) % fam.length]].fp;
   }
@@ -1219,14 +1255,37 @@ function fpLibre(x, y, s, ignore) {
   }
   return true;
 }
-// une case peut-elle accueillir un objet de type t ?
-function posable(t, x, y, ignore) {
-  if (!inB(x, y)) return false;
+// pourquoi une case accepte (ou refuse) un objet — sert au fantôme de pose
+const SOL_REFUS = {
+  crystal: "Il y a des cristaux ici ✨",
+  caillou: "Il faut d'abord déblayer les cailloux",
+  crevasse: "C'est une crevasse — il faut la colmater",
+  roche: "⛰ Relief rocheux — impossible d'y bâtir",
+  lac: "🌊 Le Grand Lac — on n'y bâtit rien",
+};
+function posableWhy(t, x, y, ignore) {
+  if (!inB(x, y)) return { ok: false, why: "C'est en dehors du terrain" };
+  if (x === SRC.x && y === SRC.y) return { ok: false, why: "C'est la Source" };
   const k = tileAt(x, y).kind;
-  if (k !== "sand") return false; // sable seul : ni relief, ni lac, ni crevasse
-  if (x === SRC.x && y === SRC.y) return false;
-  if (S.buildings.some((b) => b !== ignore && b.x === x && b.y === y)) return false;
-  return fpLibre(x, y, fpOf(t, x, y), ignore);
+  if (k !== "sand") return { ok: false, why: SOL_REFUS[k] || "Le sol ne convient pas" };
+  const dj = S.buildings.find((b) => b !== ignore && b.x === x && b.y === y);
+  if (dj) return { ok: false, why: "Il y a déjà " + BT[dj.t].nm, bx: x, by: y };
+  const s = fpOf(t, x, y);
+  for (const o of occupants(ignore)) {
+    const d = (s + o.s) / 2 + FP_MARGE;
+    if (Math.abs(o.x - x) < d && Math.abs(o.y - y) < d)
+      return { ok: false, why: "Trop près — laisse un peu de bord", bx: o.x, by: o.y };
+  }
+  return { ok: true };
+}
+// une case peut-elle accueillir un objet de type t ?
+function posable(t, x, y, ignore) { return posableWhy(t, x, y, ignore).ok; }
+// une case peut-elle accueillir un drone ouvrier ? (cristaux libres)
+function posableUnit(x, y) {
+  if (!inB(x, y)) return { ok: false, why: "C'est en dehors du terrain" };
+  if (tileAt(x, y).kind !== "crystal") return { ok: false, why: "Pose le drone sur des cristaux ✨" };
+  if (S.units.some((u) => u.x === x && u.y === y)) return { ok: false, why: "Un drone y travaille déjà" };
+  return { ok: true };
 }
 const buildable = (x, y) =>
   inB(x, y) &&
@@ -1266,8 +1325,9 @@ function s2w(sx, sy) {
   const fy = (iy / (TH / 2) - ix / (TW / 2)) / 2;
   return { x: Math.round(fx), y: Math.round(fy) };
 }
-function centerCam() {
-  const c = { x: ((SRC.x - SRC.y) * TW / 2), y: ((SRC.x + SRC.y) * TH / 2) };
+function centerCam(tx, ty) {
+  const gx = tx == null ? SRC.x : tx, gy = ty == null ? SRC.y : ty;
+  const c = { x: ((gx - gy) * TW / 2), y: ((gx + gy) * TH / 2) };
   cam.x = W / 2 - c.x * cam.z;
   cam.y = H / 2 - c.y * cam.z - 20;
 }
@@ -1283,7 +1343,10 @@ function fitCam() {
 let lastGatesT = 0;
 let view = "col"; // col | map
 let selTile = null;
-let placing = null; // {t:"recolteur"} en attente d'un tap sur cristaux
+// Pose armée (aperçu fantôme). Jamais sérialisée.
+// { kind:"bld"|"unit"|"move", t, mv, hx, hy, valid, why, bx, by,
+//   drag, ptrId, psx, psy, lift, aimed, lastTap }
+let place = null;
 let wire = null; // mode câblage : { a: clé du premier nœud ou null }
 let sim = null; // simulation de trame en cours
 let orbs = []; // {x,y,val,born}
@@ -1439,13 +1502,14 @@ function isoBox(sx, sy, w, h, hgt, col) {
   ctx.fillStyle = "#82878f"; ctx.fill(); ctx.stroke();
   // fenêtres énergie
   ctx.fillStyle = col;
-  ctx.globalAlpha = 0.9;
+  const ga0 = ctx.globalAlpha;
+  ctx.globalAlpha = ga0 * 0.9;
   const rows = Math.max(1, Math.floor(hgt / 14));
   for (let r = 0; r < rows; r++) {
     ctx.fillRect(sx - w * 0.32, topY + h / 2 + 4 + r * 12, w * 0.2, 3);
     ctx.fillRect(sx + w * 0.12, topY + h / 2 + 4 + r * 12, w * 0.2, 3);
   }
-  ctx.globalAlpha = 1;
+  ctx.globalAlpha = ga0;
 }
 /* ---------- sprites de bâtiments (pipeline assets définitifs) ----------
    regSprite(type, dataURI, smoke) branche une image iso sur un type :
@@ -2151,8 +2215,7 @@ function nearestTile(pred) {
 }
 function guideWorldTarget() {
   if (view !== "col") return null;
-  if (placing) return Object.assign({ kind: "tile" }, nearestTile((x, y) =>
-    tileAt(x, y).kind === "crystal" && !S.units.some((u) => u.x === x && u.y === y)) || {});
+  if (place) return { x: place.hx, y: place.hy, kind: "ghost" };
   const mi = S.mi;
   if (mi === 0) { const o = orbs[0]; return o && { x: o.x, y: o.y, kind: "orb" }; }
   if (mi === 2) return Object.assign({ kind: "crys" }, nearestTile((x, y) =>
@@ -2195,11 +2258,64 @@ function drawCrevasseHint(t) {
   ctx.fillText("?", p.x, p.y - 18 * z - pulse * 5 * z);
   ctx.shadowBlur = 0;
 }
+function drawPlaceHalo(t) {
+  if (!place || view !== "col") return;
+  const z = cam.z, p = w2s(place.hx, place.hy);
+  const s = place.kind === "unit" ? FP_UNIT : fpOf(place.t, place.hx, place.hy);
+  const col = place.valid ? "#3cdc82" : "#ff6b6b";
+  ctx.save();
+  diamond(ctx, p.x, p.y, s * TW * z, s * TH * z);
+  ctx.fillStyle = place.valid ? "rgba(60,220,130,.18)" : "rgba(255,107,107,.18)";
+  ctx.fill();
+  ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.stroke();
+  // le « petit bord » demandé : la zone de marge, en pointillé
+  diamond(ctx, p.x, p.y, (s + FP_MARGE) * TW * z, (s + FP_MARGE) * TH * z);
+  ctx.setLineDash([5, 4]); ctx.lineWidth = 1.4;
+  ctx.globalAlpha = 0.4; ctx.strokeStyle = col; ctx.stroke();
+  ctx.setLineDash([]); ctx.globalAlpha = 1;
+  // ce qui bloque, entouré de rouge pulsant
+  if (!place.valid && place.bx != null) {
+    const q = w2s(place.bx, place.by);
+    const pu = 0.5 + 0.5 * Math.sin(t / 450);
+    diamond(ctx, q.x, q.y, TW * 0.9 * z, TH * 0.9 * z);
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = "rgba(255,107,107," + (0.4 + 0.5 * pu).toFixed(2) + ")";
+    ctx.lineWidth = 2; ctx.stroke(); ctx.setLineDash([]);
+  }
+  ctx.restore();
+}
+function drawPlaceGhost(t) {
+  if (!place) return;
+  const z = cam.z, p = w2s(place.hx, place.hy);
+  ctx.save();
+  ctx.globalAlpha = place.valid ? 0.62 : 0.3;
+  if (place.kind === "unit") {
+    if (DRN.ok) {
+      const vw = 0.33 * TW * z, vh = vw * DRN.hw;
+      ctx.drawImage(drnImg(), p.x - vw / 2, p.y - 26 * z - vh / 2, vw, vh);
+    }
+  } else {
+    const ts = TSPR[place.t];
+    if (ts && ts.ok) {
+      const img = tsprImg(place.t);
+      const sw = ts.w * TW * z, sh = sw * ts.hw;
+      plateauClipPath(); ctx.clip();
+      ctx.drawImage(img, p.x - ts.ax * sw, p.y + TH * ts.oy * z - ts.ay * sh, sw, sh);
+    } else {
+      const def = BT[place.t];
+      diamond(ctx, p.x, p.y, TW * 0.8 * z, TH * 0.8 * z);
+      ctx.fillStyle = "#22262e"; ctx.fill();
+      isoBox(p.x, p.y, TW * 0.62 * z, TH * 0.62 * z, 21 * z, def.col);
+    }
+  }
+  ctx.restore();
+}
 function drawGuide(t) {
   const gt = guideWorldTarget();
   if (!gt || gt.x == null) return;
   const p = w2s(gt.x, gt.y), z = cam.z;
   const pulse = 0.5 + 0.5 * Math.sin(t / 220);
+  if (gt.kind === "ghost") return; // le halo de pose est la seule indication
   if (gt.kind === "tile" || gt.kind === "src" || gt.kind === "crys") {
     diamond(ctx, p.x, p.y, TW * z * (1 + 0.06 * pulse), TH * z * (1 + 0.06 * pulse));
     ctx.strokeStyle = "rgba(255,200,87," + (0.45 + 0.5 * pulse).toFixed(2) + ")";
@@ -2340,6 +2456,16 @@ function frame(t) {
       if (t - o.born > 3500) collectOrb(o, true);
     }
   }
+  if (place) {
+    if (place.drag) { // auto-défilement quand le doigt approche d'un bord
+      const M = 52, SP = 6;
+      let mx = 0, my = 0;
+      if (place.psx < M) mx = SP; else if (place.psx > W - M) mx = -SP;
+      if (place.psy < M + 60) my = SP; else if (place.psy > H - M - 120) my = -SP;
+      if (mx || my) { cam.x += mx; cam.y += my; clampCam(); movePlaceScreen(place.psx, place.psy); }
+    }
+    evalPlace();
+  }
   // rendu
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   if (view === "col") {
@@ -2348,6 +2474,7 @@ function frame(t) {
     drawLac();
     drawPaths();
     for (let y = bmin(); y <= bmax(); y++) for (let x = bmin(); x <= bmax(); x++) drawTile(x, y, t);
+    drawPlaceHalo(t);
     for (const b of S.buildings) drawLink(b, t);
     for (const l of S.links) drawCable(l, t);
     const drawables = S.buildings.map((b) => ({ d: b.x + b.y, b }));
@@ -2360,10 +2487,12 @@ function frame(t) {
       else if (k2 === "roche" && DECO.n)
         drawables.push({ d: x + y, deco: "relief", x, y });
     }
+    if (place) drawables.push({ d: place.hx + place.hy + 0.02, ghost: true });
     drawables.push({ d: SRC.x + SRC.y - 0.01, src: true });
     drawables.sort((a, b) => a.d - b.d);
     for (const it of drawables) {
-      if (it.src) drawSource(t);
+      if (it.ghost) drawPlaceGhost(t);
+      else if (it.src) drawSource(t);
       else if (it.deco === "crys") drawCrystalSprite(it.x, it.y);
       else if (it.deco === "rock") drawRockSprite(it.x, it.y);
       else if (it.deco === "relief") drawRelief(it.x, it.y);
@@ -2427,6 +2556,7 @@ function collectOrb(o, auto) {
 /* ---------- pluie d'éclats (frénésie de collecte) ---------- */
 let frz = null, collectTimes = [], frzCooldownUntil = 0, frzRetryAt = 0;
 function startFrenzy() {
+  cancelPlace(true);
   frzCooldownUntil = performance.now() + 90000;
   collectTimes = [];
   frz = { mat: 0, fill: 0, booted: false };
@@ -2547,6 +2677,13 @@ cv.addEventListener("pointerdown", (e) => {
   dragged = false;
 });
 cv.addEventListener("pointermove", (e) => {
+  if (place && !place.drag && !pd && view === "col" && e.pointerType === "mouse") {
+    const r = cv.getBoundingClientRect();
+    place.lift = 0;
+    movePlaceScreen(e.clientX - r.left, e.clientY - r.top);
+    syncPlaceUI();
+    return;
+  }
   if (!pd || e.pointerId !== pd.id || view !== "col") return;
   const dx = e.clientX - pd.x, dy = e.clientY - pd.y;
   if (Math.abs(dx) + Math.abs(dy) > 10) dragged = true;
@@ -2588,23 +2725,6 @@ cv.addEventListener("pointerup", (e) => {
     wire.a = null;
     return;
   }
-  // placement d'un drone récolteur
-  if (placing) {
-    const tp0 = s2w(sx, sy);
-    if (inB(tp0.x, tp0.y) && tileAt(tp0.x, tp0.y).kind === "crystal" &&
-        !S.units.some((u) => u.x === tp0.x && u.y === tp0.y)) {
-      S.units.push({ t: placing.t, x: tp0.x, y: tp0.y });
-      S.fr = (S.fr || 0) + 1;
-      placing = null;
-      sfx.build();
-      toast("🛸 Drone ouvrier en place.");
-      missionDone("unit_recolteur");
-      save();
-    } else {
-      toast("Pose le drone sur un <b>champ de cristaux</b> ✨ libre.");
-    }
-    return;
-  }
   // parasites
   for (const m of mobs) {
     if (m.sx != null && !m.atk && Math.hypot(sx - m.sx, sy - m.sy) < 26) {
@@ -2622,6 +2742,20 @@ cv.addEventListener("pointerup", (e) => {
       collectOrb(o, false);
       return;
     }
+  }
+  // pose armée : viser (1er tap) puis confirmer (2e tap au même endroit)
+  if (place) {
+    const tpp = s2w(sx, sy);
+    const now = performance.now();
+    if (place.aimed && tpp.x === place.hx && tpp.y === place.hy && now - place.lastTap >= 250) {
+      commitPlace();
+    } else {
+      movePlaceTile(tpp.x, tpp.y);
+      place.aimed = true; place.lastTap = now;
+      sfx.ui();
+      syncPlaceUI();
+    }
+    return;
   }
   const tp = s2w(sx, sy);
   if (tp.x === SRC.x && tp.y === SRC.y) { openSource(); return; }
@@ -2676,6 +2810,7 @@ cv.addEventListener("touchstart", (e) => {
 cv.addEventListener("touchmove", (e) => {
   if (e.touches.length === 2 && pinch) {
     const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+    if (place && place.drag) cancelPlace(true);
     zoomAt(d / pinch);
     pinch = d;
   }
@@ -2692,7 +2827,16 @@ function zoomAt(f) {
   clampCam();
 }
 $("#z-in").onclick = () => zoomAt(1.25);
+$("#buildbtn").onclick = () => {
+  if (place) { cancelPlace(); return; }
+  if (paletteVide()) { sfx.deny(); toast("✨ Récolte des éclats pour <b>amorcer le HUB-01</b>."); return; }
+  sfx.ui(); openBuild(null);
+};
+$("#placebar .ok").onclick = () => commitPlace();
+$("#placebar .cancel").onclick = () => cancelPlace();
+window.addEventListener("keydown", (e) => { if (e.key === "Escape" && place) cancelPlace(); });
 $("#wirebtn").onclick = () => {
+  if (place) cancelPlace(true);
   wire = wire ? null : { a: null };
   $("#wirebtn").classList.toggle("on", !!wire);
   toast(wire ? "🔌 <b>Mode câblage</b> : tape deux machines à relier (10 💠 le câble)." : "Mode câblage terminé.");
@@ -2710,6 +2854,192 @@ function closeSheets() {
 }
 for (const b of document.querySelectorAll(".sheet .close")) b.onclick = closeSheets;
 
+/* ---------- moteur de pose : viser, voir, confirmer ----------
+   Trois chemins mènent à la même pose : glisser une carte sur le terrain,
+   choisir puis viser puis ✅, ou (chemin historique) case présélectionnée +
+   bouton prix. Rien n'est débité tant que la pose n'est pas confirmée. */
+function placeCost(pl) {
+  if (!pl) return { mat: 0, eo: 0 };
+  if (pl.kind === "move") return { mat: moveCost(pl.mv), eo: 0 };
+  if (pl.kind === "unit") return { mat: UT[pl.t].cost, eo: UT[pl.t].ceo };
+  return { mat: buildCost(pl.t), eo: buildCostEo(pl.t) };
+}
+function placeNom(pl) {
+  if (!pl) return "";
+  if (pl.kind === "unit") return UT[pl.t].nm;
+  return BT[pl.t].nm;
+}
+function evalPlace() {
+  if (!place) return;
+  let r;
+  if (place.kind === "unit") r = posableUnit(place.hx, place.hy);
+  else r = posableWhy(place.t, place.hx, place.hy, place.mv || null);
+  if (r.ok) {
+    const c = placeCost(place);
+    if (S.mat < c.mat || S.eo < c.eo) r = { ok: false, why: "Pas assez de ressources" };
+    else if (place.kind === "bld" && enUse(BT[place.t].conso) > enCap())
+      r = { ok: false, why: "⚡ insuffisante — améliore la Centrale" };
+  }
+  place.valid = r.ok; place.why = r.why || ""; place.bx = r.bx; place.by = r.by;
+}
+// meilleure case de départ : valide, proche de la Source, et visible à l'écran
+function bestTile(pl) {
+  let best = null, bd = 1e9;
+  for (let y = bmin(); y <= bmax(); y++) for (let x = bmin(); x <= bmax(); x++) {
+    const ok = pl.kind === "unit" ? posableUnit(x, y).ok : posable(pl.t, x, y, pl.mv || null);
+    if (!ok) continue;
+    const p = w2s(x, y);
+    const vu = p.x > 40 && p.x < W - 40 && p.y > 130 && p.y < H - 190;
+    const d = Math.hypot(x - SRC.x, y - SRC.y) + (vu ? 0 : 40);
+    if (d < bd) { bd = d; best = { x, y, vu }; }
+  }
+  return best;
+}
+function armPlace(kind, t, opt) {
+  opt = opt || {};
+  if (kind === "bld") {
+    if ((BT[t].mAt || 0) > S.mi) return false;
+    if (t === "coffret" && !S.hubBoot) return false;
+  }
+  wire = null; $("#wirebtn").classList.remove("on");
+  place = { kind, t, mv: opt.mv || null, hx: 0, hy: 0, valid: false, why: "",
+            drag: false, ptrId: null, psx: 0, psy: 0, lift: 0,
+            aimed: false, lastTap: 0 };
+  let sx = opt.hx, sy = opt.hy;
+  if (sx === -999) { place.hx = -999; place.hy = -999; evalPlace(); closeSheets(); syncPlaceUI(); return true; }
+  if (sx == null) {
+    const b = bestTile(place);
+    if (!b) { place = null; sfx.deny(); toast("Aucune place libre — étends le territoire."); return false; }
+    sx = b.x; sy = b.y;
+    if (!b.vu) centerCam(sx, sy);
+  }
+  place.hx = sx; place.hy = sy;
+  evalPlace();
+  closeSheets();
+  syncPlaceUI();
+  return true;
+}
+function movePlaceTile(x, y) {
+  if (!place) return;
+  place.hx = x; place.hy = y;
+  evalPlace();
+}
+function movePlaceScreen(sx, sy) {
+  if (!place) return;
+  place.psx = sx; place.psy = sy;
+  const tp = s2w(sx, sy - place.lift);
+  movePlaceTile(tp.x, tp.y);
+}
+function cancelPlace(silence) {
+  if (!place) return;
+  place = null;
+  syncPlaceUI();
+  if (!silence) sfx.ui();
+}
+function commitPlace() {
+  if (!place) return false;
+  evalPlace();
+  if (!place.valid) { sfx.deny(); if (place.why) toast(place.why); return false; }
+  const pl = place, c = placeCost(pl);
+  if (pl.kind === "move") {
+    const b = pl.mv, ox = b.x, oy = b.y;
+    S.mat -= c.mat;
+    b.x = pl.hx; b.y = pl.hy;
+    // l'identité réseau d'un bâtiment EST sa position : les câbles suivent
+    const ak = nkey(ox, oy), nk2 = nkey(b.x, b.y);
+    for (const l of S.links) { if (l.a === ak) l.a = nk2; if (l.b === ak) l.b = nk2; }
+    netDirty = true; pathCache = { key: "", segs: [] };
+    place = null; syncPlaceUI(); sfx.build();
+    burst(w2s(b.x, b.y).x, w2s(b.x, b.y).y, BT[b.t].col);
+    toast("🚚 <b>" + BT[b.t].nm + "</b> déplacé — câbles reconnectés (−" + fmt(c.mat) + " 💠).", true);
+    save();
+    return true;
+  }
+  if (pl.kind === "unit") {
+    S.mat -= c.mat; S.eo -= c.eo;
+    S.units.push({ t: pl.t, x: pl.hx, y: pl.hy });
+    S.fr = (S.fr || 0) + 1;
+    place = null; syncPlaceUI(); sfx.build();
+    toast("🛸 Drone ouvrier en place.");
+    missionDone("unit_recolteur");
+    save();
+    return true;
+  }
+  S.mat -= c.mat; S.eo -= c.eo;
+  S.buildings.push({ t: pl.t, x: pl.hx, y: pl.hy, l: 1 });
+  place = null; syncPlaceUI(); sfx.build();
+  postBuild(pl.t);
+  save();
+  return true;
+}
+function paletteVide() {
+  for (const [key, def] of Object.entries(BT)) {
+    if ((def.mAt || 0) > S.mi) continue;
+    if (key === "coffret" && !S.hubBoot) continue;
+    return false;
+  }
+  return true;
+}
+function syncPlaceUI() {
+  const bar = $("#placebar");
+  if (!place) { bar.hidden = true; document.body.classList.remove("placing"); return; }
+  const c = placeCost(place);
+  bar.hidden = false;
+  document.body.classList.add("placing");
+  bar.querySelector(".pb-nm").innerHTML =
+    (place.kind === "move" ? "🚚 Déplacer " : "") + placeNom(place);
+  bar.querySelector(".pb-cost").textContent = c.mat ? fmt(c.mat) + " 💠" + (c.eo ? " + " + c.eo + " Eo" : "") : "";
+  const ok = bar.querySelector(".ok");
+  ok.disabled = !place.valid;
+  ok.textContent = place.valid ? "✅ POSER ICI" : "✕ " + (place.why || "impossible ici");
+}
+/* glisser-déposer depuis une carte du menu vers le terrain.
+   Pas de setPointerCapture : la feuille est au-dessus du canvas, donc
+   `pd` (le pan) ne se déclenche jamais ; on écoute sur window le temps
+   du geste, ce qui laisse le `click` intact pour les boutons prix. */
+function initDragPose() {
+  const list = $("#buildlist");
+  list.addEventListener("pointerdown", (e) => {
+    const card = e.target.closest(".bcard");
+    if (!card || card.classList.contains("locked") || !card.dataset.k) return;
+    if (e.target.closest("button")) return; // le bouton prix garde son clic
+    const key = card.dataset.k, x0 = e.clientX, y0 = e.clientY;
+    let armed = false;
+    const move = (ev) => {
+      if (!armed) {
+        if (Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) <= 10) return;
+        armed = true;
+        if (!armPlace("bld", key, { hx: -999, hy: -999 })) { fin(); return; }
+        place.drag = true; place.lift = ev.pointerType === "touch" ? 46 : 0;
+        $("#sh-build").classList.add("dragging");
+      }
+      const r = cv.getBoundingClientRect();
+      movePlaceScreen(ev.clientX - r.left, ev.clientY - r.top);
+      syncPlaceUI();
+    };
+    const up = (ev) => {
+      if (armed && place) {
+        place.drag = false;
+        if (place.valid) commitPlace();
+        else { place.aimed = true; place.lastTap = performance.now(); syncPlaceUI(); }
+      } else if (!armed) {
+        // simple tap sur le corps de la carte : on arme sur la meilleure case
+        armPlace("bld", key);
+        if (place) toast("Touche le terrain pour viser, puis <b>✅ POSER ICI</b>.");
+      }
+      fin();
+    };
+    const fin = () => {
+      $("#sh-build").classList.remove("dragging");
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+  });
+}
 function openBuild(tile) {
   closeSheets();
   selTile = tile; // après closeSheets, qui remet selTile à null
@@ -2724,6 +3054,7 @@ function openBuild(tile) {
     const enOk = enUse(def.conso) <= enCap();
     const card = document.createElement("div");
     card.className = "bcard" + (locked || !enOk ? " locked" : "");
+    card.dataset.k = key;
     let lockTxt = "";
     if (locked) lockTxt = "Requiert la technologie " + TECHS[def.tech].nm + ".";
     else if (!enOk) lockTxt = "⚡ insuffisante — améliore la Centrale énergétique.";
@@ -2736,14 +3067,12 @@ function openBuild(tile) {
     btn.disabled = locked || !enOk || S.mat < cost || S.eo < ceo;
     if (GUIDE_BUILD[S.mi] === key && !btn.disabled) btn.classList.add("guide");
     btn.onclick = () => {
-      if (S.mat < cost || S.eo < ceo || !sel || enUse(def.conso) > enCap()) { sfx.deny(); return; }
-      if (!posable(key, sel.x, sel.y)) { sfx.deny(); toast("Pas la place ici — <b>trop près</b> d'une autre installation."); return; }
-      S.mat -= cost; S.eo -= ceo;
-      S.buildings.push({ t: key, x: sel.x, y: sel.y, l: 1 });
-      sfx.build();
-      postBuild(key);
-      save();
-      closeSheets();
+      if (locked || !enOk) { sfx.deny(); return; }
+      if (sel && posable(key, sel.x, sel.y)) { // case déjà visée : pose directe
+        if (armPlace("bld", key, { hx: sel.x, hy: sel.y }) && !commitPlace()) cancelPlace(true);
+        return;
+      }
+      armPlace("bld", key); // sinon : mode viser-puis-confirmer
     };
     card.appendChild(btn);
     list.appendChild(card);
@@ -2835,6 +3164,17 @@ function openBld(b) {
     }
     fa.appendChild(mb);
   }
+  const mvB = $("#bl-move");
+  const mc = moveCost(b);
+  mvB.hidden = S.mi < 5; // le déplacement s'ouvre une fois la colonie installée
+  mvB.textContent = "🚚 DÉPLACER · " + fmt(mc) + " 💠";
+  mvB.disabled = S.mat < mc;
+  mvB.onclick = () => {
+    if (S.mat < mc) { sfx.deny(); toast("Déplacer coûte <b>" + fmt(mc) + " 💠</b> — la grue n'est pas donnée."); return; }
+    closeSheets();
+    armPlace("move", b.t, { mv: b, hx: b.x, hy: b.y });
+    toast("🚚 Choisis la nouvelle place de <b>" + BT[b.t].nm + "</b>, puis ✅. Les câbles suivront.");
+  };
   const uc = upCost(b);
   const upBtn = $("#bl-up");
   upBtn.classList.toggle("guide", (S.mi === 4 && b.t === "extracteur" || S.mi === 8 && b.t === "centrale") && S.mat >= uc);
@@ -2865,13 +3205,16 @@ function assemble(k, fb) {
   const u = UT[k];
   const cap = bsum("forge") + 3; // les 2 drones de soute ne comptent pas contre la Forge
   if (S.units.length >= cap || S.mat < u.cost || S.eo < u.ceo) { sfx.deny(); return; }
+  if (k === "recolteur") { // rien n'est débité tant que le drone n'est pas posé
+    sfx.ui();
+    armPlace("unit", k);
+    toast("🛸 Drone prêt — <b>pose-le sur des cristaux</b> ✨, puis ✅.");
+    save();
+    return;
+  }
   S.mat -= u.cost; S.eo -= u.ceo;
   sfx.build();
-  if (k === "recolteur") {
-    placing = { t: k };
-    closeSheets();
-    toast("🛸 Drone assemblé — <b>tape un champ de cristaux</b> pour le poser.");
-  } else {
+  {
     S.units.push({ t: k, x: fb.x, y: fb.y });
     closeSheets();
     toast("🚀 Chasseur en patrouille.");
@@ -4055,13 +4398,18 @@ function refreshGates() {
   $("#tab-map").classList.toggle("guide", S.mi === 18);
   $("#tab-arch").hidden = !(S.archives.length || S.mi >= 4);
   $("#tab-arch").classList.toggle("guide", S.mi >= 4 && S.mi <= 6 && !S.memories.length);
+  $("#buildbtn").hidden = S.mi < 1;
+  $("#buildbtn").classList.toggle("empty", paletteVide());
+  $("#buildbtn").classList.toggle("on", !!place);
+  $("#buildbtn").classList.toggle("guide", !!GUIDE_BUILD[S.mi] && !place && !paletteVide());
+  syncPlaceUI();
 }
 
 /* ---------- onglets ---------- */
 $("#tab-col").onclick = () => {
   const wasCol = view === "col";
   view = "col"; setTab("col");
-  if (!wasCol || placing) return;
+  if (!wasCol || place) return;
   // déjà sur la colonie : ouvre directement l'action de la mission en cours
   const gt = guideWorldTarget();
   if (!gt || gt.x == null) return;
@@ -4104,7 +4452,7 @@ function openNet() {
     if ((BT[tt].mAt || 0) > S.mi) continue;
     const b = document.createElement("button");
     b.textContent = "+ " + BT[tt].nm + " · " + fmt(buildCost(tt)) + " 💠" + (BT[tt].eo ? " + " + buildCostEo(tt) + " Eo" : "");
-    b.onclick = () => { closeSheets(); toast(BT[tt].ic + " Tape une <b>case libre</b> puis choisis <b>" + BT[tt].nm + "</b>."); };
+    b.onclick = () => { closeSheets(); armPlace("bld", tt); };
     acts.appendChild(b);
   }
   const bands = $("#net-bands");
@@ -4607,6 +4955,13 @@ window.__api = {
   orbsPos() { return orbs.filter((o) => o.sx != null).map((o) => ({ sx: o.sx, sy: o.sy, tx: o.x, ty: o.y })); },
   mobsPos() { return mobs.filter((m) => m.sx != null && !m.atk).map((m) => ({ sx: m.sx, sy: m.sy, tx: m.x, ty: m.y })); },
   center(x, y) { const c = w2s(x, y); cam.x += W / 2 - c.x; cam.y += H / 2 - c.y; clampCam(); },
+  placeArm(kind, t, mv) { return armPlace(kind, t, mv ? { mv: S.buildings.find((b) => b.t === mv), hx: 0, hy: 0 } : undefined); },
+  placeAt(x, y) { movePlaceTile(x, y); return place ? { x: place.hx, y: place.hy, valid: place.valid, why: place.why } : null; },
+  placeState() { return place ? { kind: place.kind, t: place.t, x: place.hx, y: place.hy, valid: place.valid, why: place.why } : null; },
+  placeCommit() { return commitPlace(); },
+  placeCancel() { cancelPlace(true); },
+  posableAt(t, x, y) { return posableWhy(t, x, y); },
+  moveCostOf(t) { const b = S.buildings.find((x2) => x2.t === t); return b ? moveCost(b) : 0; },
   link(ax, ay, bx, by) { return addLink(ax === "src" ? "src" : nkey(ax, ay), bx === "src" ? "src" : nkey(bx, by)); },
   autolink() {
     for (const b of S.buildings) {

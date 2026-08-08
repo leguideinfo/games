@@ -97,6 +97,23 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   récompense en 💠). Les expansions agrandissent la frontière… et le
   terrain de chasse. En prod : premier pas vers le PvE/PvP cyber de la
   vision (intrusion/défense).
+- **Pose en aperçu & déplacement (v9)** : la pose passe par un **fantôme**.
+  Trois gestes mènent au même résultat — **glisser** une carte du menu sur le
+  terrain, **taper** son nom puis viser et ✅, ou (chemin historique) case
+  présélectionnée + bouton prix. Bouton flottant **🔨 CONSTRUIRE** pour ouvrir
+  la palette sans avoir à trouver une case libre. Sous le fantôme :
+  **l'empreinte au sol** en vert/rouge + **la marge en pointillé** (le « petit
+  bord » visible), et l'obstacle entouré de rouge pulsant avec la raison écrite
+  (« C'est la Source », « Trop près — laisse un peu de bord », « ⛰ Relief
+  rocheux »…). **Rien n'est débité avant la confirmation** — annuler ne coûte
+  rien (corrige au passage une perte de 80 💠 si on rechargeait pendant la pose
+  d'un drone). Le drone ouvrier passe par le même moteur.
+  **🚚 DÉPLACER** dans la fiche d'un bâtiment : 60 % de son prix courant
+  (plancher 60 💠), niveaux conservés, et **les câbles suivent** — l'identité
+  réseau d'un bâtiment étant sa position, les liens sont remappés à l'arrivée.
+  Correction d'ergonomie trouvée au passage : `body{touch-action:none}`
+  empêchait la palette de défiler au doigt, donc les derniers bâtiments
+  étaient **inatteignables sur mobile**.
 - **Persistance** locale (`localStorage`) + reprise hors-ligne.
 - **Intuitivité enfant (v6.1)** : l'intro avance au tap sur la scène
   (après 1,2 s d'animation) ; le bouton COLONIE, déjà actif, ouvre

@@ -184,9 +184,14 @@ for (let tries = 0; tries < 6 && !cpos; tries++) {
   if (!cpos) await page.evaluate(() => { const c = window.__api.crystalsAll()[0]; if (c) window.__api.center(c.tx, c.ty); });
   await page.waitForTimeout(200);
 }
+// nouvelle règle : 1er tap = viser, 2e tap = poser (aperçu fantôme entre les deux)
+await page.mouse.click(cpos.x, cpos.y);
+await page.waitForTimeout(320);
+const vise = await page.evaluate(() => window.__api.placeState());
+if (!vise || !vise.valid) throw new Error("le fantôme du drone n'est pas valide: " + JSON.stringify(vise));
 await page.mouse.click(cpos.x, cpos.y);
 await page.waitForTimeout(300);
-console.log("drone posé:", await page.evaluate(() => ({ mi: window.__LS().mi, units: window.__LS().units.length })));
+console.log("drone posé (viser+confirmer):", await page.evaluate(() => ({ mi: window.__LS().mi, units: window.__LS().units.length })));
 
 // M19 : chasseur contre le parasite (dézoome si hors vue)
 await page.evaluate(() => { window.__LS().mat = 300; window.__api.giveEo(30); window.__api.assemble("chasseur"); });
@@ -327,6 +332,56 @@ console.log("après reload:", await page.evaluate(() => ({
   reader: window.__LS().reader, frags: window.__LS().archives.length,
 })));
 await page.screenshot({ path: shots + "/e2e-final.png" });
+
+// ---- REFONTE DE LA POSE : fantôme, refus, annulation sans perte, déplacement ----
+await page.evaluate(() => { for (const s of document.querySelectorAll(".sheet")) s.hidden = true; window.__LS().mat = 3000; });
+await page.waitForTimeout(200);
+// 1. armer par le bouton 🔨 puis le corps d'une carte
+await page.click("#buildbtn"); await page.waitForTimeout(300);
+await page.locator("#buildlist .bcard .nm").first().click(); await page.waitForTimeout(350);
+const arme = await page.evaluate(() => window.__api.placeState());
+console.log("pose armée par 🔨 :", JSON.stringify(arme));
+if (!arme) throw new Error("le bouton CONSTRUIRE n'a pas armé la pose");
+// 2. viser la Source : refus explicite
+console.log("refus sur la Source :", await page.evaluate(() => window.__api.placeAt(4, 4)));
+// 3. annuler ne coûte rien
+const matAv = await page.evaluate(() => Math.round(window.__LS().mat));
+await page.click("#placebar .cancel"); await page.waitForTimeout(250);
+const matAp = await page.evaluate(() => Math.round(window.__LS().mat));
+console.log("annulation sans perte :", { avant: matAv, apres: matAp, place: await page.evaluate(() => window.__api.placeState()) });
+if (matAp < matAv) throw new Error("l'annulation a coûté des matériaux");
+// 4. anti-superposition : la case d'un bâtiment existant est refusée
+const occupe = await page.evaluate(() => {
+  const b = window.__LS().buildings[0];
+  return window.__api.posableAt("extracteur", b.x, b.y);
+});
+console.log("case occupée refusée :", JSON.stringify(occupe));
+if (occupe.ok) throw new Error("une case occupée a été acceptée");
+// 5. déplacement d'un bâtiment : coût débité, câbles remappés
+const dep = await page.evaluate(() => {
+  const b = window.__LS().buildings.find((x) => x.t === "extracteur");
+  const bx0 = b.x, by0 = b.y; // copie : b est une référence vivante, mutée par la pose
+  const cle = b.x + "," + b.y;
+  const liens = window.__LS().links.filter((l) => l.a === cle || l.b === cle).length;
+  const cout = window.__api.moveCostOf("extracteur");
+  const mat0 = window.__LS().mat;
+  window.__api.placeArm("move", "extracteur", "extracteur");
+  for (let y = 0; y < 9; y++) for (let x = 0; x < 9; x++) {
+    if (window.__api.posableAt("extracteur", x, y).ok) { window.__api.placeAt(x, y); y = 99; break; }
+  }
+  const ok = window.__api.placeCommit();
+  const nb = window.__LS().buildings.find((x) => x.t === "extracteur");
+  const ncle = nb.x + "," + nb.y;
+  return { ok, cout, depense: Math.round(mat0 - window.__LS().mat),
+           liensAvant: liens, liensApres: window.__LS().links.filter((l) => l.a === ncle || l.b === ncle).length,
+           deplace: nb.x !== bx0 || nb.y !== by0 };
+});
+console.log("déplacement :", JSON.stringify(dep));
+if (!dep.ok || !dep.deplace) throw new Error("le déplacement a échoué");
+if (dep.depense !== dep.cout) throw new Error("coût de déplacement non débité");
+if (dep.liensApres !== dep.liensAvant) throw new Error("câbles perdus au déplacement");
+// 6. la palette doit être atteignable au doigt (touch-action)
+console.log("palette défilable :", await page.evaluate(() => getComputedStyle(document.querySelector("#buildlist")).touchAction));
 
 console.log("ERREURS:", errors.length ? errors : "aucune");
 await browser.close();
