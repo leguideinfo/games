@@ -116,8 +116,10 @@ Supreme Commander.
   est **mesuré par asset** puis mappé vers la teinte étalonnée (les fonds
   de ces tuiles diffèrent de la tuile de base). **Découpe serrée (retour
   2026-08-08)** : plus de halo — bâtiment + fine frange de sol adoucie
-  (~15 px), largeur = 1 case pile (le bâtiment colle aux bords de la
-  tuile), ancre = pied avant posé vers le coin sud de la case.
+  (~15 px), ancre = pied avant posé vers le coin sud de la case.
+  **Échelle finale (retour 2026-08-08)** : bâtiments à **0,75 case**,
+  balise centrale à **0,62 case** — chacun tient nettement dans les
+  limites de sa case, plus aucun chevauchement entre voisins.
 - **Balise centrale (2026-08-08)** : la Source a son asset définitif
   (`tuile-balise.png`) — bake dédié : structure + anneau de débris
   préservé (halo elliptique bas), **faisceau détouré par matte de
