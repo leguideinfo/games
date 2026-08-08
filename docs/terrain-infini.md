@@ -67,8 +67,13 @@ Supreme Commander.
   tuiles-variantes (méthode actée 2026-08-08, v3)** : masque par
   **composante connexe** — seule la crevasse reliée au centre est
   gardée (branches opaques jusqu'au bout, bruit isolé jeté), teinte
-  auto-alignée, **une fissure = une tuile** (alignée au carreau,
-  4 rotations par graine, ~5 % des carreaux, jamais sous un bâtiment).
+  auto-alignée, **chaque marque tient dans UNE
+  tuile, en petit** (0,34–0,44 case, 4 rotations par graine) : LA
+  fissure et LES fissures placées indépendamment (~2,5 % des cases de
+  sable chacune), purement décoratives ; LA crevasse habille les
+  crevasses de jeu (seule à se colmater, mini-jeu Tetris conservé,
+  0,55 case). L'orbe énergétique du propriétaire remplace la boule
+  bleue flottante (flottement conservé).
   Trois assets : `sol-tuile-fissure`, `sol-tuile-fissures` (décor) et
   `sol-tuile-crevasse` (**remplace le visuel des crevasses de jeu**,
   colmatage Tetris conservé). Ancienne méthode : le propriétaire
