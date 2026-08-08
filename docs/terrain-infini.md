@@ -149,42 +149,24 @@ Supreme Commander.
   (+2 crans, retour 2026-08-08) ; **arrivée très rapprochée** (~5 cases
   PC, ~3,2 mobile — on découvre la balise et ses environs) ; expansion
   débornée.
-- **ATLAS DE DÉCORS — terrain naturel (2026-08-08)** : la planche 6×6 du
-  propriétaire (`atlas-decors.png`, 36 éléments) est découpée au bake
-  (masque non-sable **calibré par case** — l'atlas est vignetté —,
-  **érosion avant composante connexe** pour tuer les ponts de mouchetis,
-  coupe nette en haut / frange au pied, teinte alignée). **Échelle
-  calibrée sur un objet connu** : le gros cristal de l'atlas est le même
-  objet que `sol-tuile-cristaux-3` ⇒ **1 case = 328 px d'atlas** ; chaque
-  décor fait 0,12 à 0,52 case. Résolution adaptée par élément
-  (96–256 px) : 426 Kio au total.
-  **Méthode de découpe v2 (retour propriétaire 2026-08-08)** : la découpe
-  serrée coupait presque tous les décors. Retour à la méthode d'origine —
-  **collerette de sable** : l'objet est opaque, entouré d'un halo de sable
-  RÉEL (dilatation 45 px + flou 18) qui se fond dans le sol, plus un fondu
-  du bord de case. Un masque imparfait devient invisible et aucun contour
-  n'apparaît coupé. **Semis (retour propriétaire)** : les décors sont
-  **plus petits (×0,62)**, **jamais centrés sur leur tuile** (décalage
-  stable jusqu'à ±0,39 case) et **répartis** — 0 à 3 par case de sable,
-  taille variée par graine. **Fissures et rocher du propriétaire
-  restaurés** (`sol-tuile-fissure(s)`, `rocher`) avec la même collerette.
-  **Règle rappelée par le propriétaire (2026-08-08)** : **UNE seule
-  fissure de chaque type** sur toute la carte, à un emplacement fixe
-  (2,6) et (6,1) ; et dans le semis, **uniquement les petits cailloux** —
-  tous les décors qui dessinent une « petite zone » (craquelures,
-  flaques asséchées, cratères) sont retirés.
-  **Arbitrage propriétaire (2026-08-08)** : les cristaux de l'atlas ne
-  sont PAS utilisés — l'amas validé `sol-tuile-cristaux-3` est conservé ;
-  et les decals sont limités aux **petites formes sèches (≤ 0,30 case)** :
-  toutes les grandes formes plates (qui se retrouvaient coupées) et
-  toutes les flaques/eaux sont retirées.
-  Familles : **cristaux** (asset dédié, ressource), **relief**
-  (mesas/pics — *infranchissable*, nouvelle nature de case), **éboulis**
-  (déblayables), **crevasses** (colmatage Tetris), et **18 decals plats**
-  (gravats, craquelures, flaques, lichen) semés sur ~38 % des cases de
-  sable — c'est eux qui donnent le terrain naturel. Remplace les assets
-  isolés `rocher`, `sol-tuile-fissure(s)`, `sol-tuile-crevasse`,
-  `sol-tuile-cristaux-1/2/3`.
+- **ATLAS DE DÉCORS — ESSAI ABANDONNÉ (2026-08-08)** : la planche 6×6 du
+  propriétaire (`atlas-decors.png`, 36 éléments) a été découpée puis
+  **retirée du jeu**. Deux méthodes essayées, deux échecs :
+  ① découpe serrée (masque calibré par case + érosion avant composante
+  connexe) → presque tous les décors apparaissaient **coupés** dès qu'un
+  pixel manquait au masque ; ② collerette de sable réel autour de l'objet
+  → **chaque décor faisait une tache visible** sur le sol, la teinte de la
+  collerette ne se fondant jamais parfaitement dans le pattern étalonné.
+  Verdict propriétaire : « ça fait tous des taches, laisse tomber ».
+  L'atlas reste en archive (`assets/sprites/atlas-decors.png`) ; le
+  pipeline de découpe (`bake-atlas.py`) et l'échelle mesurée (**1 case =
+  328 px d'atlas**) sont documentés ici pour un futur essai — la voie
+  probable étant des assets déjà fournis **à fond transparent**, sans
+  sable à détourer.
+- **Décor en prod (inchangé, validé)** : amas de cristaux
+  (`sol-tuile-cristaux-3`, deux tailles), **LA fissure et LES fissures**
+  (une seule de chaque, emplacements fixes (2,6) et (6,1)), **LA
+  crevasse** (colmatage Tetris) et **LE rocher** (éboulis déblayables).
 - **LE GRAND LAC (2026-08-08)** : `sol-tuile-grand-lac.png`, découpé par
   masque eau calibré sur échantillons (le sable est très saturé, S≥205 et
   b/r≤0,20 ; l'eau et ses reflets clairs ne le sont pas) + **rive sombre**
