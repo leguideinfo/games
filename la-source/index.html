@@ -1497,8 +1497,11 @@ function drawTerrainTex() {
   ctx.fillRect(-cam.x / k, -cam.y / k, W / k, H / k);
   // étalonnage : accorder le plateau à l'ambiance du fond (clip toujours actif)
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.globalCompositeOperation = "saturation";
+  ctx.fillStyle = "rgba(128, 128, 128, 0.34)"; // désaturation franche : sol terne
+  ctx.fillRect(0, 0, W, H);
   ctx.globalCompositeOperation = "multiply";
-  ctx.fillStyle = "rgb(226, 204, 196)"; // calme l'orange saturé
+  ctx.fillStyle = "rgb(212, 194, 188)"; // et plus profond
   ctx.fillRect(0, 0, W, H);
   const lg = ctx.createLinearGradient(W, 0, W * 0.25, H);
   lg.addColorStop(0, "rgba(255, 200, 130, .30)"); // lumière du levant (haut droit)
