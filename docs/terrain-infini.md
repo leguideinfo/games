@@ -149,6 +149,39 @@ Supreme Commander.
   (+2 crans, retour 2026-08-08) ; **arrivée très rapprochée** (~5 cases
   PC, ~3,2 mobile — on découvre la balise et ses environs) ; expansion
   débornée.
+- **ATLAS DE DÉCORS — terrain naturel (2026-08-08)** : la planche 6×6 du
+  propriétaire (`atlas-decors.png`, 36 éléments) est découpée au bake
+  (masque non-sable **calibré par case** — l'atlas est vignetté —,
+  **érosion avant composante connexe** pour tuer les ponts de mouchetis,
+  coupe nette en haut / frange au pied, teinte alignée). **Échelle
+  calibrée sur un objet connu** : le gros cristal de l'atlas est le même
+  objet que `sol-tuile-cristaux-3` ⇒ **1 case = 328 px d'atlas** ; chaque
+  décor fait 0,12 à 0,52 case. Résolution adaptée par élément
+  (96–256 px) : 426 Kio au total.
+  Familles : **cristaux** (3 tailles, ressource), **relief**
+  (mesas/pics — *infranchissable*, nouvelle nature de case), **éboulis**
+  (déblayables), **crevasses** (colmatage Tetris), et **18 decals plats**
+  (gravats, craquelures, flaques, lichen) semés sur ~38 % des cases de
+  sable — c'est eux qui donnent le terrain naturel. Remplace les assets
+  isolés `rocher`, `sol-tuile-fissure(s)`, `sol-tuile-crevasse`,
+  `sol-tuile-cristaux-1/2/3`.
+- **LE GRAND LAC (2026-08-08)** : `sol-tuile-grand-lac.png`, découpé par
+  masque eau calibré sur échantillons (le sable est très saturé, S≥205 et
+  b/r≤0,20 ; l'eau et ses reflets clairs ne le sont pas) + **rive sombre**
+  récupérée dans un anneau (V<150). Zone **fixe de 8 cases** côté droit du
+  plateau, en haut vers la diagonale ; on n'y pose ni objet ni décor, la
+  grille ne s'y dessine pas, et la crevasse de tuto qui y tombait a été
+  replacée à gauche. Un petit lac d'une case (`sol-tuile-lac.png`) est
+  baké et disponible.
+- **MOTEUR D'OCCUPATION — empreintes au sol (2026-08-08)** : chaque chose
+  posée occupe un carré monde centré sur sa case, de côté « empreinte »
+  **mesuré sur la base de l'asset** (pas sa bbox : toits et panneaux
+  débordent). Deux empreintes ne peuvent se chevaucher : écart exigé
+  ≥ (s1+s2)/2 + **marge 0,12 case**. Mesures : Extracteur 0,69 ·
+  Centrale 0,69 · Entrepôt 0,71 · balise 0,63 · coffret 0,29 ·
+  cristaux 0,42-0,46 · décor 0,04-0,47. L'adjacence reste donc toujours
+  possible (0,71+0,12 < 1) : **la règle garantit sans restreindre**, et
+  elle protégera automatiquement les futurs assets plus larges.
 - **Prochain chantier relief (2 étages)** : ① relief par décor — assets
   propriétaire : mesas (1/2/3 cases), arêtes rocheuses orientées NE-SO
   et NO-SE, cratères, dunes en decal ; Claude : placement en chaînes
