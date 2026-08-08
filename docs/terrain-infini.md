@@ -167,8 +167,12 @@ Supreme Commander.
   **plus petits (×0,62)**, **jamais centrés sur leur tuile** (décalage
   stable jusqu'à ±0,39 case) et **répartis** — 0 à 3 par case de sable,
   taille variée par graine. **Fissures et rocher du propriétaire
-  restaurés** (`sol-tuile-fissure(s)`, `rocher`) avec la même collerette,
-  eux aussi décalés.
+  restaurés** (`sol-tuile-fissure(s)`, `rocher`) avec la même collerette.
+  **Règle rappelée par le propriétaire (2026-08-08)** : **UNE seule
+  fissure de chaque type** sur toute la carte, à un emplacement fixe
+  (2,6) et (6,1) ; et dans le semis, **uniquement les petits cailloux** —
+  tous les décors qui dessinent une « petite zone » (craquelures,
+  flaques asséchées, cratères) sont retirés.
   **Arbitrage propriétaire (2026-08-08)** : les cristaux de l'atlas ne
   sont PAS utilisés — l'amas validé `sol-tuile-cristaux-3` est conservé ;
   et les decals sont limités aux **petites formes sèches (≤ 0,30 case)** :
