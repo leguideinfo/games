@@ -158,6 +158,17 @@ Supreme Commander.
   objet que `sol-tuile-cristaux-3` ⇒ **1 case = 328 px d'atlas** ; chaque
   décor fait 0,12 à 0,52 case. Résolution adaptée par élément
   (96–256 px) : 426 Kio au total.
+  **Méthode de découpe v2 (retour propriétaire 2026-08-08)** : la découpe
+  serrée coupait presque tous les décors. Retour à la méthode d'origine —
+  **collerette de sable** : l'objet est opaque, entouré d'un halo de sable
+  RÉEL (dilatation 45 px + flou 18) qui se fond dans le sol, plus un fondu
+  du bord de case. Un masque imparfait devient invisible et aucun contour
+  n'apparaît coupé. **Semis (retour propriétaire)** : les décors sont
+  **plus petits (×0,62)**, **jamais centrés sur leur tuile** (décalage
+  stable jusqu'à ±0,39 case) et **répartis** — 0 à 3 par case de sable,
+  taille variée par graine. **Fissures et rocher du propriétaire
+  restaurés** (`sol-tuile-fissure(s)`, `rocher`) avec la même collerette,
+  eux aussi décalés.
   **Arbitrage propriétaire (2026-08-08)** : les cristaux de l'atlas ne
   sont PAS utilisés — l'amas validé `sol-tuile-cristaux-3` est conservé ;
   et les decals sont limités aux **petites formes sèches (≤ 0,30 case)** :
