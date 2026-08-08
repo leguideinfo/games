@@ -63,11 +63,15 @@ Supreme Commander.
   clippé au losange du territoire, falaises de bordure dessinées, le
   reste est le vide spatial. Le pattern infini reste le moteur : chaque
   expansion agrandit le plateau sans limite. Décor uniquement en
-  territoire (cristaux, rochers — jamais en miroir). **Premier decal
-  asset intégré : la fissure** (`assets/sprites/decal-fissure.png`,
-  écrasée 2:1 sur le plan du sol, ~6 % des cases de sable intérieures,
-  échelle 1,1–1,9 case, graine stable). Les autres decals (semis de
-  cailloux, plaque sombre) suivront au même format.
+  territoire (cristaux, rochers — jamais en miroir). **Variation par
+  tuiles-variantes (méthode actée 2026-08-08)** : le propriétaire
+  fournit des tuiles complètes (ex. `sol-tuile-fissure.png`) ; à
+  l'intégration, la teinte est alignée automatiquement sur la tuile de
+  base (ratios mesurés par canal — ici ×1,07/×1,10/×1,23) et un masque
+  radial fond les bords (opaque au centre, transparent avant les
+  coins : aucun carré visible). En jeu : ~7 % des carreaux du pattern,
+  graine stable, mips dédiées. Le decal découpé (`decal-fissure.png`)
+  reste en archive — la tuile-variante donne un meilleur raccord.
 - **Caméra** : bornée autour du plateau (+4 cases), **zoom 1,6–5,2**
   (dézoom resserré) ; expansion débornée.
 - **Prochain chantier relief (2 étages)** : ① relief par décor — assets
