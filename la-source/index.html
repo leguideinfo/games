@@ -1501,7 +1501,7 @@ function drawTerrainTex() {
   ctx.fillStyle = "rgba(128, 128, 128, 0.34)"; // désaturation franche : sol terne
   ctx.fillRect(0, 0, W, H);
   ctx.globalCompositeOperation = "multiply";
-  ctx.fillStyle = "rgb(212, 194, 188)"; // et plus profond
+  ctx.fillStyle = "rgb(201, 174, 134)"; // résolu pour atterrir sur la teinte du rocher (128,71,28)
   ctx.fillRect(0, 0, W, H);
   const lg = ctx.createLinearGradient(W, 0, W * 0.25, H);
   lg.addColorStop(0, "rgba(255, 200, 130, .30)"); // lumière du levant (haut droit)
