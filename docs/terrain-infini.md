@@ -101,6 +101,13 @@ Supreme Commander.
   frange de socle adoucie (rochers proches en fondu) ; et **clip au
   pentagone du plateau** (bords-falaises exacts, ouvert vers le haut)
   sur cristaux et tuiles-bâtiments : plus aucun débordement en bordure.
+  **Coupe nette en partie haute (retour 2026-08-08)** : rampe verticale
+  sur le masque — au-dessus du socle, l'alpha suit exactement le contour
+  de la texture (plus de liseré orange autour des pointes et des toits) ;
+  la frange de sol n'existe qu'en partie basse. Bâtiments : trous
+  internes (hublots lumineux, poussière, intérieur du hangar) comblés
+  topologiquement (fermeture 7 px + remplissage des vides non reliés au
+  fond).
 - **Tuiles-bâtiments (2026-08-08)** : Extracteur, Centrale et Entrepôt
   remplacés par les assets-tuiles du propriétaire
   (`tuile-extracteur/centrale/entrepot.png`),
