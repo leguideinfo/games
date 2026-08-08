@@ -158,7 +158,12 @@ Supreme Commander.
   objet que `sol-tuile-cristaux-3` ⇒ **1 case = 328 px d'atlas** ; chaque
   décor fait 0,12 à 0,52 case. Résolution adaptée par élément
   (96–256 px) : 426 Kio au total.
-  Familles : **cristaux** (3 tailles, ressource), **relief**
+  **Arbitrage propriétaire (2026-08-08)** : les cristaux de l'atlas ne
+  sont PAS utilisés — l'amas validé `sol-tuile-cristaux-3` est conservé ;
+  et les decals sont limités aux **petites formes sèches (≤ 0,30 case)** :
+  toutes les grandes formes plates (qui se retrouvaient coupées) et
+  toutes les flaques/eaux sont retirées.
+  Familles : **cristaux** (asset dédié, ressource), **relief**
   (mesas/pics — *infranchissable*, nouvelle nature de case), **éboulis**
   (déblayables), **crevasses** (colmatage Tetris), et **18 decals plats**
   (gravats, craquelures, flaques, lichen) semés sur ~38 % des cases de
