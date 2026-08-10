@@ -178,6 +178,25 @@ Supreme Commander.
   cases restent du sable ordinaire (grille visible, empreintes
   appliquées). Les deux fissures ont été déplacées en (2,2) et (6,6),
   hors du lac et hors des dunes.
+- **ROSTER DE BÂTIMENTS (2026-08-10)** : 20 assets du propriétaire, sur
+  fond uni (bleu nuit ou noir), intégrés d'un coup. **Méthode de
+  détourage : remplissage depuis les bords**, pas un seuil de couleur —
+  les bâtiments contiennent eux-mêmes du bleu nuit identique au fond, un
+  seuil les trouait (le sable traversait le bâtiment). On ne supprime que
+  le fond EXTÉRIEUR : tout ce qui n'est pas atteignable depuis le bord de
+  l'image appartient au bâtiment, quelle que soit sa couleur. On ne
+  récupère donc **que le contour**, avec un micro-fondu (0,8 px).
+  Remplacent le rendu canvas : Ferme (`ferme`), Datacenter (`baie`),
+  Baie réseau (`reseau`), Console (`console`), Forge (`forge`), Serveur
+  DHCP (`dhcp`), Switch (`nexus`). **Nouveau chapitre 🛡 Colonie
+  avancée** (13 bâtiments, `mAt: 26` — ouverts après la chaîne de
+  missions, donc aucun impact sur le tutoriel) : Foreuse profonde,
+  Coffre blindé, Chantier spatial, Hangar de chasse, Aire de transport,
+  Tour de guet, Tourelle, Batterie de missiles, Dôme de bouclier,
+  Citadelle, Bastion, Sentinelle, Station de révocation.
+  Échelle 0,68 case, empreintes mesurées sur la base de chaque asset.
+  (`chantier`, `spatial` et `vaisseau` sont le même fichier : un seul
+  gardé.)
 - **Décor en prod (inchangé, validé)** : amas de cristaux
   (`sol-tuile-cristaux-3`, deux tailles), **LA fissure et LES fissures**
   (une seule de chaque, emplacements fixes (2,6) et (6,1)), **LA
