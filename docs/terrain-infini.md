@@ -163,6 +163,21 @@ Supreme Commander.
   328 px d'atlas**) sont documentés ici pour un futur essai — la voie
   probable étant des assets déjà fournis **à fond transparent**, sans
   sable à détourer.
+- **LE CHAMP DE DUNES (2026-08-10)** : `sol-tuile-dunes.png`, **miroir du
+  lac** de l'autre côté de la carte (8 cases, centre ~(2,6)). Découpe la
+  plus simple de toutes, et sans aucun risque de tache : ici le sable
+  clair EST le sujet et son bord se fond déjà naturellement dans le sable
+  de base, donc **l'alpha est directement l'écart au sable de base**.
+  Discriminant mesuré : la **saturation** (sable de base S=231-245,
+  dunes S=154-181) → rampe douce 224→188, plus une rampe de luminance
+  (V<150) pour les pitons rocheux. Le mouchetis du sable de base, lui
+  aussi peu saturé, ressortait en confettis : il est écarté en ne gardant
+  que la composante centrale via une enveloppe douce (le dégradé du bord
+  est préservé). **Différence clé avec le lac : on construit dessus** —
+  c'est une couche purement visuelle, `tileAt` n'est pas touché, les
+  cases restent du sable ordinaire (grille visible, empreintes
+  appliquées). Les deux fissures ont été déplacées en (2,2) et (6,6),
+  hors du lac et hors des dunes.
 - **Décor en prod (inchangé, validé)** : amas de cristaux
   (`sol-tuile-cristaux-3`, deux tailles), **LA fissure et LES fissures**
   (une seule de chaque, emplacements fixes (2,6) et (6,1)), **LA
