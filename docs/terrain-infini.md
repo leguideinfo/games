@@ -197,6 +197,22 @@ Supreme Commander.
   Échelle 0,68 case, empreintes mesurées sur la base de chaque asset.
   (`chantier`, `spatial` et `vaisseau` sont le même fichier : un seul
   gardé.)
+- **QUATRE TERRAINS DE ZONE (2026-08-13)** : le plateau a maintenant ses
+  quatre pôles, tous découpés par la même méthode que les dunes (alpha =
+  écart au sable de base, puis composante centrale sous enveloppe douce).
+  Discriminant mesuré par asset : **saturation** pour la montagne
+  (sable S≈252, roche S=87-176), **teinte** pour la zone fertile (sable
+  H≈17, végétation H=22-30), saturation pour les dunes, saturation+rive
+  pour le lac.
+  · **Chaîne de montagnes** en haut (`sol-tuile-montagne`) — nature de
+  case `montagne`, **infranchissable** ;
+  · **Zone fertile** en bas (`sol-tuile-fertile`) — **constructible**,
+  couche purement visuelle ;
+  · **Grand lac** à droite — infranchissable ;
+  · **Champ de dunes** à gauche — constructible.
+  Lac et dunes **écartés d'1/3 de case vers les bords** (retour
+  propriétaire) ; les deux fissures passent en (2,4) et (6,4), au centre,
+  hors des quatre zones.
 - **Décor en prod (inchangé, validé)** : amas de cristaux
   (`sol-tuile-cristaux-3`, deux tailles), **LA fissure et LES fissures**
   (une seule de chaque, emplacements fixes (2,6) et (6,1)), **LA
