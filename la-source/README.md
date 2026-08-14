@@ -212,6 +212,24 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
 | Intro canvas | Cinématique existante du site |
 | Missions 7 étapes | Onboarding complet + académie |
 
+## Mode miroir (embarquée dans concept.html — onglet « La Source »)
+
+La slice est le **plateau du jeu principal** : concept.html pousse par
+`postMessage` (`awoui:chantier`, à chaque rendu du Chantier + 1 Hz vue ouverte)
+les bâtiments achevés (posés en anneaux autour de la Source, autolink, niveaux
+imposés), la **file en cours rendue en fantômes minutés « 🏗 Ns »** (jamais de
+pose instantanée — le bâtiment fini prend la case de son fantôme), les
+ressources (HUD local caché, doublon du HUD principal), les défenses (compte =
+niveau) et les technos (DNS du parcours → Carte). **Bidirectionnel** : la
+palette 🔨 reste active et poser/améliorer depuis le plateau émet
+`awoui:build {id}` vers le jeu principal — qui juge (plan redécouvert, soutes,
+énergie, file de 3) et répond par le flux ; la case choisie est mémorisée
+(`MIRROR_WISH`) et le fantôme s'y installe. En miroir : `save()` coupée
+(`ls-save-v4` intact), production idle gelée, missions/technos locales gelées.
+Correspondances ids prod ↔ slice : `baie↔datacenter`, `dhcp↔dhcpsrv`,
+`coffre↔coffrefort` ; `nexus` sans équivalent (entrée BT à créer). Le
+standalone `/la-source/` direct reste un jeu complet, intact.
+
 ## Technique
 
 Un seul `index.html` — canvas 2D isométrique + DOM pour l'UI, vanilla JS,

@@ -1058,6 +1058,7 @@ function load() {
   return newSave();
 }
 function save() {
+  if (typeof MIRROR !== "undefined" && MIRROR) return; // mode miroir : la partie locale n'est JAMAIS écrasée
   S.lastSeen = Date.now();
   try { localStorage.setItem("ls-save-v4", JSON.stringify(S)); } catch (e) {}
 }
@@ -2353,7 +2354,7 @@ function drawCable(l, t) {
   ctx.stroke();
   ctx.globalAlpha = 1;
   if (netConnected(l.a) && netConnected(l.b)) {
-    const ph = ((t / 900) + (na.x * 3 + nb.y * 7) * 0.137) % 1;
+    const ph = ((t / 2600) + (na.x * 3 + nb.y * 7) * 0.137) % 1;   // glissement paisible (0,9 s -> 2,6 s le parcours)
     const inv = 1 - ph;
     const qx = inv * inv * a.x + 2 * inv * ph * ((a.x + b.x) / 2) + ph * ph * b.x;
     const qy = inv * inv * (a.y + 6 * z) + 2 * inv * ph * my + ph * ph * (b.y + 6 * z);
@@ -2682,11 +2683,15 @@ let lastT = performance.now(), acc = 0;
 function frame(t) {
   const dt = Math.min((t - lastT) / 1000, 0.1);
   lastT = t;
-  // économie
-  S.mat = Math.min(matCap(), S.mat + matRate() * dt);
-  S.eo = Math.min(eoCap(), S.eo + eoRate() * dt);
-  tickExtraction(dt);
-  tickRespawn(dt);
+  // économie — en mode MIROIR, les ressources sont CELLES du jeu principal
+  // (recalées par message) : la production locale — extraction et respawn
+  // des gisements compris — ne tire plus dessus
+  if (!MIRROR) {
+    S.mat = Math.min(matCap(), S.mat + matRate() * dt);
+    S.eo = Math.min(eoCap(), S.eo + eoRate() * dt);
+    tickExtraction(dt);
+    tickRespawn(dt);
+  }
   if (S.buffLeft > 0) {
     S.buffLeft -= dt;
     if (S.buffLeft <= 0) { S.buffLeft = 0; S.buffMult = 1; }
@@ -2783,15 +2788,19 @@ function frame(t) {
         drawables.push({ d: x + y, deco: "rock", x, y });
     }
     if (place) drawables.push({ d: place.hx + place.hy + 0.02, ghost: true });
+    // chantiers du jeu principal (mode miroir) : fantômes translucides + minuterie
+    for (const q of MIRROR_Q) if (!q.up) drawables.push({ d: q.x + q.y + 0.01, mq: q });
     drawables.push({ d: SRC.x + SRC.y - 0.01, src: true });
     drawables.sort((a, b) => a.d - b.d);
     for (const it of drawables) {
       if (it.ghost) drawPlaceGhost(t);
+      else if (it.mq) { ctx.save(); ctx.globalAlpha = 0.45; drawBuilding({ t: it.mq.t, x: it.mq.x, y: it.mq.y, l: 1 }, t); ctx.restore(); }
       else if (it.src) drawSource(t);
       else if (it.deco === "crys") drawCrystalSprite(it.x, it.y);
       else if (it.deco === "rock") drawRockSprite(it.x, it.y);
       else drawBuilding(it.b, t);
     }
+    for (const q of MIRROR_Q) drawMirrorTimer(q);   // minuterie par-dessus tout (chantier ET amélioration)
     for (const o of orbs) drawOrb(o, t);
     for (const m of mobs) drawMob(m, t);
     for (const u of S.units) drawUnit(u, t);
@@ -2809,7 +2818,16 @@ function frame(t) {
   } else {
     drawMap(t);
   }
-  // HUD
+  // HUD — en MIROIR, les compteurs affichent le jeu principal (message res)
+  if (MIRROR && MIRROR_RES) {
+    $("#mat").textContent = fmt(MIRROR_RES.mat);
+    $("#matcap").textContent = "/ " + fmt(MIRROR_RES.matCap);
+    $("#matrate").textContent = "registre du Chantier";
+    $("#eo").textContent = fmt(MIRROR_RES.dat);
+    $("#eocap").textContent = "/ " + fmt(MIRROR_RES.datCap);
+    $("#eorate").textContent = "Eo";
+    $("#en").textContent = fmt(MIRROR_RES.eUsed) + "/" + fmt(MIRROR_RES.eCap);
+  } else {
   $("#mat").textContent = fmt(S.mat);
   $("#matcap").textContent = "/ " + fmt(matCap());
   $("#matrate").textContent = "+" + fmt(matRate() * 60) + "/min";
@@ -2817,6 +2835,7 @@ function frame(t) {
   $("#eocap").textContent = "/ " + fmt(eoCap());
   $("#eorate").textContent = "+" + (eoRate() * 60).toFixed(1) + "/min";
   $("#en").textContent = fmt(enUse()) + "/" + fmt(enCap());
+  }
   $("#buff").textContent = S.buffLeft > 0
     ? "SURCHARGE ×" + S.buffMult.toFixed(2) + " · " + Math.ceil(S.buffLeft) + "s"
     : (mobs.length ? "🕷 parasite : −15 %" : "");
@@ -3175,7 +3194,7 @@ function evalPlace() {
   let r;
   if (place.kind === "unit") r = posableUnit(place.hx, place.hy);
   else r = posableWhy(place.t, place.hx, place.hy, place.mv || null);
-  if (r.ok) {
+  if (r.ok && !MIRROR) {   // miroir : ressources ET énergie se jugent au Chantier du jeu principal, jamais localement
     const c = placeCost(place);
     if (S.mat < c.mat || S.eo < c.eo) r = { ok: false, why: "Pas assez de ressources" };
     else if (place.kind === "bld" && enUse(BT[place.t].conso) > enCap())
@@ -3198,7 +3217,7 @@ function bestTile(pl) {
 }
 function armPlace(kind, t, opt) {
   opt = opt || {};
-  if (kind === "bld") {
+  if (kind === "bld" && !MIRROR) {   // miroir : le gating vient du Chantier du jeu principal, pas des missions locales
     if ((BT[t].mAt || 0) > S.mi) return false;
     if (t === "coffret" && !S.hubBoot) return false;
   }
@@ -3239,6 +3258,23 @@ function cancelPlace(silence) {
 }
 function commitPlace() {
   if (!place) return false;
+  // mode miroir : poser ici COMMANDE le vrai Chantier — la demande part au jeu
+  // principal (qui juge coûts, énergie, file), et le fantôme minuté reviendra
+  // s'installer sur LA CASE choisie (MIRROR_WISH). Les unités restent au jeu.
+  if (MIRROR && place.kind !== "move") {
+    if (place.kind === "bld") {
+      const inv = { datacenter: "baie", dhcpsrv: "dhcp", coffrefort: "coffre" };
+      const pid = inv[place.t] || place.t;
+      if (MIRROR_PROD.has(pid)) {
+        MIRROR_WISH[place.t] = { x: place.hx, y: place.hy };
+        try { window.parent.postMessage({ type: "awoui:build", id: pid }, "*"); } catch (e) {}
+        toast("🔨 Demande transmise au <b>Chantier</b> — si les soutes suivent, le chantier s'ouvre ici même.");
+      } else {
+        sfx.deny(); toast("Ce module est propre au plateau — le registre du jeu principal ne le connaît pas encore.");
+      }
+    } else { sfx.deny(); toast("Les unités s'assemblent dans le jeu principal."); }
+    cancelPlace(true); return false;
+  }
   evalPlace();
   if (!place.valid) { sfx.deny(); if (place.why) toast(place.why); return false; }
   const pl = place, c = placeCost(pl);
@@ -3274,6 +3310,7 @@ function commitPlace() {
   return true;
 }
 function paletteVide() {
+  if (MIRROR) return false;   // miroir : la palette du Chantier est toujours garnie
   for (const [key, def] of Object.entries(BT)) {
     if ((def.mAt || 0) > S.mi) continue;
     if (key === "coffret" && !S.hubBoot) continue;
@@ -3348,11 +3385,17 @@ function openBuild(tile) {
   list.innerHTML = "";
   const sel = tile;
   for (const [key, def] of Object.entries(BT)) {
-    if ((def.mAt || 0) > S.mi) continue; // pas encore découvert
-    if (key === "coffret" && !S.hubBoot) continue; // il faut d'abord amorcer le HUB-01
-    const locked = def.tech && !S.techs.includes(def.tech);
+    if (MIRROR) {
+      // miroir : seuls les bâtiments du registre du jeu principal se commandent d'ici
+      const inv = { datacenter: "baie", dhcpsrv: "dhcp", coffrefort: "coffre" };
+      if (!MIRROR_PROD.has(inv[key] || key)) continue;
+    } else {
+      if ((def.mAt || 0) > S.mi) continue; // pas encore découvert
+      if (key === "coffret" && !S.hubBoot) continue; // il faut d'abord amorcer le HUB-01
+    }
+    const locked = !MIRROR && def.tech && !S.techs.includes(def.tech);   // miroir : les plans se jugent au Chantier
     const cost = buildCost(key), ceo = buildCostEo(key);
-    const enOk = enUse(def.conso) <= enCap();
+    const enOk = MIRROR ? true : enUse(def.conso) <= enCap();   // miroir : l'énergie se juge au Chantier, pas ici
     const card = document.createElement("div");
     card.className = "bcard" + (locked || !enOk ? " locked" : "");
     card.dataset.k = key;
@@ -3365,7 +3408,7 @@ function openBuild(tile) {
       "<div class='ds'>" + (lockTxt || def.ds + (def.conso ? " · −" + def.conso + " ⚡/niv" : "")) + "</div></div>";
     const btn = document.createElement("button");
     btn.textContent = fmt(cost) + " 💠" + (ceo ? " + " + ceo + " Eo" : "");
-    btn.disabled = locked || !enOk || S.mat < cost || S.eo < ceo;
+    btn.disabled = locked || !enOk || (!MIRROR && (S.mat < cost || S.eo < ceo));
     if (GUIDE_BUILD[S.mi] === key && !btn.disabled) btn.classList.add("guide");
     btn.onclick = () => {
       if (locked || !enOk) { sfx.deny(); return; }
@@ -3468,9 +3511,11 @@ function openBld(b) {
   }
   const mvB = $("#bl-move");
   const mc = moveCost(b);
-  mvB.hidden = S.mi < 5; // le déplacement s'ouvre une fois la colonie installée
-  mvB.textContent = "🚚 DÉPLACER · " + fmt(mc) + " 💠";
-  mvB.disabled = S.mat < mc;
+  // miroir : l'aménagement du plateau appartient TOUJOURS au joueur (et il est
+  // gratuit — l'économie vit au Chantier) ; standalone : gating mission d'origine
+  mvB.hidden = MIRROR ? false : S.mi < 5;
+  mvB.textContent = MIRROR ? "🚚 DÉPLACER" : "🚚 DÉPLACER · " + fmt(mc) + " 💠";
+  mvB.disabled = MIRROR ? false : S.mat < mc;
   mvB.onclick = () => {
     if (S.mat < mc) { sfx.deny(); toast("Déplacer coûte <b>" + fmt(mc) + " 💠</b> — la grue n'est pas donnée."); return; }
     closeSheets();
@@ -3482,10 +3527,19 @@ function openBld(b) {
   upBtn.classList.toggle("guide", (S.mi === 4 && b.t === "extracteur" || S.mi === 8 && b.t === "centrale") && S.mat >= uc);
   if (b.l >= 10) { upBtn.textContent = "NIV MAX"; upBtn.disabled = true; }
   else {
-    upBtn.textContent = "AMÉLIORER · " + fmt(uc) + " 💠";
+    upBtn.textContent = MIRROR ? "AMÉLIORER AU CHANTIER" : "AMÉLIORER · " + fmt(uc) + " 💠";
     const enOkUp = enUse(BT[b.t].conso) <= enCap();
-    upBtn.disabled = S.mat < uc || !enOkUp;
+    upBtn.disabled = MIRROR ? false : (S.mat < uc || !enOkUp);
     upBtn.onclick = () => {
+      if (MIRROR) {   // la demande part au Chantier du jeu principal — le niveau montera par le flux
+        const inv = { datacenter: "baie", dhcpsrv: "dhcp", coffrefort: "coffre" };
+        const pid = inv[b.t] || b.t;
+        if (!MIRROR_PROD.has(pid)) { sfx.deny(); toast("Ce module est propre au plateau — pas d'amélioration au registre."); return; }
+        try { window.parent.postMessage({ type: "awoui:build", id: pid }, "*"); } catch (e) {}
+        toast("🔨 Amélioration demandée au <b>Chantier</b> — la minuterie apparaîtra sur le bâtiment.");
+        closeSheets();
+        return;
+      }
       if (S.mat < uc) { sfx.deny(); return; }
       if (enUse(BT[b.t].conso) > enCap()) { sfx.deny(); toast("⚡ insuffisante — améliore la <b>Centrale énergétique</b>."); return; }
       S.mat -= uc; b.l++;
@@ -4667,6 +4721,7 @@ function openTech() {
       if (!btn.disabled && S.mi === 17 && key === "dns")
         btn.classList.add("guide");
       btn.onclick = () => {
+        if (MIRROR) { sfx.deny(); toast("🧠 Les technologies se recherchent dans le jeu principal — le plateau les reçoit."); return; }
         if (S.eo < def.eo) { sfx.deny(); return; }
         S.eo -= def.eo;
         S.techs.push(key);
@@ -4700,7 +4755,7 @@ function refreshGates() {
   $("#tab-map").classList.toggle("guide", S.mi === 18);
   $("#tab-arch").hidden = !(S.archives.length || S.mi >= 4);
   $("#tab-arch").classList.toggle("guide", S.mi >= 4 && S.mi <= 6 && !S.memories.length);
-  $("#buildbtn").hidden = S.mi < 1;
+  $("#buildbtn").hidden = MIRROR ? false : S.mi < 1;   // miroir : la palette commande le vrai Chantier, toujours accessible
   $("#buildbtn").classList.toggle("empty", paletteVide());
   $("#buildbtn").classList.toggle("on", !!place);
   $("#buildbtn").classList.toggle("guide", !!GUIDE_BUILD[S.mi] && !place && !paletteVide());
@@ -5320,6 +5375,113 @@ window.__api = {
   research(k) { if (!S.techs.includes(k)) { S.techs.push(k); if (k === "dns") unlockMap(); missionDone("tech_" + k); save(); } },
   reset() { localStorage.removeItem("ls-save-v4"); location.reload(); },
 };
+
+/* ---------- MODE MIROIR : le plateau se calque sur le jeu principal ----------
+   Embarquée dans concept.html (onglet « La Source »), la slice reçoit par
+   postMessage l'état du Chantier (awoui:chantier) : bâtiments ACHEVÉS et leurs
+   niveaux, file EN COURS avec horloges (fantôme + minuterie — jamais de pose
+   instantanée), ressources vivantes (HUD recalé à 1 Hz), défenses (le compte
+   devient le niveau), technologies (la boussole DNS ouvre la Carte). En
+   miroir : save() coupée (ls-save-v4 intact), pose/amélioration/technos
+   locales gelées — seul le DÉPLACEMENT reste au joueur. Standalone : intact. */
+let MIRROR = false, MIRROR_RES = null, MIRROR_Q = [];
+const MIRROR_WISH = {};   // cases choisies par le joueur pour ses demandes de chantier
+const MIRROR_PROD = new Set(["extracteur","centrale","baie","ferme","reseau","forge","console","tour",
+                             "citadelle","nexus","entrepot","dhcp","miniere","chantier","coffre","bastion"]);
+const MIRROR_MAP = { baie: "datacenter", dhcp: "dhcpsrv", coffre: "coffrefort" };
+const MIRROR_UNITS = { tourelle: "tourelle", missiles: "missiles", bouclier: "bouclier",
+                       sentinelle: "sentinelle", revocation: "revocation", transport: "transport" };
+function mirrorSpot(t, taken) {
+  // première case posable en anneaux autour de la Source — d'abord la vraie
+  // règle (marges d'empreinte), puis sans les marges si le plateau se densifie
+  for (const strict of [true, false])
+    for (let r = 1; r <= GRID + S.ext * 2; r++)
+      for (let y = SRC.y - r; y <= SRC.y + r; y++)
+        for (let x = SRC.x - r; x <= SRC.x + r; x++) {
+          if (Math.max(Math.abs(x - SRC.x), Math.abs(y - SRC.y)) !== r) continue;
+          if (taken && taken.has(x + "," + y)) continue;
+          if (strict ? posable(t, x, y) : buildable(x, y)) return { x, y };
+        }
+  return null;
+}
+function mirrorPose(t, lvl, taken, at) {
+  let b = S.buildings.find((x) => x.t === t);
+  if (!b) {
+    // un fantôme de chantier existait ? le bâtiment fini prend SA case — pas de saut visuel
+    const libre = at && !S.buildings.some((z) => z.x === at.x && z.y === at.y);
+    const sp = libre ? at : mirrorSpot(t, taken); if (!sp) return;
+    b = { t, x: sp.x, y: sp.y, l: 0 }; S.buildings.push(b);
+    if (taken) taken.add(sp.x + "," + sp.y);
+  }
+  b.l = Math.max(1, lvl);
+}
+function drawMirrorTimer(q) {
+  const p = w2s(q.x, q.y);
+  const left = Math.max(0, Math.ceil((q.ends - Date.now()) / 1000));
+  ctx.save();
+  ctx.font = "600 12px system-ui"; ctx.textAlign = "center";
+  ctx.lineWidth = 4; ctx.lineJoin = "round"; ctx.strokeStyle = "rgba(6,9,19,.85)";
+  ctx.fillStyle = "#ffc857";
+  const txt = q.ends ? "🏗 " + left + " s" : "🏗 en file";
+  ctx.strokeText(txt, p.x, p.y - 46);
+  ctx.fillText(txt, p.x, p.y - 46);
+  ctx.restore();
+}
+window.addEventListener("message", (e) => {
+  const d = e.data;
+  if (!d || d.type !== "awoui:chantier") return;
+  if (!MIRROR) {
+    MIRROR = true;
+    // monde miroir vierge : ni bâtiments, ni câbles, ni unités de la partie locale
+    S.buildings = []; S.links = []; S.units = []; netDirty = true;
+    // trésorerie locale gonflée : les câbles (addLink débite 10 💠) et le
+    // déplacement restent possibles — invisible (HUD = res du parent) et
+    // jamais sauvegardé (save coupée)
+    S.mat = 999999; S.eo = 999999;
+    const st = document.createElement("style");
+    // missions locales : cachées (la progression vient du jeu principal) ·
+    // #hud local : caché (le HUD du jeu principal est juste au-dessus — doublon) ·
+    // la palette 🔨 RESTE : poser depuis le plateau COMMANDE le vrai Chantier
+    st.textContent = "#missions,#hud{display:none!important}";
+    document.head.appendChild(st);
+  }
+  const taken = new Set();
+  for (const pid in (d.bld || {})) {
+    const t = MIRROR_MAP[pid] || pid;
+    if (BT[t]) mirrorPose(t, d.bld[pid], taken, MIRROR_Q.find((q) => q.t === t && !q.up));
+  }
+  for (const pid in (d.units || {})) {
+    const t = MIRROR_UNITS[pid];
+    if (t && BT[t] && d.units[pid] > 0) mirrorPose(t, d.units[pid], taken);
+  }
+  // PAS d'autolink en miroir (retour propriétaire) : l'étoile de câbles vers la
+  // Source surchargeait le plateau — les conduits d'énergie suffisent au lien visuel
+  // file EN COURS : fantôme stable entre messages (la case ne saute pas),
+  // minuterie ; une amélioration pose la minuterie sur le bâtiment existant
+  const q = [];
+  for (const it of (d.queue || [])) {
+    const t = MIRROR_MAP[it.id] || it.id;
+    if (!BT[t]) continue;
+    const existing = S.buildings.find((x) => x.t === t);
+    if (existing) { q.push({ t, x: existing.x, y: existing.y, ends: it.ends, up: true }); continue; }
+    const prev = MIRROR_Q.find((x) => x.t === t && !x.up);
+    // priorité à la case CHOISIE par le joueur (pose transmise au Chantier)
+    const wish = MIRROR_WISH[t];
+    const wishOk = wish && !S.buildings.some((z) => z.x === wish.x && z.y === wish.y) && !taken.has(wish.x + "," + wish.y);
+    const sp = prev || (wishOk ? wish : null) || mirrorSpot(t, taken);
+    if (sp) { q.push({ t, x: sp.x, y: sp.y, ends: it.ends }); taken.add(sp.x + "," + sp.y); delete MIRROR_WISH[t]; }
+  }
+  MIRROR_Q = q;
+  // la boussole du jeu principal (DNS redécouvert) ouvre la Carte du plateau
+  const pt = (d.prog && d.prog.techs) || [];
+  if ((pt.includes("cartographie") || pt.includes("socle-boussole") || pt.includes("sup-carto")) && !S.techs.includes("dns")) {
+    S.techs.push("dns"); unlockMap();
+  }
+  MIRROR_RES = d.res || MIRROR_RES;
+  if (typeof netDirty !== "undefined") netDirty = true;
+});
+// l'hôte (concept.html) répond au ls-ready par l'état complet du registre
+if (window.parent !== window) { try { window.parent.postMessage({ type: "awoui:ls-ready" }, "*"); } catch (e) {} }
 
 /* ---------- démarrage ---------- */
 resize();
