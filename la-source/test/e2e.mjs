@@ -140,13 +140,19 @@ console.log("menu à M1:", JSON.stringify(menu1));
 await page.locator("#buildlist .bcard button").first().click();
 await page.waitForTimeout(300);
 
-// M2 : amélioration via UI
-const bpos = await page.evaluate(() => {
-  const b = window.__LS().buildings[0];
-  return window.__api.screenOf(b.x, b.y);
-});
-await page.mouse.click(bpos.x, bpos.y - 20);
-await page.waitForTimeout(300);
+// M2 : amélioration via UI — position recalculée avant chaque tap (la
+// caméra du guide peut glisser), retry tant que la fiche n'est pas ouverte
+for (let tries = 0; tries < 5; tries++) {
+  const bpos = await page.evaluate(() => {
+    const b = window.__LS().buildings[0];
+    return window.__api.screenOf(b.x, b.y);
+  });
+  await page.mouse.click(bpos.x, bpos.y - 20);
+  await page.waitForTimeout(350);
+  if (await page.evaluate(() => !document.querySelector("#sh-bld").hidden)) break;
+  await page.evaluate(() => { const b = window.__LS().buildings[0]; window.__api.center(b.x, b.y); });
+  await page.waitForTimeout(250);
+}
 await page.click("#bl-up");
 await page.waitForTimeout(300);
 console.log("mission après amélioration:", await page.evaluate(() => window.__LS().mi));
