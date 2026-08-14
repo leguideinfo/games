@@ -64,15 +64,20 @@ await page.waitForTimeout(1000);
 await page.waitForFunction(() => document.querySelector("#frenzy").hidden, null, { timeout: 30000 });
 
 // M2 : envoyer un drone ouvrier de la soute sur un amas de cristaux (tap réel)
-let cpos0 = null;
-for (let tries = 0; tries < 6 && !cpos0; tries++) {
-  cpos0 = await page.evaluate(() =>
+// coordonnées recalculées juste avant chaque tap : le guide de mission peut
+// faire glisser la caméra entre l'évaluation et le clic
+for (let tries = 0; tries < 8; tries++) {
+  const cpos0 = await page.evaluate(() =>
     window.__api.crystalsAll().find((c) => c.x > 40 && c.x < 350 && c.y > 140 && c.y < 530) || null);
-  if (!cpos0) await page.evaluate(() => { const c = window.__api.crystalsAll()[0]; if (c) window.__api.center(c.tx, c.ty); });
-  await page.waitForTimeout(200);
+  if (!cpos0) {
+    await page.evaluate(() => { const c = window.__api.crystalsAll()[0]; if (c) window.__api.center(c.tx, c.ty); });
+    await page.waitForTimeout(250); continue;
+  }
+  await page.mouse.click(cpos0.x, cpos0.y);
+  await page.waitForTimeout(350);
+  if (await page.evaluate(() => window.__LS().units.length > 0)) break;
 }
-await page.mouse.click(cpos0.x, cpos0.y);
-await page.waitForTimeout(400);
+await page.waitForTimeout(200);
 console.log("drone de soute envoyé (attendu mi 3, dr 1):", await page.evaluate(() =>
   ({ mi: window.__LS().mi, dr: window.__LS().dr, units: window.__LS().units.length })));
 
