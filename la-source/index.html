@@ -2174,7 +2174,7 @@ function drawTerrainTex() {
   ctx.fillStyle = "rgba(128, 128, 128, 0.15)"; // désaturation allégée : le sol rejoint le ton des assets
   ctx.fillRect(0, 0, W, H);
   ctx.globalCompositeOperation = "multiply";
-  ctx.fillStyle = "rgb(246, 214, 152)"; // ton accordé au sable des assets (retour 2026-08-14)
+  ctx.fillStyle = "rgb(255, 222, 158)"; // ton accordé au sable des assets (retour 2026-08-14)
   ctx.fillRect(0, 0, W, H);
   const lg = ctx.createLinearGradient(W, 0, W * 0.25, H);
   lg.addColorStop(0, "rgba(255, 200, 130, .30)"); // lumière du levant (haut droit)
