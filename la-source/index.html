@@ -1804,12 +1804,17 @@ function caiAt(x, y) {
   const k = x + "," + y;
   if (montSet.has(k) || lacSet.has(k) || duneSet.has(k) || fertSet.has(k)) return null;
   if (crxSpots.has(k)) return null;
-  // jamais sur la rangée de bord : l'ombre déborderait sur le vide
-  if (x === bmin() || x === bmax() || y === bmin() || y === bmax()) return null;
   const r = mulberry32(hash2(x, y) ^ 0x5EED);
   if (r() > 0.42) return null; // « pas mal d'endroits », pas partout
-  const ox = (r() - 0.5) * 0.62, oy = (r() - 0.5) * 0.62;
-  return { ox, oy, k: 0.60 + r() * 0.34, f: r() < 0.5 };
+  let ox = (r() - 0.5) * 0.62, oy = (r() - 0.5) * 0.62;
+  const kk = 0.60 + r() * 0.34;
+  // sur la rangée de bord on garde les cailloux (le propriétaire les veut sur
+  // les côtés) mais on les rentre : le décalage est forcé vers l'intérieur
+  if (x === bmin()) ox = Math.abs(ox) + 0.10;
+  if (x === bmax()) ox = -Math.abs(ox) - 0.10;
+  if (y === bmin()) oy = Math.abs(oy) + 0.10;
+  if (y === bmax()) oy = -Math.abs(oy) - 0.10;
+  return { ox, oy, k: kk, f: r() < 0.5 };
 }
 function drawCaillou(x, y) {
   const c = caiAt(x, y);
@@ -1817,6 +1822,7 @@ function drawCaillou(x, y) {
   const p = w2s(x + c.ox, y + c.oy), z = cam.z;
   const sw = 0.40 * c.k * TW * z, sh = sw * CAI.hw;
   ctx.save();
+  plateauDiamond(); ctx.clip(); // filet de sécurité : rien ne mord sur le vide
   if (c.f) { // une case sur deux en miroir : le semis ne se répète pas
     ctx.translate(p.x, p.y); ctx.scale(-1, 1);
     ctx.drawImage(caiImg(), -sw / 2, -sh * 0.62, sw, sh);
