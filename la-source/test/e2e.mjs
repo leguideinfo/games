@@ -91,18 +91,29 @@ console.log("gisement épuisé (drone en soute, case sable):", await page.evalua
   dr: window.__LS().dr, units: window.__LS().units.length,
   kind: window.__api.tileKind(u.x, u.y),
 }), u0));
-// on renvoie le second drone de soute sur un autre gisement (tap réel)
-let cpos1 = null;
-for (let tries = 0; tries < 6 && !cpos1; tries++) {
-  cpos1 = await page.evaluate(() =>
+// on renvoie le second drone de soute sur un autre gisement (tap réel).
+// Coordonnées recalculées juste avant chaque tap : la caméra peut glisser.
+for (let tries = 0; tries < 6; tries++) {
+  const cpos1 = await page.evaluate(() =>
     window.__api.crystalsAll().find((c) => c.x > 40 && c.x < 350 && c.y > 140 && c.y < 530) || null);
-  if (!cpos1) await page.evaluate(() => { const c = window.__api.crystalsAll()[0]; if (c) window.__api.center(c.tx, c.ty); });
-  await page.waitForTimeout(200);
+  if (!cpos1) {
+    await page.evaluate(() => { const c = window.__api.crystalsAll()[0]; if (c) window.__api.center(c.tx, c.ty); });
+    await page.waitForTimeout(250); continue;
+  }
+  await page.mouse.click(cpos1.x, cpos1.y);
+  await page.waitForTimeout(350);
+  if (await page.evaluate(() => window.__LS().units.length > 0)) break;
 }
-await page.mouse.click(cpos1.x, cpos1.y);
-await page.waitForTimeout(400);
-console.log("2e drone envoyé (dr 0, 1 unité):", await page.evaluate(() =>
+console.log("2e drone envoyé (dr 1, 1 unité):", await page.evaluate(() =>
   ({ dr: window.__LS().dr, units: window.__LS().units.length })));
+
+// respawn : on force l'expiration du gisement épuisé -> il se reforme, plein
+await page.evaluate((u) => { window.__LS().crxDead[u.x + "," + u.y] = Date.now() - 9e6; }, u0);
+await page.waitForTimeout(1600);
+console.log("gisement reformé (kind crystal, stock plein):", await page.evaluate((u) => ({
+  kind: window.__api.tileKind(u.x, u.y),
+  ...window.__api.crysAt(u.x, u.y),
+}), u0));
 
 // M2 : menu construire = extracteur seul, construction par tap réel.
 // La cible est recalculée juste avant chaque clic : la caméra peut glisser
