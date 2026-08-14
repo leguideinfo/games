@@ -19,8 +19,8 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   (asset `coffret-reseau.png`) se pose en mission 1 après l'Amorçage et
   devient le cœur du câblage (6 ports, auto-relié à la Source) ; le
   **drone ouvrier** vole en sprite définitif (`drone-ouvrier.png`,
-  vibration légère, sans ballant) ; les amas de cristaux utilisent le
-  modèle unique `sol-tuile-cristaux-3.png` (deux classes de taille).
+  vibration légère, sans ballant) ; les amas de cristaux sont les **3
+  gisements** du propriétaire (voir « Gisements de cristaux » ci-dessous).
 - **Économie du vrai jeu (v2)** — alignée sur console.awoui.com :
   **Matériaux 💠** extraits, **Énergie ⚡** en capacité (Centrale) consommée
   par chaque bâtiment, **Données Eo 💾** calculées (Fermes) et stockées
@@ -39,16 +39,22 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   récolter au doigt, surtout près des cristaux — la toute première activité
   d'Aurore, avant tout bâtiment (couche « bambin »). Découplés de
   l'Extracteur, qui est l'automatisation.
-- **Drones de soute & tuiles cristaux (v8.3)** : les amas de cristaux sont
-  les **2 assets du propriétaire** (`sol-tuile-cristaux-1/2.png`) — bake
-  « sprite » : cristaux préservés par masque couleur, **halo de sol compact**
-  au pied aligné sur l'étalonnage du plateau (aucun débordement gênant en
-  bordure) ; amas 1 petit, amas 2 large, tailles variées par graine.
-  **2 drones ouvriers en soute dès le départ** : taper un amas envoie un
-  drone le récolter (vol animé depuis la Source) — les premières ressources
+- **Gisements de cristaux (v8.6)** : les amas sont les **3 assets définitifs**
+  du propriétaire (`awoui-universe-assets-tuile-cristaux-small/medium/big.png`),
+  découpe « écart au sable » qui **préserve les fissures du sol** autour de la
+  base (elles se fondent dans le terrain, sable résiduel recalé sur le sol du
+  jeu). Chaque gisement a une **taille** (graine de la case ; garantie de
+  spawn : les 3 plus proches de la Source font un petit, un moyen, un grand)
+  qui fixe son **stock** (120/240/360 💠 = 1x/2x/3x) et sa **vitesse
+  d'extraction** (0,6/1,2/1,8 💠/s = 1x/2x/3x par drone). Un **compteur**
+  s'affiche au-dessus du cristal en cours d'extraction (ou entamé) avec barre
+  de progression du stock. Gisement épuisé → la case redevient du sable
+  constructible et le **drone rentre en soute** ; les gains hors-ligne des
+  drones sont plafonnés par le stock réel (sauvegarde v8, stock persisté).
+  **2 drones ouvriers en soute dès le départ** : taper un gisement envoie un
+  drone l'extraire (vol animé depuis la Source) — les premières ressources
   arrivent **avant** le premier Extracteur, avec une mission tuto dédiée
-  (25 missions, migrations de sauvegarde v4→v5→v6 — la mission « 2e
-  Extracteur » a été retirée au passage). La Forge en assemble
+  (26 missions, migrations de sauvegarde v4→…→v8). La Forge en assemble
   d'autres ensuite ; les drones de soute ne comptent pas contre sa capacité.
 - **Découverte pas-à-pas (v3)** : au départ, l'écran ne montre que le terrain,
   la Source et le compteur de matériaux. Les 14 missions déroulent la
@@ -87,9 +93,10 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   la lumière.
 - **Forge d'assemblage & unités (v4)** : la Forge assemble les premières
   unités (capacité = niveaux de Forge + 3, dont les 2 drones de soute) —
-  **Drone récolteur 🛸** (80 💠) : se pose sur un champ de cristaux et le
-  récolte (+36 💠/min) — les cristaux deviennent une ressource exploitable,
-  en plus du bonus d'adjacence des Extracteurs ;
+  **Drone récolteur 🛸** (80 💠) : se pose sur un gisement et l'extrait à la
+  vitesse du gisement (+36/+72/+108 💠/min selon la taille, jusqu'à
+  épuisement du stock) — les cristaux sont une ressource exploitable et
+  finie, en plus du bonus d'adjacence des Extracteurs ;
   **Chasseur 🚀** (120 💠 + 5 Eo) : patrouille au-dessus de la Forge.
 - **Parasites de données 🕷 (v4)** : ils apparaissent sur les cases aux
   frontières du territoire (max 2), ralentissent l'extraction (−15 %) tant

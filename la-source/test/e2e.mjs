@@ -76,21 +76,55 @@ await page.waitForTimeout(400);
 console.log("drone de soute envoyé (attendu mi 3, dr 1):", await page.evaluate(() =>
   ({ mi: window.__LS().mi, dr: window.__LS().dr, units: window.__LS().units.length })));
 
-// M2 : menu construire = extracteur seul, construction par tap réel
+// gisements : au moins un de chaque taille au spawn, stock qui décroît,
+// épuisement => drone de retour en soute et case rendue au sable
+const szs = await page.evaluate(() => window.__api.crysSizes());
+console.log("tailles de gisements au spawn (chacune >= 1):", szs, szs.every((n) => n >= 1) ? "OK" : "ERREUR");
+const u0 = await page.evaluate(() => { const u = window.__LS().units[0]; return { x: u.x, y: u.y }; });
+const st0 = await page.evaluate((u) => window.__api.crysAt(u.x, u.y).stock, u0);
+await page.waitForTimeout(900);
+const st1 = await page.evaluate((u) => window.__api.crysAt(u.x, u.y).stock, u0);
+console.log("extraction en cours (stock décroît):", st1 < st0 ? "OK" : "ERREUR", { st0, st1 });
+await page.evaluate((u) => window.__api.crysSet(u.x, u.y, 0.4), u0);
+await page.waitForTimeout(1200);
+console.log("gisement épuisé (drone en soute, case sable):", await page.evaluate((u) => ({
+  dr: window.__LS().dr, units: window.__LS().units.length,
+  kind: window.__api.tileKind(u.x, u.y),
+}), u0));
+// on renvoie le second drone de soute sur un autre gisement (tap réel)
+let cpos1 = null;
+for (let tries = 0; tries < 6 && !cpos1; tries++) {
+  cpos1 = await page.evaluate(() =>
+    window.__api.crystalsAll().find((c) => c.x > 40 && c.x < 350 && c.y > 140 && c.y < 530) || null);
+  if (!cpos1) await page.evaluate(() => { const c = window.__api.crystalsAll()[0]; if (c) window.__api.center(c.tx, c.ty); });
+  await page.waitForTimeout(200);
+}
+await page.mouse.click(cpos1.x, cpos1.y);
+await page.waitForTimeout(400);
+console.log("2e drone envoyé (dr 0, 1 unité):", await page.evaluate(() =>
+  ({ dr: window.__LS().dr, units: window.__LS().units.length })));
+
+// M2 : menu construire = extracteur seul, construction par tap réel.
+// La cible est recalculée juste avant chaque clic : la caméra peut glisser
+// (guide de mission) entre l'évaluation et le tap.
 await page.evaluate(() => window.__api.center(4, 4));
 await page.waitForTimeout(200);
-const target = await page.evaluate(() => {
-  for (let y = 2; y <= 6; y++) for (let x = 2; x <= 6; x++) {
-    if (window.__api.buildableAt(x, y)) {
-      const p = window.__api.screenOf(x, y);
-      if (p.x > 30 && p.x < 360 && p.y > 120 && p.y < 540) return { sx: p.x, sy: p.y };
+let menu1 = [];
+for (let tries = 0; tries < 5 && !menu1.length; tries++) {
+  const target = await page.evaluate(() => {
+    for (let y = 2; y <= 6; y++) for (let x = 2; x <= 6; x++) {
+      if (window.__api.buildableAt(x, y)) {
+        const p = window.__api.screenOf(x, y);
+        if (p.x > 30 && p.x < 360 && p.y > 120 && p.y < 540) return { sx: p.x, sy: p.y };
+      }
     }
-  }
-  return null;
-});
-await page.mouse.click(target.sx, target.sy);
-await page.waitForTimeout(300);
-const menu1 = await page.evaluate(() => [...document.querySelectorAll("#buildlist .bcard .nm")].map((n) => n.textContent));
+    return null;
+  });
+  if (!target) { await page.evaluate(() => window.__api.center(4, 4)); await page.waitForTimeout(300); continue; }
+  await page.mouse.click(target.sx, target.sy);
+  await page.waitForTimeout(350);
+  menu1 = await page.evaluate(() => [...document.querySelectorAll("#buildlist .bcard .nm")].map((n) => n.textContent));
+}
 console.log("menu à M1:", JSON.stringify(menu1));
 await page.locator("#buildlist .bcard button").first().click();
 await page.waitForTimeout(300);

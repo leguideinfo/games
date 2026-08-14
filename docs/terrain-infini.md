@@ -213,10 +213,39 @@ Supreme Commander.
   Lac et dunes **écartés d'1/3 de case vers les bords** (retour
   propriétaire) ; les deux fissures passent en (2,4) et (6,4), au centre,
   hors des quatre zones.
-- **Décor en prod (inchangé, validé)** : amas de cristaux
-  (`sol-tuile-cristaux-3`, deux tailles), **LA fissure et LES fissures**
-  (une seule de chaque, emplacements fixes (2,6) et (6,1)), **LA
-  crevasse** (colmatage Tetris) et **LE rocher** (éboulis déblayables).
+- **NOUVELLE TUILE MONTAGNES (2026-08-14)** : l'ancienne tuile montagne
+  (massif plein cadre) était disproportionnée quelle que soit l'échelle ; la
+  rotation 180° tentée pour la « coucher » produisait un amas de pixels (les
+  pics pointaient vers le bas). Le propriétaire a fourni
+  `awoui-universe-assets-map-tuile-montagnes.png` : un **champ en losange
+  iso** (pics rocheux, sable clair, petits cristaux) déjà orienté comme le
+  plateau. Découpe méthode zones (écart au sable de bord S=252, bord érodé
+  puis fondu), recalage couleur **affine pondéré par la clarté** vers le sol
+  du jeu (164.8/96/38.3). Dessinée **à plat, sans rotation ni aplat**, à la
+  taille des autres zones (w 2,15 ≈ lac/dunes w 2,0 — retour propriétaire :
+  « taille similaire aux autres »), empreinte infranchissable 3×3 au coin
+  haut. `drawZone()` clippe par le **losange exact du territoire**
+  (`plateauDiamond()`, fermé — jamais de débordement au-dessus du vide).
+- **Conduits pointillés retirés (2026-08-14)** : les liens pointillés animés
+  bâtiment → Source (`drawLink`) sont supprimés (retour propriétaire) ; ne
+  restent que les **câbles réseau** posés par le joueur (`drawCable`).
+- **GISEMENTS DE CRISTAUX 3 TAILLES (2026-08-14)** : les amas par défaut
+  sont remplacés par les 3 assets définitifs
+  (`awoui-universe-assets-tuile-cristaux-small/medium/big.png`, fond sable
+  orangé, **fissures du sol autour de la base**). Découpe « écart au sable »
+  (teinte bleue = cristal, désaturation = roches, sombre = cracks), les
+  branches de fissures reliées à l'amas par dilatation avant la composante
+  centrale — **les fissures restent et se fondent dans le terrain**, sable
+  résiduel recalé vers le sol du jeu pondéré par sa « sable-itude ».
+  Ancre de pose = centroïde du sol seul (cristaux exclus). Gameplay :
+  stock 120/240/360 💠 et vitesse 0,6/1,2/1,8 💠/s (1x/2x/3x selon la
+  taille), compteur + barre au-dessus du cristal extrait, épuisement →
+  sable constructible + drone de retour en soute, hors-ligne plafonné par
+  le stock, garantie une-taille-de-chaque près de la Source au spawn
+  (sauvegarde v8).
+- **Décor en prod (inchangé, validé)** : **LA fissure et LES fissures**
+  (une seule de chaque, emplacements fixes), **LA crevasse** (colmatage
+  Tetris) et **LE rocher** (éboulis déblayables).
 - **LE GRAND LAC (2026-08-08)** : `sol-tuile-grand-lac.png`, découpé par
   masque eau calibré sur échantillons (le sable est très saturé, S≥205 et
   b/r≤0,20 ; l'eau et ses reflets clairs ne le sont pas) + **rive sombre**
