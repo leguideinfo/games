@@ -1804,10 +1804,12 @@ function caiAt(x, y) {
   const k = x + "," + y;
   if (montSet.has(k) || lacSet.has(k) || duneSet.has(k) || fertSet.has(k)) return null;
   if (crxSpots.has(k)) return null;
+  // jamais sur la rangée de bord : l'ombre déborderait sur le vide
+  if (x === bmin() || x === bmax() || y === bmin() || y === bmax()) return null;
   const r = mulberry32(hash2(x, y) ^ 0x5EED);
   if (r() > 0.42) return null; // « pas mal d'endroits », pas partout
   const ox = (r() - 0.5) * 0.62, oy = (r() - 0.5) * 0.62;
-  return { ox, oy, k: 0.66 + r() * 0.62, f: r() < 0.5 };
+  return { ox, oy, k: 0.60 + r() * 0.34, f: r() < 0.5 };
 }
 function drawCaillou(x, y) {
   const c = caiAt(x, y);
@@ -2163,10 +2165,10 @@ function drawTerrainTex() {
   // étalonnage : accorder le plateau à l'ambiance du fond (clip toujours actif)
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   ctx.globalCompositeOperation = "saturation";
-  ctx.fillStyle = "rgba(128, 128, 128, 0.30)"; // désaturation : sol terne mais vivant
+  ctx.fillStyle = "rgba(128, 128, 128, 0.15)"; // désaturation allégée : le sol rejoint le ton des assets
   ctx.fillRect(0, 0, W, H);
   ctx.globalCompositeOperation = "multiply";
-  ctx.fillStyle = "rgb(252, 233, 202)"; // remonté vers les faces éclairées du rocher (retour 2026-08-08)
+  ctx.fillStyle = "rgb(246, 214, 152)"; // ton accordé au sable des assets (retour 2026-08-14)
   ctx.fillRect(0, 0, W, H);
   const lg = ctx.createLinearGradient(W, 0, W * 0.25, H);
   lg.addColorStop(0, "rgba(255, 200, 130, .30)"); // lumière du levant (haut droit)
