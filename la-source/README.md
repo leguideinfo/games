@@ -15,9 +15,9 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
 - **La Source** au centre : la **balise centrale**, asset définitif du
   propriétaire (`tuile-balise.png`, faisceau détouré en matte de
   différence, halo animé léger le long du faisceau) — tout bâtiment s'y
-  relie par un conduit d'énergie animé. Le **Coffret réseau HUB-01**
-  (asset `coffret-reseau.png`) se pose en mission 1 après l'Amorçage et
-  devient le cœur du câblage (6 ports, auto-relié à la Source) ; le
+  relie par un conduit d'énergie animé. Le **Hub réseau HUB-01**
+  (asset `awoui-universe-asset-hub-reseau.png`) se pose en mission 2, puis
+  s'alimente et se câble à la main (4 ports) ; le
   **drone ouvrier** vole en sprite définitif (`drone-ouvrier.png`,
   vibration légère, sans ballant) ; les amas de cristaux sont les **3
   gisements** du propriétaire (voir « Gisements de cristaux » ci-dessous).
@@ -39,6 +39,16 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   récolter au doigt, surtout près des cristaux — la toute première activité
   d'Aurore, avant tout bâtiment (couche « bambin »). Découplés de
   l'Extracteur, qui est l'automatisation.
+- **Ouverture ré-ordonnée (v10)** — l'ordre validé par le propriétaire :
+  **1)** taper un gisement pour y envoyer un drone ouvrier de la soute (la
+  toute première action du jeu, avant tout bâtiment) · **2)** poser le **Hub
+  réseau** · **3)** récolter des éclats ✨ pour l'**alimenter** (mini-jeu
+  d'Amorçage) · **4)** le **câbler à la Source** (bouton 🔌). Le Hub n'est
+  plus relié d'office : l'alimenter puis le câbler sont deux gestes du
+  joueur. Migration automatique des parties en cours (save v10).
+- **Hub réseau (ex-Coffret réseau)** : nom officiel **Hub réseau**, asset
+  définitif du propriétaire (`awoui-universe-asset-hub-reseau.png`),
+  **4 ports**. L'ancien visuel du coffret sert désormais au **Switch réseau**.
 - **Gisements de cristaux (v8.6)** : les amas sont les **3 assets définitifs**
   du propriétaire (`awoui-universe-assets-tuile-cristaux-small/medium/big.png`),
   découpe « écart au sable » qui **préserve les fissures du sol** autour de la

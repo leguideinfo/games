@@ -104,17 +104,29 @@ l'arbre de recherche.
 - **Data-driven** : NET_LAYERS (bandes + savoirs), PORTS, équipements en
   BT — prêt à recevoir le contenu de formation du propriétaire.
 
-## Coffret réseau — HUB-01 posé au sol (2026-08-08, v1.1)
+## Hub réseau — HUB-01 posé au sol (2026-08-08, v1.1 · ré-ordonné v10 le 2026-08-14)
 
-L'Amorçage débouche désormais sur du concret : dès que le HUB-01 est
-démarré (mini-jeu ⚡ ci-dessous), la **mission 1 fait poser le Coffret
-réseau** dans la colonie (asset `coffret-reseau.png`, 10 💠, 6 ports).
-À la pose, il est **auto-relié à la Source** et devient **le cœur du
-câblage de début de partie** (la pénurie des 3 prises de la Source
-arrive plus tard, avec plus de bâtiments → Switch). Tant que le hub
-n'est pas amorcé, le Coffret n'apparaît pas au menu Construire, et
-l'Amorçage se relance automatiquement (toutes les ~12 s) pendant la
-mission 1. 26 missions, migration v6→v7.
+Le **Hub réseau** est le nom officiel de l'équipement (l'ancien « Coffret
+réseau » n'existe plus ; son visuel sert désormais au **Switch réseau**).
+Asset définitif du propriétaire `awoui-universe-asset-hub-reseau.png`,
+10 💠, **4 ports**.
+
+**Ordre d'ouverture validé (2026-08-14)** — il fait découvrir le réseau en
+quatre gestes, dans cet ordre exact :
+
+1. **Envoyer un drone ouvrier sur un gisement** — la toute première action du
+   jeu, avant tout bâtiment : les ressources arrivent par la main du joueur.
+2. **Poser le Hub réseau** (menu Construire). Il est posé **inerte** : plus
+   d'auto-liaison à la Source.
+3. **Récolter des éclats ✨ pour l'alimenter** — c'est le mini-jeu
+   d'**Amorçage** (⚡ ci-dessous) qui le démarre ; il se relance
+   automatiquement (~12 s) tant que le hub n'a pas de courant.
+4. **Le câbler à la Source** au bouton 🔌 — le premier câble du jeu est posé
+   par le joueur, sur l'équipement qui deviendra le cœur du réseau.
+
+Le hub devient ensuite le cœur du câblage de la colonie : les bâtiments s'y
+branchent (la saturation des 3 prises de la Source arrive plus tard, avec plus
+de bâtiments → Switch, 8 ports).
 
 ## Amorçage du hub (2026-08-08 — remplace la « Pluie d'éclats »)
 

@@ -32,40 +32,8 @@ const gates0 = await page.evaluate(() => ({
 }));
 console.log("gates au départ (tout masqué):", JSON.stringify(gates0));
 
-// M0 : récolter 3 éclats par taps réels (zone sûre, hors HUD/onglets)
-let collected = 0;
-for (let tries = 0; tries < 20 && collected < 3; tries++) {
-  await page.waitForFunction(() => window.__api.orbsPos().length > 0, null, { timeout: 15000 });
-  const o = await page.evaluate(() =>
-    window.__api.orbsPos().find((p) => p.sx > 20 && p.sx < 340 && p.sy > 145 && p.sy < 690) || null);
-  if (!o) {
-    await page.evaluate(() => { const f = window.__api.orbsPos()[0]; if (f) window.__api.center(f.tx, f.ty); });
-    await page.waitForTimeout(1200); continue;
-  }
-  await page.mouse.click(o.sx, o.sy);
-  await page.waitForTimeout(250);
-  collected = await page.evaluate(() => window.__LS().orbsCollected);
-}
-console.log("après 3 éclats, mission:", await page.evaluate(() => window.__LS().mi));
-// si la Pluie d'éclats s'est déclenchée (3 récoltes rapides), on la laisse passer
-await page.waitForTimeout(700);
-await page.waitForFunction(() => document.querySelector("#frenzy").hidden, null, { timeout: 15000 });
-
-// M1 : poser le Coffret réseau (HUB-01) — via api (le menu exige le hub amorcé)
-await page.evaluate(() => {
-  for (let y = 3; y <= 6; y++) for (let x = 3; x <= 6; x++)
-    if (window.__api.buildableAt(x, y)) { window.__api.build("coffret", x, y); return; }
-});
-await page.waitForTimeout(500);
-console.log("coffret posé (attendu mi 2 + lien src):", await page.evaluate(() =>
-  ({ mi: window.__LS().mi, links: window.__LS().links.length })));
-// l'Amorçage non réussi peut se relancer : on le laisse se refermer
-await page.waitForTimeout(1000);
-await page.waitForFunction(() => document.querySelector("#frenzy").hidden, null, { timeout: 30000 });
-
-// M2 : envoyer un drone ouvrier de la soute sur un amas de cristaux (tap réel)
-// coordonnées recalculées juste avant chaque tap : le guide de mission peut
-// faire glisser la caméra entre l'évaluation et le clic
+// M0 : envoyer un drone ouvrier sur un gisement (première action du jeu).
+// Coordonnées recalculées avant chaque tap : le guide fait glisser la caméra.
 for (let tries = 0; tries < 8; tries++) {
   const cpos0 = await page.evaluate(() =>
     window.__api.crystalsAll().find((c) => c.x > 40 && c.x < 350 && c.y > 140 && c.y < 530) || null);
@@ -77,8 +45,7 @@ for (let tries = 0; tries < 8; tries++) {
   await page.waitForTimeout(350);
   if (await page.evaluate(() => window.__LS().units.length > 0)) break;
 }
-await page.waitForTimeout(200);
-console.log("drone de soute envoyé (attendu mi 3, dr 1):", await page.evaluate(() =>
+console.log("drone envoyé sur un gisement (attendu mi 1, dr 1):", await page.evaluate(() =>
   ({ mi: window.__LS().mi, dr: window.__LS().dr, units: window.__LS().units.length })));
 
 // gisements : au moins un de chaque taille au spawn, stock qui décroît,
@@ -90,34 +57,60 @@ const st0 = await page.evaluate((u) => window.__api.crysAt(u.x, u.y).stock, u0);
 await page.waitForTimeout(900);
 const st1 = await page.evaluate((u) => window.__api.crysAt(u.x, u.y).stock, u0);
 console.log("extraction en cours (stock décroît):", st1 < st0 ? "OK" : "ERREUR", { st0, st1 });
-await page.evaluate((u) => window.__api.crysSet(u.x, u.y, 0.4), u0);
+
+// M1 : poser le Hub réseau — il n'est PAS relié d'office
+await page.evaluate(() => {
+  for (let y = 3; y <= 6; y++) for (let x = 2; x <= 6; x++)
+    if (window.__api.buildableAt(x, y)) { window.__api.build("coffret", x, y); return; }
+});
+await page.waitForTimeout(500);
+console.log("hub posé (attendu mi 2, aucun lien):", await page.evaluate(() =>
+  ({ mi: window.__LS().mi, links: window.__LS().links.length })));
+
+// M2 : récolter des éclats pour alimenter HUB-01 (l'Amorçage boote le hub)
+let collected = 0;
+for (let tries = 0; tries < 12 && collected < 3; tries++) {
+  await page.waitForFunction(() => window.__api.orbsPos().length > 0, null, { timeout: 15000 });
+  const o = await page.evaluate(() =>
+    window.__api.orbsPos().find((p) => p.sx > 20 && p.sx < 340 && p.sy > 145 && p.sy < 690) || null);
+  if (!o) {
+    await page.evaluate(() => { const f = window.__api.orbsPos()[0]; if (f) window.__api.center(f.tx, f.ty); });
+    await page.waitForTimeout(1000); continue;
+  }
+  await page.mouse.click(o.sx, o.sy);
+  await page.waitForTimeout(250);
+  collected = await page.evaluate(() => window.__LS().orbsCollected);
+}
+await page.waitForTimeout(700);
+await page.waitForFunction(() => document.querySelector("#frenzy").hidden, null, { timeout: 30000 });
+await page.evaluate(() => window.__api.bootHub()); // l'Amorçage réussi, sans jouer le mini-jeu
+await page.waitForTimeout(500);
+console.log("HUB-01 alimenté (attendu mi 3 + bouton câblage):", await page.evaluate(() =>
+  ({ mi: window.__LS().mi, wire: !document.querySelector("#wirebtn").hidden })));
+
+// M3 : câbler HUB-01 à la Source
+await page.evaluate(() => {
+  const h = window.__LS().buildings.find((b) => b.t === "coffret");
+  window.__LS().mat = 500;
+  window.__api.link("src", 0, h.x, h.y);
+});
+await page.waitForTimeout(500);
+console.log("HUB-01 câblé (attendu mi 4):", await page.evaluate(() =>
+  ({ mi: window.__LS().mi, links: window.__LS().links.length })));
+
+// épuisement d'un gisement : le drone rentre en soute, la case redevient sable.
+// (on redescend le stock 💠 : entrepôt plein = drones en pause, par conception)
+await page.evaluate((u) => { window.__LS().mat = 40; window.__api.crysSet(u.x, u.y, 0.4); }, u0);
 await page.waitForTimeout(1200);
 console.log("gisement épuisé (drone en soute, case sable):", await page.evaluate((u) => ({
   dr: window.__LS().dr, units: window.__LS().units.length,
   kind: window.__api.tileKind(u.x, u.y),
 }), u0));
-// on renvoie le second drone de soute sur un autre gisement (tap réel).
-// Coordonnées recalculées juste avant chaque tap : la caméra peut glisser.
-for (let tries = 0; tries < 6; tries++) {
-  const cpos1 = await page.evaluate(() =>
-    window.__api.crystalsAll().find((c) => c.x > 40 && c.x < 350 && c.y > 140 && c.y < 530) || null);
-  if (!cpos1) {
-    await page.evaluate(() => { const c = window.__api.crystalsAll()[0]; if (c) window.__api.center(c.tx, c.ty); });
-    await page.waitForTimeout(250); continue;
-  }
-  await page.mouse.click(cpos1.x, cpos1.y);
-  await page.waitForTimeout(350);
-  if (await page.evaluate(() => window.__LS().units.length > 0)) break;
-}
-console.log("2e drone envoyé (dr 1, 1 unité):", await page.evaluate(() =>
-  ({ dr: window.__LS().dr, units: window.__LS().units.length })));
-
-// respawn : on force l'expiration du gisement épuisé -> il se reforme, plein
+// respawn : on force l'expiration -> le gisement se reforme, plein
 await page.evaluate((u) => { window.__LS().crxDead[u.x + "," + u.y] = Date.now() - 9e6; }, u0);
 await page.waitForTimeout(1600);
 console.log("gisement reformé (kind crystal, stock plein):", await page.evaluate((u) => ({
-  kind: window.__api.tileKind(u.x, u.y),
-  ...window.__api.crysAt(u.x, u.y),
+  kind: window.__api.tileKind(u.x, u.y), ...window.__api.crysAt(u.x, u.y),
 }), u0));
 
 // M2 : menu construire = extracteur seul, construction par tap réel.
@@ -179,7 +172,7 @@ await page.waitForTimeout(500);
 // M8-M11 : chapitre 🔌 — câbles, switch, simulation de trame
 await page.evaluate(() => { window.__LS().mat = 500; window.__api.autolink(); });
 await page.waitForTimeout(600);
-console.log("réseau câblé (attendu mi 10):", await page.evaluate(() => ({ mi: window.__LS().mi, ...window.__api.netInfo() })));
+console.log("réseau câblé (attendu mi 11):", await page.evaluate(() => ({ mi: window.__LS().mi, ...window.__api.netInfo() })));
 await buildFirst("switchhub");
 await page.waitForTimeout(400);
 // le Switch posé doit être câblé pour terminer « raccorde tout »
@@ -195,7 +188,7 @@ await page.evaluate(() => window.__api.giveEo(15));
 await page.waitForTimeout(500);
 await buildFirst("datacenter");
 await page.waitForTimeout(400);
-console.log("après la séquence ressources (attendu mi 16):", await page.evaluate(() => ({ mi: window.__LS().mi })));
+console.log("après la séquence ressources (attendu mi 17):", await page.evaluate(() => ({ mi: window.__LS().mi })));
 
 // M15 : serveur DHCP posé et câblé ; M16 : DNS
 await page.evaluate(() => window.__api.giveEo(20));
@@ -229,7 +222,7 @@ for (const t of ["console", "forge"]) {
   }, t);
 }
 await page.waitForTimeout(300);
-console.log("après forge (attendu 23):", await page.evaluate(() => window.__LS().mi));
+console.log("après forge (attendu 24):", await page.evaluate(() => window.__LS().mi));
 
 // M18 : drone récolteur posé sur cristaux par tap réel (dézoome si hors vue)
 await page.evaluate(() => { window.__LS().mat = 300; window.__api.assemble("recolteur"); });
