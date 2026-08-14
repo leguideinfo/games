@@ -1318,7 +1318,7 @@ const inB = (x, y) => x >= bmin() && y >= bmin() && x <= bmax() && y <= bmax();
    cristaux 0,42-0,46 · éboulis/relief 0,20-0,47 — l'adjacence reste donc
    toujours possible (0,71 + 0,12 < 1), la règle garantit sans restreindre. */
 const FP_MARGE = 0.12;
-const FP_BLD = { extracteur: 0.86, centrale: 0.69, entrepot: 0.71, coffret: 0.29,
+const FP_BLD = { extracteur: 0.72, centrale: 0.69, entrepot: 0.71, coffret: 0.29,
   ferme: 0.48, datacenter: 0.50, reseau: 0.44, console: 0.53, forge: 0.45, dhcpsrv: 0.67, switchhub: 0.59, miniere: 0.57, coffrefort: 0.67, citadelle: 0.46, bastion: 0.68, tour: 0.47, tourelle: 0.50, missiles: 0.48, bouclier: 0.49, sentinelle: 0.68, revocation: 0.59, chantier: 0.50, transport: 0.42, hangar: 0.44 };
 const FP_DEF = 0.62, FP_SRC = 0.63, FP_UNIT = 0.30;
 function fpOf(kind, x, y) {
@@ -1634,7 +1634,7 @@ function regSprite(type, src, smoke, meta) {
 // masque couleur + composante connexe, halo de sol aligné sur l'étalonnage du
 // plateau — tout le contenu tient dans la case, avec un léger bord intérieur).
 const TSPR = { // ancre = centre du losange d'empreinte au sol, posé au centre de case
-  extracteur: { ok: false, mips: {}, ax: 0.545, ay: 0.640, hw: 0.648, w: 0.94, oy: 0 },
+  extracteur: { ok: false, mips: {}, ax: 0.545, ay: 0.640, hw: 0.648, w: 0.78, oy: 0 },
   centrale: { ok: false, mips: {}, ax: 0.558, ay: 0.634, hw: 0.733, w: 0.75, oy: 0 },
   entrepot: { ok: false, mips: {}, ax: 0.474, ay: 0.450, hw: 0.539, w: 0.75, oy: 0 },
   coffret: { ok: false, mips: {}, ax: 0.445, ay: 0.717, hw: 0.890, w: 0.30, oy: 0 },
