@@ -2879,7 +2879,7 @@ function frame(t) {
     drawZone(FERT, FERT_CX, FERT_CY, -0.30, -0.30, 0.50, 0.86);
     drawDunes();
     drawLac();
-    drawZone(MONT, MONT_CX, MONT_CY, 0.30, 0.30, 0.62, 1, true);
+    drawZone(MONT, MONT_CX, MONT_CY, 0, 0, 0.62, 1, true); // aligné sur sa case bloquée
     drawPaths();
     for (let y = bmin(); y <= bmax(); y++) for (let x = bmin(); x <= bmax(); x++) drawTile(x, y, t);
     drawPlaceHalo(t);
