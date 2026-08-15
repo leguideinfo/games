@@ -3573,8 +3573,24 @@ function postBuild(key) {
 }
 
 let curBld = null;
+/* Le panneau #sh-bld est PARTAGÉ (bâtiment, éboulis…) : ses boutons gardent
+   sinon le libellé, la visibilité ET le gestionnaire de l'ouverture précédente.
+   Toute ouverture repart donc d'une ardoise nette — chacune ne rallume ensuite
+   que ce qui la concerne. */
+function resetBldSheet() {
+  for (const id of ["#bl-move", "#bl-turbo", "#bl-up"]) {
+    const el = $(id);
+    el.hidden = id !== "#bl-up";   // seul « améliorer/déblayer » est toujours utile
+    el.disabled = false;
+    el.onclick = null;
+    el.classList.remove("guide");
+  }
+  $("#bl-stats").innerHTML = "";
+  $("#bl-forge").innerHTML = "";
+}
 function openBld(b) {
   closeSheets();
+  resetBldSheet();
   curBld = b;
   const def = BT[b.t];
   $("#bl-name").innerHTML = def.ic + " " + def.nm + " <span style='color:var(--dim);font-size:12px'>· NIV " + b.l + "</span>";
@@ -3780,6 +3796,11 @@ function openSource() {
 function openRubble(tp) {
   closeSheets();
   selTile = tp;
+  // Un éboulis n'est PAS un bâtiment : il n'a qu'un seul geste, déblayer.
+  // Le panneau #sh-bld étant partagé avec openBld, sans cette remise à zéro le
+  // bouton 🚚 DÉPLACER restait affiché AVEC le gestionnaire du dernier bâtiment
+  // ouvert — on croyait déplacer le rocher, on déménageait un ouvrage.
+  resetBldSheet();
   $("#bl-name").textContent = "🪨 Éboulis";
   $("#bl-desc").textContent = "Des débris bloquent la case.";
   $("#bl-stats").innerHTML = "";
@@ -3801,8 +3822,7 @@ function openRubble(tp) {
     save();
     closeSheets();
   };
-  $("#bl-turbo").hidden = true;
-  $("#sh-bld").hidden = false;
+  $("#sh-bld").hidden = false;   // (turbo et déplacer déjà éteints par resetBldSheet)
 }
 
 let cave = null;
