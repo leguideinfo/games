@@ -25,8 +25,9 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   **Matériaux 💠** extraits, **Énergie ⚡** en capacité (Centrale) consommée
   par chaque bâtiment, **Données Eo 💾** calculées (Fermes) et stockées
   (Datacenter). Coût ×1,6 par niveau, comme en prod.
-- **7 bâtiments du roster réel** : Extracteur de matériaux, Centrale
-  énergétique, Entrepôt de matériaux, Ferme de serveurs, Datacenter,
+- **8 bâtiments du roster réel** : Extracteur de matériaux, Centrale
+  énergétique, Entrepôt de matériaux, **Serveur** (la première machine à
+  calculer des Données), Ferme de serveurs (le parc, plus tard), Datacenter,
   Baie réseau (contrats, requiert DNS), Console de commandement
   (+4 %/niv de production globale, PowerShell) — améliorations NIV 1→10.
 - **Chaînes de progression émergentes** : construire coûte de l'énergie →
@@ -46,6 +47,19 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   d'Amorçage) · **4)** le **câbler à la Source** (bouton 🔌). Le Hub n'est
   plus relié d'office : l'alimenter puis le câbler sont deux gestes du
   joueur. Migration automatique des parties en cours (save v10).
+- **Équipements réseau, assets définitifs (v10)** : le **Hub réseau**
+  (`awoui-universe-asset-hub-reseau.png`, 4 ports), le **Switch réseau**
+  (`awoui-universe-asset-switch-reseau.png`, vrai switch 12 ports câblé — le
+  visuel du coffret a disparu du jeu) et le **Serveur**
+  (`awoui-universe-asset-server-reseau.png`, baie câblée). Tous découpés par
+  la même méthode : masque couleur + **terme de structure** (les câbles et
+  les socles ont la teinte du sable et échappaient au seuil couleur) +
+  fermeture forte — corps pleins, câbles conservés, aucun trou. Empreinte au
+  sol ramenée au corps seul : les câbles n'interdisent pas la case voisine.
+- **Serveur puis Ferme de serveurs** : la colonie démarre avec **un Serveur**
+  (mission du chapitre 💾 Données) ; la **Ferme** reste en jeu mais bien plus
+  tard — c'est le parc, quand une machine ne suffit plus (4× le calcul, même
+  asset dessiné plus grand en attendant un visuel dédié).
 - **Hub réseau (ex-Coffret réseau)** : nom officiel **Hub réseau**, asset
   définitif du propriétaire (`awoui-universe-asset-hub-reseau.png`),
   **4 ports**. L'ancien visuel du coffret sert désormais au **Switch réseau**.

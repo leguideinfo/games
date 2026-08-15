@@ -158,7 +158,7 @@ console.log("mission après amélioration:", await page.evaluate(() => window.__
 // M3 : palier « ressens le stock » (250/300 💠)
 await page.evaluate(() => { window.__LS().mat = 260; });
 await page.waitForTimeout(500);
-// M4-M10 : entrepôt → 2e extracteur → centrale (puis NIV 2) → ferme → 12 Eo → datacenter
+// M4-M10 : entrepôt → 2e extracteur → centrale (puis NIV 2) → serveur → 12 Eo → datacenter
 const buildFirst = (t) => page.evaluate((tt) => {
   window.__LS().mat = 300;
   for (let y = 0; y < 9; y++) for (let x = 0; x < 9; x++) {
@@ -181,8 +181,8 @@ await page.waitForTimeout(500);
 await page.evaluate(() => window.__api.simDone());
 await page.waitForTimeout(400);
 
-// M12-M14 : ferme → 12 Eo → datacenter
-await buildFirst("ferme");
+// M12-M14 : serveur → 12 Eo → datacenter
+await buildFirst("serveur");
 await page.waitForTimeout(350);
 await page.evaluate(() => window.__api.giveEo(15));
 await page.waitForTimeout(500);
