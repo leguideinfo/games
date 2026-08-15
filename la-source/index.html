@@ -1943,27 +1943,8 @@ const fertSet = new Set(FERT_CELLS.map((c) => c[0] + "," + c[1]));
    case de zone par un côté, réparties autour de la Source : deux à portée
    immédiate pour le tutoriel, trois sur les flancs dégagés. Hors du plateau
    de départ (expansions), le tirage procédural reprend la main. */
-const crxTailles = { "3,4": 0, "3,1": 0, "4,6": 1, "1,4": 1, "7,4": 2 };
+const crxTailles = { "2,3": 0, "3,1": 0, "4,6": 1, "1,4": 1, "7,4": 2 };
 const crxSpots = new Set(Object.keys(crxTailles));
-/* Aucun gisement sur la rangée de bord (le sprite déborderait la falaise) ni
-   sur une case de zone. Ceux qui touchent une zone par un côté sont DÉCALÉS
-   à l'opposé au rendu, pour que la base ne morde jamais sur la zone. */
-const crxNudge = (() => {
-  const m = new Map();
-  for (const k of crxSpots) {
-    const [x, y] = k.split(",").map(Number);
-    let dx = 0, dy = 0;
-    for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      const v = (x + ax) + "," + (y + ay);
-      if (lacSet.has(v) || montSet.has(v) || duneSet.has(v) || fertSet.has(v)) { dx -= ax; dy -= ay; }
-    }
-    // une case de bord : on recule vers l'intérieur pour ne pas mordre le vide
-    if (x <= 0) dx += 1; if (x >= GRID - 1) dx -= 1;
-    if (y <= 0) dy += 1; if (y >= GRID - 1) dy -= 1;
-    if (dx || dy) m.set(k, { dx: dx * 0.28, dy: dy * 0.28 });
-  }
-  return m;
-})();
 const FERT_CX = FERT_CELLS.reduce((a, c) => a + c[0], 0) / FERT_CELLS.length;
 const FERT_CY = FERT_CELLS.reduce((a, c) => a + c[1], 0) / FERT_CELLS.length;
 /* ---------- gisements : taille et stock ----------
@@ -2283,9 +2264,7 @@ function plateauClipPath() { // pentagone : bords-falaises exacts, ouvert vers l
 }
 function drawCrystalSprite(x, y) {
   if (!CRX.ok) return;
-  const info = tileAt(x, y), z = cam.z;
-  const nu = crxNudge.get(x + "," + y);
-  const p = w2s(x + (nu ? nu.dx : 0), y + (nu ? nu.dy : 0));
+  const info = tileAt(x, y), z = cam.z, p = w2s(x, y);
   const sz = crysSize(x, y), m = CRX.m[sz];
   const sw = CRX.w[sz] * (0.94 + 0.12 * ((info.j * 7) % 1)) * TW * z, sh = sw * m.hw;
   ctx.save();
