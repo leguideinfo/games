@@ -575,6 +575,11 @@
   <canvas id="cv"></canvas>
 
   <div id="hud">
+    <div id="hud-cry">
+      <div class="hud-label">💎 Cristaux</div>
+      <div class="hud-val"><span id="cry">0</span></div>
+      <div class="hud-rate"><span id="cryrate">+0/min</span></div>
+    </div>
     <div>
       <div class="hud-label">💠 Matériaux</div>
       <div class="hud-val"><span id="mat">0</span></div>
@@ -1011,7 +1016,7 @@ function skipSatisfied() {
 let S = null;
 function newSave() {
   return {
-    v: 10, mat: 50, eo: 0, crx: {}, crxDead: {}, buildings: [], techs: [], links: [], seenIntro: false,
+    v: 11, mat: 50, eo: 0, cry: 0, crx: {}, crxDead: {}, buildings: [], techs: [], links: [], seenIntro: false,
     mi: 0, orbsCollected: 0, lastSeen: Date.now(), buffLeft: 0, buffMult: 1,
     ext: 0, cleared: [], units: [], archives: [], reader: false,
     rubble: [], lastRubble: Date.now(), memories: [], restored: [], dr: 2, fr: 0, hubBoot: false,
@@ -1064,6 +1069,10 @@ function load() {
         sv.mi = (sv.mi || 0) <= 2 ? 0 : sv.mi + 1;
         sv.v = 10;
       }
+      if (sv.v < 11) { // v11 : les cristaux 💎 deviennent une monnaie à part
+        sv.cry = sv.cry || 0;
+        sv.v = 11;
+      }
       return sv;
     }
   } catch (e) {}
@@ -1109,9 +1118,9 @@ function matRate(sansDrones) {
   const ex = S.buildings.filter((b) => b.t === "extracteur")
     .reduce((a, b) => a + 0.7 * Math.pow(b.l, 1.4) * (1 + 0.15 * crysAdj(b.x, b.y)) * netFactor(b), 0);
   const net = 0.35 * S.buildings.filter((b) => b.t === "reseau").reduce((a, b) => a + b.l * netFactor(b), 0);
-  const dr = sansDrones ? 0 : droneRate();
+  // les drones ne produisent plus de matériaux : ils minent des cristaux 💎
   const malus = mobs.length ? 0.85 : 1;
-  return (ex + net + dr) * globalMult() * malus;
+  return (ex + net) * globalMult() * malus;
 }
 function eoRate() {
   return 0.05 * S.buildings.filter((b) => b.t === "ferme")
@@ -1203,28 +1212,31 @@ function offlineGains() {
   const capT = S.techs.includes("backup") ? 24 * 3600 : 2 * 3600;
   const b0 = S.buffMult; S.buffMult = 1;
   const t = Math.min(el, capT);
-  // les bâtiments d'abord (production infinie, simplement écrêtée) ; puis les
-  // drones, qui ne débitent leur gisement QU'À HAUTEUR de la place restante —
-  // un stock fini n'est jamais détruit pour un gain écrêté.
-  const gmFixe = Math.max(0, Math.min(matRate(true) * t, matCap() - S.mat));
-  let placeBrute = Math.max(0, (matCap() - S.mat - gmFixe) / globalMult());
-  let dgain = 0;
-  for (let i = S.units.length - 1; i >= 0 && placeBrute > 0.01; i--) {
+  // Matériaux : production des bâtiments, simplement écrêtée par la soute.
+  const gm = Math.max(0, Math.min(matRate() * t, matCap() - S.mat));
+  // Cristaux : les drones ont miné pendant l'absence. Pas de plafond à écrêter
+  // (les cristaux n'en ont pas), mais le gisement reste FINI — on ne prend que
+  // ce qu'il contient, et il s'épuise pour de bon s'il se vide.
+  let gc = 0;
+  for (let i = S.units.length - 1; i >= 0; i--) {
     const u = S.units[i];
     if (u.t !== "recolteur" || tileAt(u.x, u.y).kind !== "crystal") continue;
     const st = crysStock(u.x, u.y);
     if (st <= 0) continue;
-    const take = Math.min(st, CRX_V * (crysSize(u.x, u.y) + 1) * t, placeBrute);
+    const take = Math.min(st, CRX_V * (crysSize(u.x, u.y) + 1) * t);
     S.crx[u.x + "," + u.y] = st - take;
-    dgain += take; placeBrute -= take;
+    gc += take;
     if (S.crx[u.x + "," + u.y] <= 0.01) crysDeplete(u.x, u.y, i);
   }
-  const gm = Math.max(0, gmFixe + dgain * globalMult());
   const ge = Math.max(0, Math.min(eoRate() * Math.min(el, capT), eoCap() - S.eo));
   S.buffMult = b0;
-  if (gm > 1 || ge > 0.5) {
-    S.mat += gm; S.eo += ge;
-    setTimeout(() => toast("Pendant ton absence : <b>+" + fmt(gm) + " 💠</b>" + (ge > 0.5 ? " et <b>+" + fmt(ge) + " Eo</b>" : "")), 1200);
+  if (gm > 1 || ge > 0.5 || gc > 1) {
+    S.mat += gm; S.eo += ge; S.cry = (S.cry || 0) + gc;
+    const bouts = [];
+    if (gc > 1) bouts.push("<b>+" + fmt(gc) + " 💎</b>");
+    if (gm > 1) bouts.push("<b>+" + fmt(gm) + " 💠</b>");
+    if (ge > 0.5) bouts.push("<b>+" + fmt(ge) + " Eo</b>");
+    setTimeout(() => toast("Pendant ton absence : " + bouts.join(" · ")), 1200);
   }
   S.buffLeft = 0; S.buffMult = 1;
   save();
@@ -1999,11 +2011,14 @@ function crysStock(x, y) {
   const v = S.crx[x + "," + y];
   return v == null ? crysMax(x, y) : v;
 }
-// débit total des drones (ne compte que les gisements encore fournis).
-// Entrepôt plein => les drones se mettent en pause : on ne détruit JAMAIS un
-// stock fini pour un gain écrêté (crédit et débit s'arrêtent ensemble).
-function droneRate() {
-  if (S.mat >= matCap() - 0.01) return 0;
+/* Débit de CRISTAUX 💎 des drones (seuls les gisements encore fournis comptent).
+   Depuis le 15/08, miner ne rapporte plus des matériaux mais des cristaux : une
+   monnaie à part, dont c'est aujourd'hui l'UNIQUE source. L'ancienne mise en
+   pause « entrepôt plein » a disparu avec elle — elle gelait l'extraction dès
+   que les matériaux plafonnaient (et, sur le plateau où la trésorerie locale est
+   gonflée, elle la gelait TOUT LE TEMPS : compteur figé, gisement jamais épuisé,
+   drone jamais rappelé — les symptômes remontés par le propriétaire). */
+function cryRate() {
   return CRX_V * S.units.reduce((a, u) => a + (u.t === "recolteur" &&
     tileAt(u.x, u.y).kind === "crystal" && crysStock(u.x, u.y) > 0
     ? crysSize(u.x, u.y) + 1 : 0), 0);
@@ -2058,7 +2073,6 @@ function tickRespawn(dt) {
 }
 // extraction réelle : chaque drone vide son gisement à sa vitesse
 function tickExtraction(dt) {
-  if (S.mat >= matCap() - 0.01) return; // entrepôt plein : drones en pause
   for (let i = S.units.length - 1; i >= 0; i--) {
     const u = S.units[i];
     if (u.t !== "recolteur" || tileAt(u.x, u.y).kind !== "crystal") continue;
@@ -2281,7 +2295,7 @@ function drawCrystalSprite(x, y) {
   if (!mining && st >= max) return;
   const fs = Math.max(9, 8.8 * z);
   ctx.font = "700 " + fs + "px system-ui, sans-serif";
-  const txt = "💠 " + Math.max(0, Math.ceil(st));
+  const txt = "💎 " + Math.max(0, Math.ceil(st));   // ce qu'un gisement contient, c'est du cristal
   const tw2 = ctx.measureText(txt).width, pw = tw2 + 11 * z, ph = fs + 8;
   const bx = p.x - pw / 2;
   // jamais sous le HUD ni hors écran (fort zoom) : on borne dans la vue
@@ -2485,7 +2499,7 @@ function drawOrb(o, t) {
   const oy = p.y - 34 * z - Math.sin((t + o.born) / 350) * 5 * z;
   o.sx = p.x; o.sy = oy;
   if (ORBIMG.ok) {
-    const dw = 26 * z;
+    const dw = 19.5 * z;   // éclat réduit d'un quart (26 -> 19,5) — retour user 15/08
     ctx.shadowColor = "rgba(78, 242, 224, .85)";
     ctx.shadowBlur = 12 * z;
     ctx.drawImage(ORBIMG.img, p.x - dw / 2, oy - dw / 2, dw, dw);
@@ -2493,8 +2507,8 @@ function drawOrb(o, t) {
     return;
   }
   ctx.beginPath();
-  ctx.arc(p.x, oy, 8 * z, 0, Math.PI * 2);
-  const g = ctx.createRadialGradient(p.x, oy, 1, p.x, oy, 9 * z);
+  ctx.arc(p.x, oy, 6 * z, 0, Math.PI * 2);   // repli sans asset : même réduction d'un quart
+  const g = ctx.createRadialGradient(p.x, oy, 1, p.x, oy, 6.75 * z);
   g.addColorStop(0, "#eaffff"); g.addColorStop(0.5, "#4ef2e0"); g.addColorStop(1, "rgba(78,242,224,0)");
   ctx.fillStyle = g;
   ctx.shadowColor = "#4ef2e0"; ctx.shadowBlur = 12;
@@ -2533,6 +2547,10 @@ function drawMob(m, t) {
 }
 // Drone ouvrier : asset définitif (fond transparent), vibration légère
 const DRN = { ok: false, mips: {}, hw: 0.857 };
+// Largeur du drone ouvrier, en fraction de case — réduite d'un quart le 15/08
+// (0,33 -> 0,2475) à la demande du propriétaire. Une seule constante : le drone
+// posé et son aperçu de pose ne peuvent pas diverger.
+const DRONE_W = 0.2475;
 (function () {
   const img = new Image();
   img.onload = () => { DRN.img = img; DRN.ok = true; };
@@ -2574,7 +2592,7 @@ function drawUnit(u, t) {
     const vx = px + Math.sin(t / 23 + u.x * 5) * 0.14 * z;
     const vy = py + Math.cos(t / 29 + u.y * 7) * 0.14 * z;
     if (DRN.ok) {
-      const vw = 0.33 * TW * z, vh = vw * DRN.hw;
+      const vw = DRONE_W * TW * z, vh = vw * DRN.hw;
       // rayon de récolte vers les cristaux
       ctx.strokeStyle = "rgba(78,242,224,.4)"; ctx.lineWidth = 1.5 * z;
       ctx.beginPath(); ctx.moveTo(vx, vy + vh * 0.28); ctx.lineTo(vx, vy + 26 * z); ctx.stroke();
@@ -2687,7 +2705,7 @@ function drawPlaceGhost(t) {
   ctx.globalAlpha = place.valid ? 0.62 : 0.3;
   if (place.kind === "unit") {
     if (DRN.ok) {
-      const vw = 0.33 * TW * z, vh = vw * DRN.hw;
+      const vw = DRONE_W * TW * z, vh = vw * DRN.hw;
       ctx.drawImage(drnImg(), p.x - vw / 2, p.y - 26 * z - vh / 2, vw, vh);
     }
   } else {
@@ -2788,15 +2806,19 @@ function frame(t) {
   healCanvas();
   const dt = Math.min((t - lastT) / 1000, 0.1);
   lastT = t;
-  // économie — en mode MIROIR, les ressources sont CELLES du jeu principal
-  // (recalées par message) : la production locale — extraction et respawn
-  // des gisements compris — ne tire plus dessus
+  // Matériaux et Données : en MIROIR ce sont ceux du jeu principal (recalés par
+  // message), la production locale ne tire donc pas dessus.
   if (!MIRROR) {
     S.mat = Math.min(matCap(), S.mat + matRate() * dt);
     S.eo = Math.min(eoCap(), S.eo + eoRate() * dt);
-    tickExtraction(dt);
-    tickRespawn(dt);
   }
+  // Les CRISTAUX 💎, eux, se minent sur le plateau — miroir compris : c'est la
+  // seule monnaie qu'on y gagne, et le seul geste qui la produit. L'extraction
+  // (et le respawn des gisements) tourne donc TOUJOURS : sans cela le compteur
+  // du gisement restait figé et le drone n'était jamais rappelé en soute.
+  S.cry = (S.cry || 0) + cryRate() * dt;
+  tickExtraction(dt);
+  tickRespawn(dt);
   if (S.buffLeft > 0) {
     S.buffLeft -= dt;
     if (S.buffLeft <= 0) { S.buffLeft = 0; S.buffMult = 1; }
@@ -2931,7 +2953,12 @@ function frame(t) {
   } else {
     drawMap(t);
   }
-  // HUD — en MIROIR, les compteurs affichent le jeu principal (message res)
+  // Cristaux : monnaie du plateau, TOUJOURS locale (miroir compris) — elle ne
+  // vient jamais du Chantier, elle se mine ici.
+  $("#cry").textContent = fmt(S.cry || 0);
+  const cr = cryRate();
+  $("#cryrate").textContent = cr > 0 ? "+" + (cr * 60).toFixed(0) + "/min" : "à miner";
+  // HUD — en MIROIR, les autres compteurs affichent le jeu principal (message res)
   if (MIRROR && MIRROR_RES) {
     $("#mat").textContent = fmt(MIRROR_RES.mat);
     $("#matcap").textContent = "/ " + fmt(MIRROR_RES.matCap);
@@ -5605,10 +5632,13 @@ window.addEventListener("message", (e) => {
     // rocher, colmater une faille et déplacer 🚚 sont GRATUITS — l'économie, la
     // vraie, vit au Chantier (et c'est lui qu'affiche le HUD).
     S.mat = 999999; S.eo = 999999;
-    // le HUD local est un doublon de celui du jeu principal, juste au-dessus ;
-    // les missions, elles, RESTENT : c'est le tuto du plateau qui se rejoue
+    // Le HUD local double celui du jeu principal, juste au-dessus : on l'éteint
+    // — SAUF le compteur de CRISTAUX 💎, qui est la monnaie propre au plateau et
+    // n'existe nulle part ailleurs. Les missions, elles, RESTENT : c'est le tuto
+    // du plateau qui se rejoue.
     const st = document.createElement("style");
-    st.textContent = "#hud{display:none!important}";
+    st.textContent = "#hud>div:not(#hud-cry){display:none!important}" +
+                     "#hud{background:transparent;border:0;box-shadow:none}";
     document.head.appendChild(st);
   }
   MIRROR_BLD = d.bld || {};
