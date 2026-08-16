@@ -1,0 +1,29 @@
+  /* ---------- archives / assemblage ---------- */
+  .asm-slot { margin-bottom: 10px; }
+  .asm-slot .sl-nm { font-size: 11px; color: var(--dim); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 5px; }
+  .asm-opt {
+    display: block; width: 100%;
+    border: 1px solid var(--line); background: var(--panel2); color: var(--txt);
+    border-radius: 9px; padding: 8px 10px; font-size: 12px; text-align: left;
+    margin-bottom: 5px;
+  }
+  .asm-opt.sel { border-color: var(--blue); color: var(--blue); background: #0c1a30; }
+  #asm-log {
+    font-size: 11.5px; line-height: 1.7; min-height: 20px;
+    padding: 4px 2px; font-variant-numeric: tabular-nums;
+  }
+  #asm-log .ok { color: var(--green); }
+  #asm-log .err { color: var(--red); }
+  .frag-txt {
+    border: 1px solid #3a3050;
+    background: #120f1e;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: #d8d2ea;
+    margin-bottom: 8px;
+  }
+  .frag-txt .hd { color: var(--violet); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 6px; }
+  .frag-txt .cy { color: var(--cyan); }
+

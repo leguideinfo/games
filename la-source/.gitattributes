@@ -1,0 +1,5 @@
+# Fidelite octet-pour-octet du modele sections/assemblage (voir ARCHITECTURE.md) :
+# aucune normalisation de fins de ligne sur le monolithe ni sur ses sections.
+index.html -text
+src/** -text
+tools/*.ps1 -text

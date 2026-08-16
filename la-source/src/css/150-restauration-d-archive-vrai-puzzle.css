@@ -1,0 +1,27 @@
+  /* ---------- restauration d'archive (vrai puzzle d'image) ---------- */
+  #re-tray { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; }
+  .rpiece {
+    width: 54px; height: 54px; padding: 0;
+    border: 2px solid var(--line); border-radius: 8px;
+    background-size: 300% 300%;
+    background-color: #0a0f1e;
+  }
+  .rpiece.sel { border-color: var(--cyan); box-shadow: 0 0 10px rgba(78, 242, 224, .5); }
+  #re-tray.dense .rpiece { width: 40px; height: 40px; border-radius: 6px; }
+  #re-tray.dense2 .rpiece { width: 32px; height: 32px; border-radius: 5px; border-width: 1.5px; }
+  #re-board {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px;
+    background: rgba(6, 9, 19, .5);
+    border: 1px solid rgba(255, 255, 255, .07);
+    border-radius: 14px; padding: 8px;
+  }
+  .rslot {
+    aspect-ratio: 1; border-radius: 6px;
+    border: 1px dashed rgba(120, 160, 220, .28);
+    background-color: #10182b;
+    background-size: 300% 300%;
+  }
+  .rslot.filled { border: 1px solid rgba(255, 255, 255, .15); }
+  .rslot.glow { animation: aglow .8s; }
+  #re-cap { text-align: center; margin-top: 8px; color: var(--amber); font-size: 13.5px; min-height: 20px; }
+

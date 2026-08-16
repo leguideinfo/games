@@ -1,0 +1,9 @@
+  /* ---------- PC / grands écrans : monde plein cadre ---------- */
+  @media (min-width: 760px) {
+    #app { max-width: none; }
+    .sheet { left: 0; right: 0; margin-inline: auto; width: min(92vw, 560px); }
+    #tabs { left: 0; right: 0; margin-inline: auto; width: min(92vw, 620px); }
+    .toast { max-width: 480px; }
+    #missions { max-width: 300px; }
+  }
+

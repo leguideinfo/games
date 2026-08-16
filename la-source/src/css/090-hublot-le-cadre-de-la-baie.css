@@ -1,0 +1,36 @@
+  /* ---------- hublot : le cadre de la baie ----------
+     La forme vient de la reference du proprietaire (baie vitree de vaisseau :
+     angles coupes, renflement central en haut et en bas). Les COULEURS, elles,
+     restent celles de la maison — bleu nuit desature, le cyan en accent rare —
+     pour que le cadre se fonde dans le jeu au lieu de plaquer un teal etranger.
+     Le renflement du bas n'est pas decoratif : c'est le logement de la barre
+     COLONIE / CARTE / …, taillee sur sa mesure reelle par drawHublot(). */
+  /* width/height explicites : sans eux le SVG garde sa taille intrinseque de
+     300x150 le temps du premier layout, et le cadre se dessinait a cette echelle */
+  #hublot { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; }
+  #hb-plaque { fill: url(#hb-metal); }
+  /* Le verre : c'est lui qui rend le cadre TRANSLUCIDE, comme les panneaux du
+     jeu (meme grammaire : fond a peine teinte + flou de l'arriere-plan). Il ne
+     peut pas etre fait en SVG — backdrop-filter ne s'applique pas a un <path> —
+     d'ou ce calque HTML decoupe sur le meme contour via clip-path: path().
+     Reserve aux moteurs qui savent clipper sur un chemin : sinon le calque
+     couvrirait tout l'ecran, et on retombe sur la plaque SVG (translucide elle
+     aussi, simplement sans flou). */
+  #hb-verre {
+    position: absolute; inset: 0; z-index: 5; pointer-events: none; display: none;
+    backdrop-filter: blur(9px); -webkit-backdrop-filter: blur(9px);
+    background: linear-gradient(180deg, rgba(26, 33, 49, .72), rgba(20, 27, 41, .62) 38%, rgba(10, 13, 22, .74));
+  }
+  #hb-ombre { fill: none; stroke: rgba(3, 5, 11, .55); stroke-width: 7; }
+  /* Arete retiree : elle suivait EXACTEMENT le meme chemin que le liseret, si
+     bien que le contour portait deux traits l'un sur l'autre — un sombre de 1 px
+     double d'un cyan de 1,5. Sur le bord haut, cela se lisait comme une barre
+     parasite. Le liseret suffit a tenir le contour. */
+  #hb-arete { display: none; }
+  /* Liseret renforce (.34 -> .58) : a gauche et en haut, le contour se detachait
+     sur les bandes d'Universe ; a DROITE il n'a que le paysage derriere lui, et
+     un verre sombre borde d'un trait a 34 % s'y perdait completement — le
+     montant paraissait absent de ce cote. C'est le liseret qui doit tenir le
+     contour, pas le contraste du decor. */
+  #hb-liseret { fill: none; stroke: rgba(78, 242, 224, .58); stroke-width: 1.5; }
+

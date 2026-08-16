@@ -1,0 +1,56 @@
+  /* ---------- pluie d'éclats ---------- */
+  #frenzy {
+    position: absolute; inset: 0; z-index: 45;
+    display: grid; place-items: center;
+    background: rgba(4, 6, 14, .35);
+  }
+  #frenzy[hidden] { display: none; }
+  #frz-panel {
+    width: min(86vw, 320px);
+    background: rgba(13, 18, 33, .94);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(78, 242, 224, .35);
+    border-radius: 20px;
+    box-shadow: 0 0 40px rgba(78, 242, 224, .25);
+    padding: 14px;
+    animation: frzin .3s;
+  }
+  @keyframes frzin { from { transform: scale(.8); opacity: 0; } }
+  #frz-title { text-align: center; font-weight: 700; font-size: 16px; color: var(--cyan); margin-bottom: 8px; }
+  #frz-zone { position: relative; height: 240px; border-radius: 14px; background: rgba(6, 9, 19, .5); overflow: hidden; }
+  .frz-dev {
+    position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%);
+    width: 118px; padding: 12px 10px 8px;
+    background: linear-gradient(180deg, #1a2030, #0c1120);
+    border: 1px solid #3a4358; border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .6);
+    pointer-events: none; z-index: 1;
+  }
+  .frz-dev.rx { animation: devrx .25s; }
+  @keyframes devrx { 40% { transform: translate(-50%, -50%) scale(1.06); } }
+  .dev-leds { display: flex; gap: 7px; justify-content: center; }
+  .dev-leds span { width: 11px; height: 11px; border-radius: 50%; background: #232b3d; transition: background .15s; }
+  .dev-leds span.amber { background: #ffc857; box-shadow: 0 0 8px #ffc857; }
+  .dev-leds span.on { background: #57e389; box-shadow: 0 0 10px #57e389; }
+  .dev-label { text-align: center; font-size: 9px; color: var(--dim); letter-spacing: .14em; margin-top: 7px; }
+  .frz-gauge { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); display: flex; gap: 4px; z-index: 1; pointer-events: none; }
+  .frz-gauge i { width: 17px; height: 9px; border-radius: 3px; background: #232b3d; }
+  .frz-gauge i.f { background: #ffc857; box-shadow: 0 0 7px rgba(255, 200, 87, .7); }
+  /* batterie pleine : la jauge vire au vert et se soulève avant de se vider */
+  .frz-gauge i.full { background: #57e389; box-shadow: 0 0 12px #57e389; animation: gaugefull .42s; }
+  @keyframes gaugefull { 40% { transform: translateY(-5px) scaleY(1.5); } }
+  .pkt {
+    position: absolute; width: 14px; height: 14px; border-radius: 50%;
+    background: #ffe9b0; box-shadow: 0 0 10px #ffd27a;
+    transition: left .28s ease-in, top .28s ease-in;
+    pointer-events: none; z-index: 2;
+  }
+  .spark-btn {
+    position: absolute; width: 46px; height: 46px;
+    border: none; background: none; padding: 0;
+    filter: drop-shadow(0 0 9px rgba(78, 242, 224, .9));
+    animation: gempop 1.7s forwards;
+  }
+  .spark-btn img, .spark-btn svg { width: 100%; height: 100%; pointer-events: none; }
+  #frz-score { text-align: center; color: var(--amber); font-size: 15px; font-weight: 700; min-height: 22px; margin-top: 6px; }
+

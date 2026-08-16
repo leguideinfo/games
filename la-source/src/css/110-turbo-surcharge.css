@@ -1,0 +1,18 @@
+  /* ---------- turbo (surcharge) ---------- */
+  #turbo-zone { margin: 12px 0; }
+  #tz-bar {
+    position: relative; height: 34px;
+    border: 1px solid var(--line); border-radius: 9px;
+    background: var(--panel2); overflow: hidden;
+  }
+  #tz-green {
+    position: absolute; top: 0; bottom: 0;
+    background: rgba(87, 227, 137, .25);
+    border-left: 1px solid var(--green); border-right: 1px solid var(--green);
+  }
+  #tz-cursor {
+    position: absolute; top: 0; bottom: 0; width: 4px;
+    background: var(--cyan); box-shadow: 0 0 8px var(--cyan);
+  }
+  #tz-stars { text-align: center; font-size: 18px; letter-spacing: .3em; margin: 8px 0 2px; color: var(--amber); min-height: 24px; }
+

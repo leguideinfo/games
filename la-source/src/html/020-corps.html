@@ -1,0 +1,214 @@
+</style>
+
+<div id="app">
+  <canvas id="cv-bg"></canvas>
+  <canvas id="cv"></canvas>
+
+  <svg id="hublot" aria-hidden="true" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="hb-metal" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#1a2131" stop-opacity=".82"/>
+        <stop offset=".38" stop-color="#141b29" stop-opacity=".76"/>
+        <stop offset="1" stop-color="#0a0d16" stop-opacity=".86"/>
+      </linearGradient>
+    </defs>
+    <path id="hb-plaque" fill-rule="evenodd"/>
+    <path id="hb-ombre"/>
+    <path id="hb-arete"/>
+    <path id="hb-liseret"/>
+  </svg>
+  <div id="hb-verre" aria-hidden="true"></div>
+
+  <div id="hud">
+    <div id="hud-cry">
+      <div class="hud-label">💎 Cristaux</div>
+      <div class="hud-val"><span id="cry">0</span></div>
+      <div class="hud-rate"><span id="cryrate">+0/min</span></div>
+    </div>
+    <div>
+      <div class="hud-label">💠 Matériaux</div>
+      <div class="hud-val"><span id="mat">0</span></div>
+      <div class="hud-rate"><span id="matcap"></span> · <span id="matrate">+0/min</span></div>
+    </div>
+    <div id="hud-eo" style="display:none">
+      <div class="hud-label">💾 Données</div>
+      <div class="hud-val" style="color:var(--blue)"><span id="eo">0</span></div>
+      <div class="hud-rate"><span id="eocap"></span> · <span id="eorate">+0/min</span></div>
+    </div>
+    <div id="hud-pw" style="display:none">
+      <div class="hud-label">🔋 Batteries</div>
+      <div class="hud-val" style="color:var(--amber)"><span id="pw">0</span></div>
+      <div class="hud-rate">réserve</div>
+    </div>
+    <div id="hud-en" style="display:none">
+      <div class="hud-label">⚡ Énergie</div>
+      <div class="hud-val" style="color:var(--amber)"><span id="en">0</span></div>
+      <div id="buff" class="hud-rate"></div>
+    </div>
+    <div class="grow"></div>
+    <div style="text-align:center">
+      <div class="hud-label">Niv</div>
+      <div class="hud-val" id="clevel" style="color:var(--amber)">1</div>
+    </div>
+    <button id="mute" aria-label="Son">♪</button>
+  </div>
+
+  <div id="missions" hidden>
+    <div class="m-label">Mission</div>
+    <div class="m-text" id="m-text"></div>
+  </div>
+
+  <div id="zoomctl">
+    <button id="z-in" aria-label="Zoomer">+</button>
+    <button id="z-out" aria-label="Dézoomer">−</button>
+  </div>
+
+  <div class="overlay-note" id="mapnote" hidden>SECTEUR K-7 · fédérations à venir (v1 asynchrone)</div>
+
+  <button id="wirebtn" hidden>🔌</button>
+  <button id="buildbtn" hidden>🔨</button>
+  <div id="placebar" hidden>
+    <div class="pb-info"><span class="pb-nm"></span><span class="pb-cost"></span></div>
+    <div class="pb-row"><button class="cancel">ANNULER</button><button class="ok">POSER ICI</button></div>
+  </div>
+  <div id="tabs">
+    <button id="tab-col" class="on">COLONIE</button>
+    <button id="tab-map" disabled>CARTE 🔒</button>
+    <button id="tab-arch" hidden>QUÊTES</button>
+    <button id="tab-tech">TECHNOS</button>
+    <button id="tab-net" hidden>RÉSEAU</button>
+  </div>
+
+  <div class="sheet" id="sh-build" hidden>
+    <button class="close">✕</button>
+    <h3>Construire</h3>
+    <div class="sub">Case libre.</div>
+    <div id="buildlist"></div>
+  </div>
+
+  <div class="sheet" id="sh-bld" hidden>
+    <button class="close">✕</button>
+    <h3 id="bl-name"></h3>
+    <div class="sub" id="bl-desc"></div>
+    <div id="bl-stats"></div>
+    <div id="bl-forge"></div>
+    <div class="actrow">
+      <button id="bl-up"></button>
+      <button id="bl-move"></button>
+      <button id="bl-turbo" class="warn"></button>
+      <button id="bl-del" class="danger"></button>
+    </div>
+  </div>
+
+  <div class="sheet" id="sh-turbo" hidden>
+    <h3 id="tz-title">SURCHARGE</h3>
+    <div class="sub" id="tz-sub"></div>
+    <div id="turbo-zone">
+      <div id="tz-bar"><div id="tz-green"></div><div id="tz-cursor"></div></div>
+      <div id="tz-stars"></div>
+    </div>
+    <div class="actrow"><button id="tz-tap">SYNCHRONISER</button></div>
+  </div>
+
+  <div class="sheet" id="sh-cave" hidden>
+    <button class="close">✕</button>
+    <h3>🕳 Crevasse</h3>
+    <div class="sub" id="cave-sub"></div>
+    <div id="cave-zone" hidden>
+      <div id="pit-next"><div id="pn-grid"></div><button id="pn-rot" aria-label="Tourner la pièce">🔄</button><span id="pn-left"></span></div>
+      <div id="pit"></div>
+    </div>
+    <div id="cave-score"></div>
+    <div class="actrow"><button id="cave-go">COMBLER LA CREVASSE</button></div>
+  </div>
+
+  <div class="sheet" id="sh-arch" hidden>
+    <button class="close">✕</button>
+    <h3>🗺 Quêtes</h3>
+    <div class="sub" id="arch-sub"></div>
+    <div id="arch-reader"></div>
+    <div id="arch-list"></div>
+  </div>
+
+  <div class="sheet" id="sh-asm" hidden>
+    <button class="close">✕</button>
+    <h3>🔩 Système d'époque</h3>
+    <div class="sub">Ces données demandent une machine d'un autre temps.
+      Choisis des composants compatibles.</div>
+    <div id="asm-slots"></div>
+    <div id="asm-log"></div>
+    <div class="actrow"><button id="asm-boot">DÉMARRER · 200 💠 + 20 Eo</button></div>
+  </div>
+
+  <div class="sheet" id="sh-atelier" hidden>
+    <button class="close">✕</button>
+    <h3>🧩 Atelier de Mémoire</h3>
+    <div class="sub">Reconstitue le motif corrompu — pose les tuiles dans la forme.</div>
+    <div id="at-tray"></div>
+    <div id="at-grid"></div>
+    <div id="at-score"></div>
+  </div>
+
+  <div class="sheet" id="sh-restore" hidden>
+    <button class="close">✕</button>
+    <h3>🖼 Restauration d'Archive</h3>
+    <div class="sub">L'image est fragmentée. Replace chaque morceau dans le cadre.</div>
+    <div id="re-tray"></div>
+    <div id="re-board"></div>
+    <div id="re-cap"></div>
+  </div>
+
+  <div class="sheet" id="sh-net" hidden>
+    <button class="close">✕</button>
+    <h3>🔌 Le SI de la colonie</h3>
+    <div class="sub">Deux vues, un seul réseau : le schéma en couches ici, les câbles sur la carte.</div>
+    <div id="net-actions"></div>
+    <div id="net-bands"></div>
+  </div>
+
+  <div class="sheet" id="sh-sim" hidden>
+    <button class="close">✕</button>
+    <h3 id="sim-title">▶ Simulation</h3>
+    <div class="sub" id="sim-msg"></div>
+    <div id="sim-path"></div>
+    <div id="sim-stack"></div>
+    <div style="text-align:center;margin-top:12px"><button id="sim-next" class="forge-asm">SUIVANT ▶</button></div>
+  </div>
+
+  <div class="sheet" id="sh-tech" hidden>
+    <button class="close">✕</button>
+    <h3>Technologies</h3>
+    <div class="sub">Le savoir débloque le reste.</div>
+    <div id="techlist"></div>
+  </div>
+
+  <div class="sheet" id="sh-source" hidden>
+    <button class="close">✕</button>
+    <h3>La Source · colonie L'Étincelle</h3>
+    <div class="sub">L'Étincelle qui a fait naître la colonie. Tout s'y relie.</div>
+    <div id="src-stats"></div>
+    <div class="actrow" id="src-act"></div>
+    <button id="src-intro" style="margin-top:10px;border:1px solid var(--line);background:none;color:var(--dim);border-radius:8px;padding:7px 12px;font-size:11px;width:100%">↺ Revoir l'intro</button>
+  </div>
+
+  <div id="frenzy" hidden>
+    <div id="frz-panel">
+      <div id="frz-title">⚡ Amorçage du hub !</div>
+      <div id="frz-zone"></div>
+      <div id="frz-score"></div>
+    </div>
+  </div>
+
+  <div id="toasts"></div>
+
+  <div id="intro">
+    <canvas id="icv"></canvas>
+    <div id="itext"></div>
+    <div id="ibtns">
+      <button id="iskip">PASSER</button>
+      <button id="inext">SUITE</button>
+    </div>
+  </div>
+</div>
+
+<script>

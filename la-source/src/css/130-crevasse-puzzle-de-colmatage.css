@@ -1,0 +1,27 @@
+  /* ---------- crevasse (puzzle de colmatage) ---------- */
+  #cave-zone { margin: 10px 0; }
+  #cave-zone[hidden] { display: none; }
+  #pit-next { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  #pn-grid { display: grid; grid-template-columns: repeat(3, 15px); grid-auto-rows: 15px; gap: 2px; }
+  .pn-c { background: linear-gradient(180deg, #e8e6e0, #9aa0a8); border-radius: 3px; }
+  #pn-rot {
+    border: 1px solid var(--line); background: var(--panel2); color: var(--txt);
+    border-radius: 8px; padding: 8px 12px; font-size: 16px;
+  }
+  #pn-left { color: var(--dim); font-size: 11px; }
+  #pit {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px;
+    background: linear-gradient(180deg, #170d07, #0a0510);
+    border: 1px solid #2a1d10; border-radius: 12px; padding: 8px;
+  }
+  .pcell { aspect-ratio: 1; border-radius: 4px; background: #150c08; border: 1px solid #221204; position: relative; }
+  .pcell.rock { background: #3a2413; border-color: #4a2f18; }
+  .pcell.fill { background: linear-gradient(180deg, #e8e6e0, #9aa0a8); border-color: #6c7178; }
+  .pcell.gem::after, .pcell.gemEo::after {
+    content: "💠"; position: absolute; inset: 0;
+    display: grid; place-items: center; font-size: 13px; opacity: .6;
+    filter: drop-shadow(0 0 4px #6fd8f2);
+  }
+  .pcell.gemEo::after { content: "💾"; }
+  #cave-score { text-align: center; color: var(--amber); font-size: 15px; min-height: 20px; }
+

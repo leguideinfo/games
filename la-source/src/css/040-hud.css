@@ -1,0 +1,38 @@
+  /* ---------- HUD ---------- */
+  #hud {
+    position: absolute; top: 0; left: 0; right: 0;
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px;
+    background: linear-gradient(180deg, rgba(6, 9, 19, .92), rgba(6, 9, 19, 0));
+    z-index: 10;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+  #hud > * { pointer-events: auto; }
+  /* Embarque : le bandeau d'Universe montre deja ces ressources juste au-dessus.
+     Le notre s'eteint immediatement, sans attendre le premier message du
+     Chantier — sinon il apparait le temps que celui-ci arrive. */
+  html.embed #hud { display: none !important; }
+  /* Les commandes se calent sur l'encombrement REEL des bandes d'Universe, avec
+     la meme marge genereuse que le cadre (18 px). Sans cela le bandeau de mission
+     passait sous le rail (« …SION » au lieu de « MISSION ») et les boutons de
+     droite venaient fraler le bord. La hauteur du bandeau de ressources VARIE —
+     il passe sur deux lignes quand la fenetre retrecit — d'ou une mesure recue
+     plutot qu'une constante. */
+  /* Repli AVANT le premier message du Chantier : sans lui, --u-gauche vaut 0 le
+     temps que la mesure arrive, et le bloc de mission demarre a 30 px — donc
+     par-dessus les icones du rail, comme on le voyait au chargement. */
+  html.embed { --u-gauche: 56px; --u-haut: 46px; }
+  html.embed #missions { top: calc(var(--u-haut) + 30px); left: calc(var(--u-gauche) + 22px); }
+  html.embed #zoomctl  { top: calc(var(--u-haut) + 30px); right: 30px; }
+  html.embed #wirebtn  { top: calc(var(--u-haut) + 124px); right: 30px; }
+  html.embed #buildbtn { top: calc(var(--u-haut) + 168px); right: 30px; }
+  /* Centre sur l'OUVERTURE et non sur la fenetre : le cadre demarre apres le
+     rail, donc son axe est decale d'une vingtaine de pixels vers la droite. Les
+     onglets s'y alignent, sans quoi ils flottaient hors de leur propre logement. */
+  html.embed #tabs     { bottom: var(--u-bas); left: var(--u-gauche); right: 18px; gap: 8px; }
+  /* Les panneaux se centrent sur la meme ouverture que les onglets, pas sur la
+     fenetre : sinon ils penchent d'une vingtaine de pixels vers le rail. */
+  html.embed .sheet,
+  html.embed #placebar { left: var(--u-gauche); right: 18px; }
+

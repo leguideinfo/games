@@ -1,0 +1,91 @@
+  /* ---------- SI / réseau ---------- */
+  #wirebtn {
+    position: absolute; right: var(--hb-marge); top: 152px;
+    width: 38px; height: 38px; border-radius: 9px;
+    border: 1px solid var(--line); background: rgba(11, 17, 32, .88);
+    font-size: 16px; z-index: 9;
+  }
+  #wirebtn.on { border-color: var(--cyan); box-shadow: 0 0 12px rgba(78, 242, 224, .6); }
+  #buildbtn {
+    position: absolute; right: var(--hb-marge); top: 196px; width: 38px; height: 38px;
+    border-radius: 9px; border: 1px solid var(--line); background: rgba(11, 17, 32, .88);
+    color: var(--fg); font-size: 16px; z-index: 9;
+  }
+  #buildbtn.on { border-color: #3cdc82; box-shadow: 0 0 12px rgba(60, 220, 130, .6); }
+  #buildbtn.empty { opacity: .45; }
+  /* BARRE DE POSE, refondue (15/08). Elle barrait l'ecran d'un bord a l'autre,
+     fond quasi opaque, avec un gris plein et un vert vif herites des premiers
+     jets — deux aplats qui juraient avec le reste. Elle devient un panneau
+     flottant de la meme famille que les feuilles : translucide, arrondi, pose
+     au-dessus des onglets. Les boutons passent en pilules ; l'action principale
+     se signale par sa TEINTE (le vert de la charte) et non par un aplat criard,
+     et les emojis ont disparu du libelle. */
+  #placebar {
+    position: absolute; left: 0; right: 0; bottom: calc(var(--u-bas) + 62px); z-index: 25;
+    width: min(92vw, 560px); margin-inline: auto;
+    background: rgba(13, 18, 33, .74);
+    backdrop-filter: blur(20px) saturate(1.15); -webkit-backdrop-filter: blur(20px) saturate(1.15);
+    border: 1px solid rgba(255, 255, 255, .09); border-radius: 20px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, .55);
+    padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;
+  }
+  #placebar[hidden] { display: none; }
+  /* La barre du haut d'un panneau est une poignee : le curseur le dit, et pendant
+     le glissement le canvas cesse de reagir sous le pointeur. */
+  @media (min-width: 760px) {
+    .sheet h3, .sheet .sub, #placebar .pb-info { cursor: grab; }
+    body.sh-drag { user-select: none; cursor: grabbing; }
+    body.sh-drag #cv { pointer-events: none; }
+    .sheet:focus-visible, #placebar:focus-visible { outline: 1px solid rgba(78, 242, 224, .5); outline-offset: 2px; }
+  }
+  #placebar .pb-info { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; }
+  #placebar .pb-nm { font-weight: 600; letter-spacing: .02em; }
+  #placebar .pb-cost { color: var(--cyan); font-variant-numeric: tabular-nums; }
+  #placebar .pb-row { display: flex; gap: 10px; }
+  #placebar .cancel, #placebar .ok {
+    border-radius: 999px; padding: 12px 0; font-size: 11.5px; letter-spacing: .16em;
+    font-weight: 500; border: 1px solid rgba(255, 255, 255, .1);
+    background: rgba(255, 255, 255, .035); color: var(--dim);
+    transition: color .16s, border-color .16s, background .16s;
+  }
+  #placebar .cancel { flex: 34; }
+  #placebar .cancel:hover { color: var(--txt); border-color: rgba(255, 255, 255, .2); }
+  #placebar .ok {
+    flex: 66; color: var(--green);
+    background: rgba(87, 227, 137, .1); border-color: rgba(87, 227, 137, .45);
+  }
+  #placebar .ok:hover:not(:disabled) { background: rgba(87, 227, 137, .17); }
+  #placebar .ok:disabled {
+    color: var(--dim); background: rgba(255, 255, 255, .03);
+    border-color: rgba(255, 255, 255, .08);
+  }
+  /* la palette doit défiler au doigt : body{touch-action:none} l'en empêchait */
+  #buildlist { touch-action: pan-y; overscroll-behavior: contain; }
+  .sheet.dragging { transform: translateY(calc(100% - 44px)); pointer-events: none; }
+  .bcard { touch-action: none; }
+  body.placing #cv { cursor: crosshair; }
+  body.placing #toasts { bottom: 160px; }
+  #net-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  #net-actions button {
+    border: 1px solid var(--line); background: rgba(11, 17, 32, .8); color: var(--txt);
+    border-radius: 9px; padding: 8px 10px; font-size: 12px;
+  }
+  .net-band {
+    border: 1px solid rgba(255, 255, 255, .07); border-radius: 10px;
+    padding: 6px 8px; margin-bottom: 6px; background: rgba(6, 9, 19, .35);
+  }
+  .net-band .bn { font-size: 10px; letter-spacing: .1em; color: var(--dim); text-transform: uppercase; }
+  .net-band .bn b { color: var(--cyan); font-weight: normal; }
+  .net-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
+  .net-chip {
+    border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px;
+    font-size: 11.5px; background: rgba(11, 17, 32, .8); color: var(--txt); text-align: left;
+  }
+  .net-chip.off { opacity: .45; }
+  #sim-path { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+  .sim-node { border: 1px solid var(--line); border-radius: 9px; padding: 6px 9px; font-size: 12px; background: rgba(11, 17, 32, .8); }
+  .sim-node.cur { border-color: var(--cyan); box-shadow: 0 0 10px rgba(78, 242, 224, .5); }
+  .sim-arrow { color: var(--dim); }
+  #sim-stack { font-size: 12px; }
+  .enc { border: 1.5px solid; border-radius: 8px; padding: 6px 8px; margin-top: 4px; }
+
