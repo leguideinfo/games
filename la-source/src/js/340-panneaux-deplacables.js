@@ -1,8 +1,12 @@
 /* ---------- PANNEAUX DEPLACABLES ----------
-   Meme geste que les fenetres de la console : on saisit la BARRE DU HAUT, le
-   panneau suit, il s'aimante doucement aux bords et ne peut jamais sortir de
-   l'ecran — sa barre reste toujours rattrapable, sinon un panneau lache trop
-   loin deviendrait irrecuperable. Une fois saisi, les fleches le deplacent au
+   Meme geste que les fenetres de la console : on saisit la BARRE DU HAUT — ou
+   le BORD BAS (retour 16/08) —, le panneau suit, il s'aimante doucement aux
+   bords et ne peut jamais sortir de l'ecran : sa zone de saisie reste toujours
+   rattrapable, sinon un panneau lache trop loin deviendrait irrecuperable.
+   En mode embarque, le plancher vertical est le chrome de la console
+   (--u-haut) : un panneau glisse a top 0 passait SOUS le bandeau d'Universe
+   (z-index superieur), sa barre devenait incliquable — bloque en haut
+   (retour 16/08). Une fois saisi, les fleches le deplacent au
    clavier (Maj = pas large) ; un double-clic sur la barre le remet a sa place.
    La position est retenue par panneau d'une partie a l'autre.
    Souris seulement, et au-dessus de 760 px : au doigt et sur mobile, une feuille
@@ -18,8 +22,15 @@ function shPose(el, x, y) {
   const lp = p ? p.clientWidth : window.innerWidth;
   const hp = p ? p.clientHeight : window.innerHeight;
   const ATTRAPE = 56;   // ce qui doit rester visible pour pouvoir le reprendre
+  // plancher vertical : sous le chrome de la console en mode embarque, sinon la
+  // barre de saisie glisse sous le bandeau (z-index superieur) et devient incliquable
+  let mn = 0;
+  if (typeof EMBED !== "undefined" && EMBED) {
+    const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--u-haut"));
+    mn = (isNaN(v) ? 46 : v) + 2;
+  }
   const bx = Math.round(Math.max(ATTRAPE - el.offsetWidth, Math.min(x, lp - ATTRAPE)));
-  const by = Math.round(Math.max(0, Math.min(y, hp - 44)));
+  const by = Math.round(Math.max(mn, Math.min(y, hp - 44)));
   el.style.left = bx + "px"; el.style.top = by + "px";
   el.style.right = "auto"; el.style.bottom = "auto"; el.style.marginInline = "0";
   el.classList.add("pose");
@@ -32,7 +43,9 @@ function shReset(el) {
 }
 function shDansLaBarre(el, e) {
   const r = el.getBoundingClientRect();
-  return (e.clientY - r.top) <= 46;
+  // barre du haut (46) OU bord bas (28) : les deux prises menent au meme geste
+  // (les elements interactifs restent proteges par le garde `closest` en amont)
+  return (e.clientY - r.top) <= 46 || (r.bottom - e.clientY) <= 28;
 }
 function rendreDeplacable(el) {
   let g = null;
