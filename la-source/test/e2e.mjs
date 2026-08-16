@@ -421,7 +421,8 @@ if (occupe.ok) throw new Error("une case occupée a été acceptée");
 const dep = await page.evaluate(() => {
   const b = window.__LS().buildings.find((x) => x.t === "extracteur");
   const bx0 = b.x, by0 = b.y; // copie : b est une référence vivante, mutée par la pose
-  const cle = b.x + "," + b.y;
+  // pose libre (v14) : les câbles pointent sur l'IDENTIFIANT du bâtiment, plus sur sa case
+  const cle = "b" + b.id;
   const liens = window.__LS().links.filter((l) => l.a === cle || l.b === cle).length;
   const cout = window.__api.moveCostOf("extracteur");
   const mat0 = window.__LS().mat;
@@ -431,15 +432,58 @@ const dep = await page.evaluate(() => {
   }
   const ok = window.__api.placeCommit();
   const nb = window.__LS().buildings.find((x) => x.t === "extracteur");
-  const ncle = nb.x + "," + nb.y;
+  const ncle = "b" + nb.id;
   return { ok, cout, depense: Math.round(mat0 - window.__LS().mat),
            liensAvant: liens, liensApres: window.__LS().links.filter((l) => l.a === ncle || l.b === ncle).length,
-           deplace: nb.x !== bx0 || nb.y !== by0 };
+           deplace: nb.x !== bx0 || nb.y !== by0, memeId: nb.id === b.id };
 });
 console.log("déplacement :", JSON.stringify(dep));
 if (!dep.ok || !dep.deplace) throw new Error("le déplacement a échoué");
 if (dep.depense !== dep.cout) throw new Error("coût de déplacement non débité");
 if (dep.liensApres !== dep.liensAvant) throw new Error("câbles perdus au déplacement");
+if (dep.liensAvant < 1) throw new Error("le test de déplacement n'a aucun câble à préserver : il ne prouve rien");
+
+// ---- POSE LIBRE (v14) : positions continues, aimant, empreintes, identifiants ----
+const libre = await page.evaluate(() => {
+  const S = window.__LS(), api = window.__api, out = {};
+  S.mat = 5000;
+  // 1. viser à 30 px du centre d'une case : le fantôme flotte ; à 5 px : il s'aimante
+  api.placeArm("bld", "switchhub");
+  const c = api.screenOfPos(2, 5);
+  out.loin = api.placeAtScreen(c.x + 30, c.y + 12, false);
+  out.pres = api.placeAtScreen(c.x + 5, c.y + 2, false);
+  api.placeCancel();
+  // 2. deux petits modules dans la MÊME case ; un troisième entre eux est refusé
+  const pose = (x, y) => { api.placeArm("bld", "switchhub"); api.placeAt(x, y); const s = api.placeState(); const ok = s.valid ? api.placeCommit() : false; if (!ok) api.placeCancel(); return { ok, why: s.why }; };
+  // on cherche une case libre où trois positions tiennent
+  let cell = null;
+  for (let y = 0; y < 9 && !cell; y++) for (let x = 0; x < 9; x++)
+    if (api.posableAt("switchhub", x - 0.25, y).ok && api.posableAt("switchhub", x + 0.25, y).ok) { cell = { x, y }; break; }
+  out.cellule = cell;
+  if (cell) {
+    out.premier = pose(cell.x - 0.25, cell.y);
+    out.second = pose(cell.x + 0.25, cell.y);
+    out.entre = api.posableAt("switchhub", cell.x, cell.y);
+  }
+  // 3. les deux ont des identifiants distincts et des positions continues sauvegardées
+  const sw = S.buildings.filter((b) => b.t === "switchhub").slice(-2);
+  out.ids = sw.map((b) => b.id);
+  out.positions = sw.map((b) => [b.x, b.y]);
+  const brut = JSON.parse(localStorage.getItem("ls-save-v4") || "{}");
+  out.sauve = { v: brut.v, continues: (brut.buildings || []).some((b) => b.x !== Math.round(b.x)) };
+  // 4. le clic sur le bord d'un sprite en position libre ouvre le bon bâtiment
+  if (sw[0]) { const p = api.screenOfPos(sw[0].x, sw[0].y); const hit = api.bldAtScreen(p.x + 6, p.y - 4); out.clic = hit && hit.id === sw[0].id; }
+  return out;
+});
+console.log("pose libre :", JSON.stringify(libre));
+if (!libre.loin || libre.loin.snap || libre.loin.x === Math.round(libre.loin.x)) throw new Error("à 30 px du centre, la pose devrait être libre (non aimantée)");
+if (!libre.pres || !libre.pres.snap) throw new Error("à 5 px du centre, la pose devrait s'aimanter");
+if (!libre.cellule) throw new Error("aucune case libre pour le test des deux modules");
+if (!libre.premier.ok || !libre.second.ok) throw new Error("deux petits modules devraient tenir dans une même case");
+if (libre.entre.ok) throw new Error("un troisième module entre les deux devrait être refusé (chevauchement)");
+if (libre.ids.length !== 2 || libre.ids[0] === libre.ids[1]) throw new Error("identifiants de bâtiments non distincts");
+if (libre.sauve.v < 14 || !libre.sauve.continues) throw new Error("positions continues absentes de la sauvegarde v14");
+if (!libre.clic) throw new Error("le clic sur le bord d'un module en pose libre n'ouvre pas le bon bâtiment");
 // 6. la palette doit être atteignable au doigt (touch-action)
 console.log("palette défilable :", await page.evaluate(() => getComputedStyle(document.querySelector("#buildlist")).touchAction));
 
