@@ -1,9 +1,12 @@
 /* ================= DRONE DE LIAISON — sprite unique =================
    Un seul sprite de profil (asset du propriétaire), retourné en miroir selon
-   le sens du déplacement — une face par segment. CIRCUIT : le drone décolle
-   de la soute (la Source), longe LES CÔTÉS de la map en courbes arrondies,
-   et ne se pose qu'une seule fois : au retour au spawn. Aucune pose au sol
-   ailleurs. Rien en sauvegarde. */
+   le sens du déplacement ÉCRAN. PATROUILLE : le drone décolle de la soute
+   (au pied de la balise), rejoint UNE COURBE FERMÉE ET LISSE qui contourne
+   les quatre côtés du plateau (rectangle arrondi paramétrique — fini les
+   segments à coins, retour 16/08), fait un tour complet, revient et RENTRE
+   en soute par fondu (il ne se gare plus une case sous la balise). En vol il
+   est dessiné DEVANT tout le décor (il volait derrière la montagne et
+   disparaissait). Rien en sauvegarde. */
 const DR1 = { ok: false, img: null, hw: 0.420, mips: {} };
 (function () {
   const img = new Image();
@@ -23,28 +26,25 @@ function dr1Img(px2) {
 const DRONES = [];
 for (let i = 0; i < 2; i++) DRONES.push({
   on: false, phase: "IDLE", tp: 0, seed: i * 977 + 131,
-  wx: 0, wy: 0, alt: 0, v: 0, p: 0, len: 1, flip: false, dirs: 0,
+  wx: 0, wy: 0, alt: 0, v: 0, p: 0, len: 1, flip: false, fade: 0,
   ax: 0, ay: 0, bx: 0, by: 0, c1x: 0, c1y: 0, c2x: 0, c2y: 0,
-  route: null, leg: 0,
+  th: 0, thLeft: 0,
 });
-// point d'attache : la soute, juste devant la Source
-function drHome() { return [SRC.x + 0.85, SRC.y + 0.85]; }
-// le circuit : longer les côtés du plateau (coins rentrés de 0,9 case),
-// dans le sens le plus court depuis la soute, puis retour au spawn
-function drRoute() {
+// point d'attache : la soute, au pied de la balise (retour 16/08 : à +0,85 il
+// se garait visuellement une case SOUS la Source ; à +0,55 + fondu il y RENTRE)
+function drHome() { return [SRC.x + 0.55, SRC.y + 0.55]; }
+/* LA BOUCLE DE PATROUILLE : courbe fermée et lisse qui longe les quatre côtés
+   du plateau — rectangle arrondi paramétrique (squircle). L'exposant k règle
+   l'arrondi des coins (plus petit = plus carré, colle mieux aux côtés). */
+function drLoopPos(th, out) {
   const lo = bmin() + 0.9, hi = bmax() - 0.9;
-  const coins = [[lo, lo], [hi, lo], [hi, hi], [lo, hi]];
-  const h = drHome();
-  let k0 = 0, dm = 1e9;
-  for (let i = 0; i < 4; i++) {
-    const d = Math.hypot(coins[i][0] - h[0], coins[i][1] - h[1]);
-    if (d < dm) { dm = d; k0 = i; }
-  }
-  const r = [];
-  for (let i = 0; i <= 4; i++) r.push(coins[(k0 + i) % 4]); // tour complet
-  r.push(h);                                                // retour au spawn
-  return r;
+  const c = (lo + hi) / 2, R = (hi - lo) / 2, k = 0.42;
+  const f = (u) => Math.sign(u) * Math.pow(Math.abs(u), k);
+  out.x = c + R * f(Math.cos(th));
+  out.y = c + R * f(Math.sin(th));
+  return out;
 }
+const _lp = { x: 0, y: 0 }, _lp2 = { x: 0, y: 0 };
 function drLaunch(dr, ax, ay, bx, by) {
   dr.ax = ax; dr.ay = ay; dr.bx = bx; dr.by = by;
   const dx = bx - ax, dy = by - ay;
@@ -59,10 +59,6 @@ function drLaunch(dr, ax, ay, bx, by) {
   dr.c2x = ax + dx * 0.7 + vx / vn * bombe; dr.c2y = ay + dy * 0.7 + vy / vn * bombe;
   dr.len = L * 1.1; dr.p = 0;
   dr.wx = ax; dr.wy = ay;
-  // une face par segment : miroir si le déplacement écran va vers la droite
-  const versDroit = (dx - dy) > 0;
-  if (dr.dirs === 0 || versDroit !== dr.flip) dr.dirs++;
-  dr.flip = versDroit;
 }
 const _bz = { x: 0, y: 0 };
 function drBez(dr, p) {
@@ -78,29 +74,46 @@ function tickDrones(dt, t) {
   for (const dr of DRONES) {
     if (!dr.on) continue;
     dr.tp += dt;
+    const pwx = dr.wx, pwy = dr.wy;
     if (dr.phase === "TAKEOFF") {
       dr.alt = Math.min(1, dr.tp / 0.9);
-      if (dr.tp >= 0.9) { dr.phase = "TRAVEL"; dr.tp = 0; }
-    } else if (dr.phase === "TRAVEL") {
-      const dernier = dr.leg >= dr.route.length - 2;
-      // profil : plein vol entre les coins, vrai ralenti sur le dernier segment
-      const frein = dernier ? (1 - dr.p) / 0.26 : Math.max(0.55, (1 - dr.p) / 0.10);
+      dr.fade = Math.min(1, dr.tp / 0.45);       // sort de la soute en fondu
+      if (dr.tp >= 0.9) { dr.phase = "JOIN"; dr.tp = 0; }
+    } else if (dr.phase === "JOIN" || dr.phase === "RETURN") {
+      const fin = dr.phase === "RETURN";
+      const frein = fin ? (1 - dr.p) / 0.26 : 1;  // vrai ralenti au retour seulement
       const cible = DR_VMAX * Math.max(0.14, Math.min(dr.p / 0.2 + 0.25, frein, 1));
       dr.v += (cible - dr.v) * Math.min(1, dt * 3.2);
       dr.p = Math.min(1, dr.p + dr.v * dt / dr.len);
       const a = drBez(dr, dr.p);
       dr.wx = a.x; dr.wy = a.y;
       if (dr.p >= 1) {
-        if (!dernier) { // coin atteint : on enchaîne SANS se poser
-          dr.leg++;
-          const s2 = dr.route[dr.leg], d2 = dr.route[dr.leg + 1];
-          drLaunch(dr, s2[0], s2[1], d2[0], d2[1]);
-        } else { dr.phase = "LANDING"; dr.tp = 0; } // retour au spawn : la seule pose
+        if (!fin) { dr.phase = "LOOP"; dr.thLeft = Math.PI * 2; }  // un tour complet
+        else { dr.phase = "LANDING"; dr.tp = 0; }
+      }
+    } else if (dr.phase === "LOOP") {
+      dr.v += (DR_VMAX - dr.v) * Math.min(1, dt * 3.2);
+      // avancer l'angle à VITESSE-MONDE constante : longueur locale numérique
+      const e = 0.02;
+      drLoopPos(dr.th, _lp); drLoopPos(dr.th + e, _lp2);
+      const L = Math.max(0.05, Math.hypot(_lp2.x - _lp.x, _lp2.y - _lp.y) / e);
+      const dth = dr.v * dt / L;
+      dr.th += dth; dr.thLeft -= dth;
+      drLoopPos(dr.th, _lp);
+      dr.wx = _lp.x; dr.wy = _lp.y;
+      if (dr.thLeft <= 0) {                       // tour bouclé : on rentre
+        const h = drHome();
+        drLaunch(dr, dr.wx, dr.wy, h[0], h[1]);
+        dr.phase = "RETURN";
       }
     } else if (dr.phase === "LANDING") {
       dr.alt = Math.max(0, 1 - dr.tp / 0.9);
-      if (dr.tp >= 0.9) dr.on = false; // posé à la soute : fin du circuit
+      dr.fade = Math.max(0, 1 - dr.tp / 0.7);     // RENTRE en soute par fondu
+      if (dr.tp >= 0.9) dr.on = false;
     }
+    // une face par sens de déplacement ÉCRAN (hystérésis anti-battement)
+    const ddx = (dr.wx - pwx) - (dr.wy - pwy);
+    if (Math.abs(ddx) > 1e-4) dr.flip = ddx > 0;
   }
 }
 let drAcc = 0, drCool = 0;
@@ -118,14 +131,19 @@ function drSpawn() {
   const dr = DRONES.find((d) => !d.on);
   if (!dr) return null;
   const h = drHome();
-  dr.on = true; dr.phase = "TAKEOFF"; dr.tp = 0; dr.alt = 0; dr.dirs = 0;
-  dr.route = drRoute(); dr.leg = 0;
-  drLaunch(dr, h[0], h[1], dr.route[0][0], dr.route[0][1]);
+  dr.on = true; dr.phase = "TAKEOFF"; dr.tp = 0; dr.alt = 0; dr.fade = 0; dr.v = 0;
+  dr.wx = h[0]; dr.wy = h[1];
+  dr.th = 0;                                     // entrée de boucle : plein est
+  drLoopPos(dr.th, _lp);
+  drLaunch(dr, h[0], h[1], _lp.x, _lp.y);
   return dr;
 }
 function drawDrone16(dr, t) { // (nom conservé : appelé par la passe triée)
   const z = cam.z, p = w2s(dr.wx, dr.wy);
   if (p.x < -90 || p.x > W + 90 || p.y < -120 || p.y > H + 90) return;
+  if (dr.fade <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = dr.fade;                      // fondu soute (départ/retour)
   const bob = Math.sin(t / 460 + dr.seed) * 2.2 * z * Math.min(1, dr.alt * 2);
   const alt = dr.alt * DR_ALT * z;
   // l'ombre reste au sol, plus petite et plus claire en altitude
@@ -146,6 +164,7 @@ function drawDrone16(dr, t) { // (nom conservé : appelé par la passe triée)
   ctx.fillRect(p.x - sw * 0.35, py2, sw * 0.7, sh * 0.6);
   ctx.drawImage(dr1Img(sw * DPR), p.x - sw / 2, py2 - sh * 0.52, sw, sh);
   ctx.restore();
+  ctx.restore();   // referme le save() du fondu
 }
 
 const GUIDE_BUILD = { 1: "coffret", 4: "extracteur", 7: "entrepot", 8: "centrale", 11: "switchhub", 14: "serveur", 16: "datacenter", 20: "reseau", 22: "console", 23: "forge" };

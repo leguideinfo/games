@@ -177,7 +177,9 @@ function frame(t) {
       }
     }
     if (place) drawables.push({ d: place.hx + place.hy + 0.02, ghost: true });
-    for (const dr2 of DRONES) if (dr2.on) drawables.push({ d: dr2.wx + dr2.wy + 0.03, dr16: dr2 });
+    // le drone vole en ALTITUDE : toujours DEVANT le décor (trié à wx+wy, il
+    // passait derrière la montagne en longeant le côté nord et disparaissait)
+    for (const dr2 of DRONES) if (dr2.on) drawables.push({ d: 1e6, dr16: dr2 });
     // chantiers du jeu principal (mode miroir) : fantômes translucides + minuterie
     for (const q of MIRROR_Q) if (!q.up) drawables.push({ d: q.x + q.y + 0.01, mq: q });
     drawables.push({ d: SRC.x + SRC.y - 0.01, src: true });
