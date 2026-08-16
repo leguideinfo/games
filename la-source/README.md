@@ -128,6 +128,22 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   récompense en 💠). Les expansions agrandissent la frontière… et le
   terrain de chasse. En prod : premier pas vers le PvE/PvP cyber de la
   vision (intrusion/défense).
+- **Trafic de drones 16 directions (v11)** : illusion de 3D par sprites
+  pré-rendus (`awoui-universe-assets-drone-test.png`, atlas 4×4 embarqué) —
+  aucun rendu 3D. Le cap est l'angle **écran** de la trajectoire, lissé
+  (≤ 4,2 rad/s) puis quantifié en 16 secteurs ; les vues de dos absentes de
+  la planche sont couvertes par **miroirs horizontaux** (table calibrée en
+  vol, 9 orientations traversées sur un demi-tour mesuré). Trajectoires en
+  **Bézier cubiques** (contrôles décalés perpendiculairement, amplitude
+  aléatoire bornée), profil accélération → croisière → ralentissement,
+  altitude simulée avec **ombre séparée au sol** (taille/opacité selon
+  l'altitude), états TAKEOFF/TRAVEL/APPROACH/LANDING/WORKING/retour.
+  **TrafficManager piloté par l'état réel** : les extracteurs génèrent des
+  rotations vers l'entrepôt (coupées si entrepôt plein), les serveurs vers
+  le datacenter, les chantiers du miroir attirent un drone ; panne
+  d'énergie → trafic réduit de moitié. Pool fixe de 14 (zéro allocation en
+  régime), profondeur via la passe triée existante (passe devant/derrière
+  les bâtiments), rien en sauvegarde. Hooks : `droneRun/droneInfo/droneCal`.
 - **Pose en aperçu & déplacement (v9)** : la pose passe par un **fantôme**.
   Trois gestes mènent au même résultat — **glisser** une carte du menu sur le
   terrain, **taper** son nom puis viser et ✅, ou (chemin historique) case
