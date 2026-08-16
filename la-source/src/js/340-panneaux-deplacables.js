@@ -21,7 +21,11 @@ function shPose(el, x, y) {
   const p = el.offsetParent || document.getElementById("app");
   const lp = p ? p.clientWidth : window.innerWidth;
   const hp = p ? p.clientHeight : window.innerHeight;
-  const ATTRAPE = 56;   // ce qui doit rester visible pour pouvoir le reprendre
+  // Ce qui doit rester visible pour pouvoir reprendre le panneau. 56 etait trop
+  // juste (retour 16/08, coince a droite) : sur la tranche restante il ne restait
+  // que le bouton fermer, des cartes (protegees du drag) et l'ascenseur — zero
+  // pixel de prise. 84 garantit que le coin de la barre de titre reste attrapable.
+  const ATTRAPE = 84;
   // plancher vertical : sous le chrome de la console en mode embarque, sinon la
   // barre de saisie glisse sous le bandeau (z-index superieur) et devient incliquable
   let mn = 0;
@@ -43,9 +47,12 @@ function shReset(el) {
 }
 function shDansLaBarre(el, e) {
   const r = el.getBoundingClientRect();
-  // barre du haut (46) OU bord bas (28) : les deux prises menent au meme geste
-  // (les elements interactifs restent proteges par le garde `closest` en amont)
-  return (e.clientY - r.top) <= 46 || (r.bottom - e.clientY) <= 28;
+  // quatre prises : barre du haut (46), bord bas (28), bords gauche/droit (16).
+  // Les bords lateraux sauvent un panneau pousse contre un cote de l'ecran : la
+  // tranche visible contient toujours un bord. (Les elements interactifs restent
+  // proteges par le garde `closest` en amont ; l'ascenseur natif avale ses clics.)
+  return (e.clientY - r.top) <= 46 || (r.bottom - e.clientY) <= 28 ||
+         (e.clientX - r.left) <= 16 || (r.right - e.clientX) <= 16;
 }
 function rendreDeplacable(el) {
   let g = null;
