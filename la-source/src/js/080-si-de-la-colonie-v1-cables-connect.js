@@ -19,7 +19,9 @@ const anc = (v) => Math.round(v);                        // la case d'ancrage d'
 /* Toute création passe ici : c'est le seul endroit qui distribue les
    identifiants, donc le seul à pouvoir garantir qu'ils sont uniques. */
 function newBld(t, x, y, l) {
-  if (S.nid == null) S.nid = 1 + S.buildings.reduce((m, b) => Math.max(m, b.id || 0), 0);
+  // le compteur ne peut jamais rendre un id deja porte : on le recale sur le max present
+  const maxId = S.buildings.reduce((m, b) => Math.max(m, Number.isFinite(b.id) ? b.id : 0), 0);
+  if (!Number.isFinite(S.nid) || S.nid <= maxId) S.nid = maxId + 1;
   return { id: S.nid++, t, x: quant(x), y: quant(y), l: l || 1 };
 }
 const bldAtTile = (x, y, ignore) => { const ax = anc(x), ay = anc(y); return S.buildings.find((b) => b !== ignore && anc(b.x) === ax && anc(b.y) === ay) || null; };

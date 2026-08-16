@@ -34,7 +34,9 @@ function occupants(ignore) {
     if (ignore && b === ignore) continue;
     out.push({ x: b.x, y: b.y, s: fpOf(b.t, b.x, b.y), k: "bld", b });
   }
-  for (const u of S.units) out.push({ x: u.x, y: u.y, s: FP_UNIT, k: "unit" });
+  // les Chasseurs patrouillent : ils ne tiennent pas le sol (sinon celui ne sur la
+  // Forge interdisait de la deplacer de moins d'une demi-case)
+  for (const u of S.units) if (u.t !== "chasseur") out.push({ x: u.x, y: u.y, s: FP_UNIT, k: "unit" });
   for (let y = bmin(); y <= bmax(); y++) for (let x = bmin(); x <= bmax(); x++) {
     const kd = tileAt(x, y).kind;
     if (kd === "crystal") out.push({ x, y, s: [0.27, 0.40, 0.53][crysSize(x, y)], k: "crystal" });

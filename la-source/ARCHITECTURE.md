@@ -39,19 +39,35 @@ tant que la preuve passe.
 
 ```powershell
 # 1) Travailler dans src/ (multi-agent, multi-édit), puis reconstruire :
-powershell -File tools\assembler-source.ps1
+powershell -ExecutionPolicy Bypass -File tools\assembler-source.ps1
 
 # 2) Après une édition du monolithe (mobile, autre poste) : resynchroniser src/ :
-powershell -File tools\decouper-source.ps1
+powershell -ExecutionPolicy Bypass -File tools\decouper-source.ps1
 
 # 3) Vérifier : chaque outil affiche le SHA-1 — deux mondes en phase = même hash.
 ```
 
-**Garde anti-écrasement** : `src/.source-sha1` mémorise le hash d'`index.html`
-au dernier découpage. Si le monolithe a changé depuis (édition mobile…),
-`assembler-source.ps1` **refuse** d'écraser — relancer le découpage d'abord
-(ou `-Force` en connaissance de cause). C'est la protection contre la perte
-d'une édition faite de l'autre côté.
+(`-ExecutionPolicy Bypass` est nécessaire : la stratégie effective du poste est
+Restricted, comme pour tous les scripts du projet.)
+
+**Gardes croisées — chaque côté protège l'autre :**
+
+- **`assembler-source.ps1` refuse** d'écraser `index.html` si le monolithe a
+  changé depuis le dernier découpage (`src/.source-sha1` fait foi ; son
+  *absence* est aussi un refus — fail-closed). `-Force` en connaissance de cause.
+- **`decouper-source.ps1` refuse** d'écraser un `src/` contenant du travail
+  **non assemblé** (sections éditées sans avoir lancé l'assembleur). Assembler
+  d'abord ; avec `-Force`, l'ancien `src/` est conservé en `src._ancien_<date>`.
+- **`assembler-source.ps1` refuse** tout fichier **orphelin** sous `src/`
+  (présent sur disque, absent du manifest) : il serait silencieusement exclu de
+  l'assemblage puis détruit au découpage suivant. **On ne crée JAMAIS un
+  fichier à la main dans `src/`** — nouvelle section = nouveau *marqueur* dans
+  une section existante, assembler, puis redécouper.
+
+**Le vrai filet reste git** : committez `src/` régulièrement — les gardes
+attrapent les accidents, l'historique attrape tout le reste. En cas
+d'interruption d'un découpage, `src._nouveau_*` / `src._ancien_*` contiennent
+un état complet récupérable à la main.
 
 ## Auto-découverte : un marqueur = une section
 
@@ -59,7 +75,7 @@ Le découpeur ne maintient **aucune table** : il dérive les sections des
 marqueurs du code lui-même.
 
 - JS (colonne 0) : `/* ---------- nom ---------- */` ou `/* ========== nom`
-- CSS (indenté 2 espaces) : `  /* ---------- nom ---------- */`
+- CSS (indenté 2 espaces) : `  /* ---------- nom ---------- */` (ou `==========`)
 
 **Poser un marqueur = créer une section** au prochain découpage. Supprimer un
 système supprime ses sections. Le fichier vivant reste la vérité ; l'outillage
@@ -82,12 +98,19 @@ Conséquences pratiques :
 2. **Personne n'édite `index.html` pendant qu'un travail est ouvert dans
    `src/`** (la garde le détecte, mais autant ne pas la déclencher).
 3. **Intégration = assemblage** : `assembler-source.ps1`, puis test de fumée
-   (le jeu charge, 0 erreur console), puis `deploy\build-source.ps1` (universe)
-   pour la prod — pipeline aval inchangé.
-4. Édition mobile du monolithe ? Aucun souci : `decouper-source.ps1` au retour,
-   et `src/` rejoint la réalité.
-5. Les fins de ligne sont **verrouillées LF** (`.gitattributes` : `-text`) —
-   la fidélité octet exige qu'aucune normalisation ne touche ces fichiers.
+   (le jeu charge, 0 erreur console), puis — *depuis `universe\`* :
+   `powershell -ExecutionPolicy Bypass -File deploy\build-source.ps1` pour la
+   prod — pipeline aval inchangé.
+4. Édition mobile du monolithe ? **Committez/assemblez le travail de `src/`
+   d'abord**, puis `decouper-source.ps1` au retour, et `src/` rejoint la
+   réalité (le découpeur refuse de lui-même d'écraser du travail non assemblé).
+5. Fins de ligne : git **ne convertit jamais** ces fichiers (`.gitattributes`
+   `-text`). Le monolithe est en **LF pur** et doit le rester — une balise
+   charnière passée en CRLF fait échouer *proprement* le découpeur (refus,
+   jamais de corruption).
+6. **Invariant charnières** : une seule occurrence de chacune des lignes
+   `<style>`, `</style>`, `<script>`, `</script>` en colonne 0. En introduire
+   une seconde bloque le découpage (refus explicite).
 
 ## Fichiers
 
@@ -102,8 +125,13 @@ Conséquences pratiques :
 | `tools/decouper-source.ps1` | monolithe → sections (+ preuve) |
 | `tools/assembler-source.ps1` | sections → monolithe (+ garde + hash) |
 
-Détails d'implémentation notables : tout le tranchage se fait en **Latin-1**
-(1 octet = 1 caractère) — aucun décodage UTF-8, donc aucun risque
-d'encodage/BOM/CRLF ; la comparaison de preuve est **ordinale** ; le découpeur
-construit dans un dossier temporaire et ne remplace `src/` que si la preuve
-passe ; les scripts sont 100 % ASCII (règle maison PowerShell 5.1).
+Détails d'implémentation notables : toutes les lectures se font en **octets
+purs** (`ReadAllBytes` + Latin-1, 1 octet = 1 caractère) — jamais
+`ReadAllText`, qui *sniffe* les BOM et re-décode en douce (corruption réelle
+démontrée puis corrigée lors du test adversarial du 16/08 : un BOM UTF-8
+traverse maintenant le cycle intact) ; les comparaisons sont **ordinales**
+(charnières comprises) ; les hashs sont calculés **sur les octets traités en
+mémoire**, pas relus du disque (anti-TOCTOU) ; le découpeur construit dans un
+dossier temporaire et ne remplace `src/` que si la preuve passe ; les scripts
+sont 100 % ASCII (règle maison PowerShell 5.1 — le tiret cadratin dans une
+chaîne casse réellement le parseur, vécu pendant l'écriture).

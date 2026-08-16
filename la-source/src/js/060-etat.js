@@ -102,8 +102,23 @@ function load() {
       }
       /* garde-fou : un identifiant manquant (partie touchée à la main, import) est
          attribué au chargement, sans attendre une migration */
-      if (sv.nid == null) sv.nid = 1;
-      for (const b of (sv.buildings || [])) if (b.id == null) b.id = sv.nid++;
+      /* Le compteur se RECALCULE toujours à partir des ids présents : se fier à sa
+         seule présence laissait passer une sauvegarde importée (nid absent, donc
+         remis à 1 par newSave) dont les bâtiments portaient déjà les ids 1, 2, 3 —
+         le prochain posé aurait été un second « b1 », partageant câbles, ports et
+         IP avec le premier. Un doublon d'id déjà présent est renuméroté ; les
+         câbles restent au premier porteur (c'est lui que nodeAt trouvait déjà),
+         on ne peut pas deviner à qui ils appartenaient. */
+      {
+        const vus = new Set();
+        let maxId = 0;
+        for (const b of (sv.buildings || [])) if (Number.isFinite(b.id)) maxId = Math.max(maxId, b.id);
+        if (!Number.isFinite(sv.nid) || sv.nid <= maxId) sv.nid = maxId + 1;
+        for (const b of (sv.buildings || [])) {
+          if (!Number.isFinite(b.id) || vus.has(b.id)) b.id = sv.nid++;
+          vus.add(b.id);
+        }
+      }
       return sv;
     }
   } catch (e) {}

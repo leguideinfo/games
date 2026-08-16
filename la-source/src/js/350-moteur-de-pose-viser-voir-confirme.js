@@ -102,7 +102,21 @@ function bldAtScreen(sx, sy) {
     const s = fpOf(b.t, b.x, b.y) / 2 + 0.06;   // un peu d'air : la base est plus large que l'empreinte
     if (Math.abs(f.x - b.x) < s && Math.abs(f.y - b.y) < s && s < bs) { best = b; bs = s; }
   }
-  return best || bldAtTile(Math.round(f.x), Math.round(f.y));
+  if (best) return best;
+  /* Repli sur l'ANCRE, avec deux garde-fous trouves en revue :
+     - jamais sur une case de gisement, caillou ou crevasse : un petit module
+       ancre sur la case d'un petit cristal capturait le tap destine au cristal
+       (plus moyen d'y envoyer un drone) ;
+     - si plusieurs modules partagent la case, le plus PROCHE du point tape,
+       pas le premier de la liste. */
+  const ax = Math.round(f.x), ay = Math.round(f.y);
+  if (tileAt(ax, ay).kind !== "sand") return null;
+  let near = null, nd = 1e9;
+  for (const b of S.buildings) if (anc(b.x) === ax && anc(b.y) === ay) {
+    const d = Math.hypot(b.x - f.x, b.y - f.y);
+    if (d < nd) { nd = d; near = b; }
+  }
+  return near;
 }
 function cancelPlace(silence) {
   if (!place) return;
@@ -134,6 +148,11 @@ function commitPlace() {
       return true;
     }
     if (mirrorKnown(place.t)) {
+      /* le voeu doit etre VALIDE : sans ce verrou, deux taps sur le lac ou hors
+         plateau envoyaient une commande au Chantier — et le batiment y etait
+         livre tel quel, sauvegarde sur l'eau */
+      evalPlace();
+      if (!place.valid) { sfx.deny(); if (place.why) toast(place.why); return false; }
       MIRROR_WISH[place.t] = { x: quant(place.hx), y: quant(place.hy) };
       try { window.parent.postMessage({ type: "awoui:build", id: MIRROR_INV[place.t] || place.t }, "*"); } catch (e) {}
       toast("🔨 Demande transmise au <b>Chantier</b> — si les soutes suivent, le chantier s'ouvre ici même.");
@@ -286,6 +305,15 @@ function openBuild(tile) {
       if (locked || !enOk) { sfx.deny(); return; }
       if (sel && posable(key, sel.x, sel.y)) { // case déjà visée : pose directe
         if (armPlace("bld", key, { hx: sel.x, hy: sel.y }) && !commitPlace()) cancelPlace(true);
+        return;
+      }
+      if (sel) {
+        /* le centre de la case tapee est pris (voisin decale, en pose libre) :
+           on cherche la place libre la plus proche DANS cette case, et a defaut
+           on arme sur la case tapee pour MONTRER le refus — plutot que d'armer
+           sans un mot ailleurs, pres de la Source */
+        const alt = placeLibreProche(key, sel.x, sel.y, null, 0.6);
+        armPlace("bld", key, alt ? { hx: alt.x, hy: alt.y } : { hx: sel.x, hy: sel.y });
         return;
       }
       armPlace("bld", key); // sinon : mode viser-puis-confirmer

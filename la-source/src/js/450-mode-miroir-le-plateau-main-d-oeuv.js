@@ -121,7 +121,7 @@ window.addEventListener("message", (e) => {
     const wish = MIRROR_WISH[t];
     // « libre » se juge sur l'EMPREINTE, pas sur l'égalité de case : en pose
     // libre, un voisin décalé peut recouvrir la place promise sans y être ancré
-    const libre = (p) => p && fpLibre(p.x, p.y, fpOf(t, p.x, p.y));
+    const libre = (p) => p && posable(t, p.x, p.y);   // bornes + lac/montagne + empreinte, pas l'empreinte seule
     const sp = (libre(prev) ? prev : null) || (libre(wish) ? wish : null);
     if (sp) q.push({ t, x: sp.x, y: sp.y, ends: it.ends });
   }
@@ -132,7 +132,7 @@ window.addEventListener("message", (e) => {
     if (!lv || S.buildings.some((b) => b.t === t)) continue;
     if (q.some((x) => x.t === t)) continue;   // encore en file : on laisse le fantôme
     const sp = MIRROR_WISH[t];
-    if (sp && fpLibre(sp.x, sp.y, fpOf(t, sp.x, sp.y))) {
+    if (sp && posable(t, sp.x, sp.y)) {
       S.buildings.push(newBld(t, sp.x, sp.y, Math.max(1, lv)));
       MIRROR_LAYOUT[t] = { x: sp.x, y: sp.y };
       netDirty = true; sfx.build();

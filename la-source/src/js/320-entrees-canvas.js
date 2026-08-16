@@ -39,8 +39,8 @@ cv.addEventListener("pointerup", (e) => {
   if (wire) {
     const tpw = s2w(sx, sy);
     let k = null;
-    if (tpw.x === SRC.x && tpw.y === SRC.y) k = "src";
-    else { const bw = bldAtScreen(sx, sy); if (bw) k = keyOf(bw); }
+    { const bw = bldAtScreen(sx, sy); if (bw) k = keyOf(bw); }
+    if (!k && tpw.x === SRC.x && tpw.y === SRC.y) k = "src";   // l'empreinte d'abord, la Source ensuite
     if (!k) { toast("Tape un <b>bâtiment</b> ou la <b>Source</b> à câbler."); return; }
     if (!wire.a) {
       wire.a = k;
@@ -79,8 +79,13 @@ cv.addEventListener("pointerup", (e) => {
        rien dire — on compare la DISTANCE ÉCRAN au fantôme (24 px, la taille d'un
        doigt), tolérance qui vaut aussi pour la souris */
     const pf = w2s(place.hx, place.hy);
-    const surLeFantome = Math.hypot(sx - pf.x, sy - pf.y) < 24;
-    if (place.aimed && surLeFantome && now - place.lastTap >= 250) {
+    const tp2 = s2w(sx, sy);
+    /* fantome AIMANTE (drones toujours, batiments pres d'un centre) : « meme
+       endroit » = meme case — le 2e tap tombe rarement a 24 px du centre exact,
+       et le premier tap avait justement ete aimante depuis plus loin */
+    const surLeFantome = Math.hypot(sx - pf.x, sy - pf.y) < 24 ||
+      (place.snap && tp2.x === anc(place.hx) && tp2.y === anc(place.hy));
+    if (place.aimed && surLeFantome && now - place.lastTap >= 250 && place.valid) {
       commitPlace();
     } else {
       place.lift = 0;
@@ -92,9 +97,12 @@ cv.addEventListener("pointerup", (e) => {
     return;
   }
   const tp = s2w(sx, sy);
-  if (tp.x === SRC.x && tp.y === SRC.y) { openSource(); return; }
+  /* l'EMPREINTE d'abord, la Source ensuite : un module pose legalement a moins
+     de 0,75 case de la balise voyait sa partie proche revendiquee par la case
+     de la Source (fiche Source au lieu de la sienne) */
   const b = bldAtScreen(sx, sy);
   if (b) { openBld(b); return; }
+  if (tp.x === SRC.x && tp.y === SRC.y) { openSource(); return; }
   // amas de cristaux : envoyer un drone ouvrier de la soute
   if (inB(tp.x, tp.y) && tileAt(tp.x, tp.y).kind === "crystal" &&
       S.units.some((u) => u.t === "recolteur" && u.x === tp.x && u.y === tp.y)) {
