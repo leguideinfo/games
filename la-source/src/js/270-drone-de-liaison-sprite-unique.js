@@ -1,8 +1,9 @@
 /* ================= DRONE DE LIAISON — sprite unique =================
    Un seul sprite de profil (asset du propriétaire), retourné en miroir selon
-   le sens du déplacement. Une face par segment de trajet. Trajectoires en
-   Bézier cubiques (courbes arrondies), ombre séparée au sol, profondeur via
-   la passe triée existante. Rien en sauvegarde. */
+   le sens du déplacement — une face par segment. CIRCUIT : le drone décolle
+   de la soute (la Source), longe LES CÔTÉS de la map en courbes arrondies,
+   et ne se pose qu'une seule fois : au retour au spawn. Aucune pose au sol
+   ailleurs. Rien en sauvegarde. */
 const DR1 = { ok: false, img: null, hw: 0.420, mips: {} };
 (function () {
   const img = new Image();
@@ -20,28 +21,43 @@ function dr1Img(px2) {
   return c;
 }
 const DRONES = [];
-for (let i = 0; i < 6; i++) DRONES.push({
+for (let i = 0; i < 2; i++) DRONES.push({
   on: false, phase: "IDLE", tp: 0, seed: i * 977 + 131,
   wx: 0, wy: 0, alt: 0, v: 0, p: 0, len: 1, flip: false, dirs: 0,
   ax: 0, ay: 0, bx: 0, by: 0, c1x: 0, c1y: 0, c2x: 0, c2y: 0,
-  retour: false, sx: 0, sy: 0,
+  route: null, leg: 0,
 });
-const DR_WAYPTS = [[4, 1.6], [1.7, 4.5], [6.4, 5.2]];
-function drAnchor(b) {
-  const j = ((b.x * 7 + b.y * 13) % 5 - 2) * 0.09;
-  return [b.x + j, b.y - j];
+// point d'attache : la soute, juste devant la Source
+function drHome() { return [SRC.x + 0.85, SRC.y + 0.85]; }
+// le circuit : longer les côtés du plateau (coins rentrés de 0,9 case),
+// dans le sens le plus court depuis la soute, puis retour au spawn
+function drRoute() {
+  const lo = bmin() + 0.9, hi = bmax() - 0.9;
+  const coins = [[lo, lo], [hi, lo], [hi, hi], [lo, hi]];
+  const h = drHome();
+  let k0 = 0, dm = 1e9;
+  for (let i = 0; i < 4; i++) {
+    const d = Math.hypot(coins[i][0] - h[0], coins[i][1] - h[1]);
+    if (d < dm) { dm = d; k0 = i; }
+  }
+  const r = [];
+  for (let i = 0; i <= 4; i++) r.push(coins[(k0 + i) % 4]); // tour complet
+  r.push(h);                                                // retour au spawn
+  return r;
 }
 function drLaunch(dr, ax, ay, bx, by) {
   dr.ax = ax; dr.ay = ay; dr.bx = bx; dr.by = by;
   const dx = bx - ax, dy = by - ay;
   const L = Math.hypot(dx, dy) || 0.01;
-  // courbe arrondie : contrôles décalés perpendiculairement, amplitude bornée
-  const r = mulberry32(dr.seed ^ (performance.now() | 0));
-  const k1 = (r() - 0.5) * 1.1, k2 = (r() - 0.5) * 1.1;
-  const px2 = -dy / L, py2 = dx / L;
-  dr.c1x = ax + dx * 0.3 + px2 * k1; dr.c1y = ay + dy * 0.3 + py2 * k1;
-  dr.c2x = ax + dx * 0.7 + px2 * k2; dr.c2y = ay + dy * 0.7 + py2 * k2;
-  dr.len = L * 1.12; dr.p = 0; dr.v = 0;
+  // courbe arrondie : le segment bombe légèrement vers l'intérieur du plateau
+  const cx = (bmin() + bmax()) / 2, cy = cx;
+  const mx = ax + dx / 2, my = ay + dy / 2;
+  const vx = cx - mx, vy = cy - my;
+  const vn = Math.hypot(vx, vy) || 1;
+  const bombe = 0.55;
+  dr.c1x = ax + dx * 0.3 + vx / vn * bombe; dr.c1y = ay + dy * 0.3 + vy / vn * bombe;
+  dr.c2x = ax + dx * 0.7 + vx / vn * bombe; dr.c2y = ay + dy * 0.7 + vy / vn * bombe;
+  dr.len = L * 1.1; dr.p = 0;
   dr.wx = ax; dr.wy = ay;
   // une face par segment : miroir si le déplacement écran va vers la droite
   const versDroit = (dx - dy) > 0;
@@ -65,23 +81,25 @@ function tickDrones(dt, t) {
     if (dr.phase === "TAKEOFF") {
       dr.alt = Math.min(1, dr.tp / 0.9);
       if (dr.tp >= 0.9) { dr.phase = "TRAVEL"; dr.tp = 0; }
-    } else if (dr.phase === "TRAVEL" || dr.phase === "APPROACH") {
-      const cible = DR_VMAX * Math.max(0.14, Math.min(dr.p / 0.2, (1 - dr.p) / 0.26, 1));
+    } else if (dr.phase === "TRAVEL") {
+      const dernier = dr.leg >= dr.route.length - 2;
+      // profil : plein vol entre les coins, vrai ralenti sur le dernier segment
+      const frein = dernier ? (1 - dr.p) / 0.26 : Math.max(0.55, (1 - dr.p) / 0.10);
+      const cible = DR_VMAX * Math.max(0.14, Math.min(dr.p / 0.2 + 0.25, frein, 1));
       dr.v += (cible - dr.v) * Math.min(1, dt * 3.2);
       dr.p = Math.min(1, dr.p + dr.v * dt / dr.len);
-      dr.phase = dr.p > 0.74 ? "APPROACH" : "TRAVEL";
       const a = drBez(dr, dr.p);
       dr.wx = a.x; dr.wy = a.y;
-      if (dr.p >= 1) { dr.phase = "LANDING"; dr.tp = 0; }
-    } else if (dr.phase === "LANDING") {
-      dr.alt = Math.max(0.22, 1 - dr.tp / 0.8);
-      if (dr.tp >= 0.8) { dr.phase = "WORKING"; dr.tp = 0; }
-    } else if (dr.phase === "WORKING") {
-      dr.alt = 0.22;
-      if (dr.tp >= 1.6 + ((dr.seed % 7) * 0.3)) {
-        if (dr.retour) { dr.on = false; }
-        else { dr.retour = true; drLaunch(dr, dr.bx, dr.by, dr.sx, dr.sy); dr.phase = "TAKEOFF"; dr.tp = 0; }
+      if (dr.p >= 1) {
+        if (!dernier) { // coin atteint : on enchaîne SANS se poser
+          dr.leg++;
+          const s2 = dr.route[dr.leg], d2 = dr.route[dr.leg + 1];
+          drLaunch(dr, s2[0], s2[1], d2[0], d2[1]);
+        } else { dr.phase = "LANDING"; dr.tp = 0; } // retour au spawn : la seule pose
       }
+    } else if (dr.phase === "LANDING") {
+      dr.alt = Math.max(0, 1 - dr.tp / 0.9);
+      if (dr.tp >= 0.9) dr.on = false; // posé à la soute : fin du circuit
     }
   }
 }
@@ -91,35 +109,18 @@ function drTraffic(dt) {
   if (drAcc < 1) return;
   drAcc = 0; drCool = Math.max(0, drCool - 1);
   if (view !== "col" || drCool > 0) return;
-  const actifs = DRONES.reduce((a, d) => a + (d.on ? 1 : 0), 0);
-  // UN SEUL drone à la fois — coupé en panne d'énergie
-  const cible = enUse() > enCap() ? 0 : 1;
-  if (actifs >= cible) return;
-  const rnd = mulberry32((performance.now() | 0) ^ 0xD10);
-  const ex = S.buildings.filter((b) => b.t === "extracteur");
-  const dataSrc = S.buildings.filter((b) => b.t === "serveur" || b.t === "ferme");
-  let src = null, dst = null;
-  const entre = S.buildings.find((b) => b.t === "entrepot");
-  if (ex.length && S.mat < matCap() - 1) {
-    src = ex[(rnd() * ex.length) | 0];
-    dst = entre || { x: SRC.x, y: SRC.y };
-  } else if (dataSrc.length) {
-    src = dataSrc[(rnd() * dataSrc.length) | 0];
-    dst = S.buildings.find((b) => b.t === "datacenter") || S.buildings.find((b) => b.t === "coffret") || { x: SRC.x, y: SRC.y };
-  } else if (S.buildings.length) {
-    src = S.buildings[(rnd() * S.buildings.length) | 0];
-    const w = DR_WAYPTS[(rnd() * DR_WAYPTS.length) | 0];
-    dst = { x: w[0], y: w[1] };
-  } else return;
-  drSpawn(drAnchor(src), dst.x != null && dst.t ? drAnchor(dst) : [dst.x != null ? dst.x : dst[0], dst.y != null ? dst.y : dst[1]]);
-  drCool = 2 + ((rnd() * 3) | 0);
+  if (DRONES.some((d) => d.on)) return;      // UN SEUL drone en circulation
+  if (enUse() > enCap()) return;             // panne d'énergie : pas de patrouille
+  drSpawn();
+  drCool = 10 + ((mulberry32((performance.now() | 0) ^ 0xD10)() * 12) | 0);
 }
-function drSpawn(a, b) {
+function drSpawn() {
   const dr = DRONES.find((d) => !d.on);
   if (!dr) return null;
-  dr.on = true; dr.retour = false; dr.phase = "TAKEOFF"; dr.tp = 0;
-  dr.sx = a[0]; dr.sy = a[1]; dr.alt = 0; dr.dirs = 0;
-  drLaunch(dr, a[0], a[1], b[0] != null ? b[0] : b.x, b[1] != null ? b[1] : b.y);
+  const h = drHome();
+  dr.on = true; dr.phase = "TAKEOFF"; dr.tp = 0; dr.alt = 0; dr.dirs = 0;
+  dr.route = drRoute(); dr.leg = 0;
+  drLaunch(dr, h[0], h[1], dr.route[0][0], dr.route[0][1]);
   return dr;
 }
 function drawDrone16(dr, t) { // (nom conservé : appelé par la passe triée)
@@ -128,12 +129,12 @@ function drawDrone16(dr, t) { // (nom conservé : appelé par la passe triée)
   const bob = Math.sin(t / 460 + dr.seed) * 2.2 * z * Math.min(1, dr.alt * 2);
   const alt = dr.alt * DR_ALT * z;
   // l'ombre reste au sol, plus petite et plus claire en altitude
-  const so = 0.30 - 0.16 * dr.alt, sr = (5.5 - 2 * dr.alt) * z;
+  const so = 0.30 - 0.16 * dr.alt, sr = (3.8 - 1.4 * dr.alt) * z;
   ctx.beginPath();
   ctx.ellipse(p.x, p.y, sr, sr * 0.5, 0, 0, Math.PI * 2);
   ctx.fillStyle = "rgba(20,10,4," + so.toFixed(2) + ")";
   ctx.fill();
-  const sw = 0.24 * TW * z, sh = sw * DR1.hw;
+  const sw = 0.16 * TW * z, sh = sw * DR1.hw;
   const py2 = p.y - alt + bob;
   ctx.save();
   if (dr.flip) { ctx.translate(p.x, py2); ctx.scale(-1, 1); ctx.translate(-p.x, -py2); }

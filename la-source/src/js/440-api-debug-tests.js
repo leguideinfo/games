@@ -42,11 +42,11 @@ window.__api = {
   netInfo() { if (netDirty) netRecalc(); return { links: S.links.length, connected: netSet.size }; },
   assemble(k) { const f = S.buildings.find((b) => b.t === "forge"); if (f) assemble(k, f); },
   asmOk() { return ASM.map((sl) => sl.opts.findIndex((o) => o.ok)); },
-  droneRun(ax, ay, bx, by) { return !!drSpawn([ax, ay], [bx, by]); },
+  droneRun() { return !!drSpawn(); }, // lance une patrouille du périmètre
   droneInfo() {
     return DRONES.filter((d) => d.on).map((d) => ({
       phase: d.phase, wx: +d.wx.toFixed(2), wy: +d.wy.toFixed(2),
-      alt: +d.alt.toFixed(2), dirs: d.dirs, retour: d.retour,
+      alt: +d.alt.toFixed(2), dirs: d.dirs, leg: d.leg, legs: d.route ? d.route.length : 0,
     }));
   },
   crysAt(x, y) { return { sz: crysSize(x, y), max: crysMax(x, y), stock: crysStock(x, y) }; },

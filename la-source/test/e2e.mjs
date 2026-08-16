@@ -113,16 +113,22 @@ console.log("gisement reformé (kind crystal, stock plein):", await page.evaluat
   kind: window.__api.tileKind(u.x, u.y), ...window.__api.crysAt(u.x, u.y),
 }), u0));
 
-// trafic de drones 16 directions : un aller-retour complet entre deux points
-await page.evaluate(() => window.__api.droneRun(2, 6, 6, 2));
+// drone de liaison : une patrouille complète du périmètre, une seule pose (au spawn)
+await page.evaluate(() => window.__api.droneRun());
+const patrouille = await page.evaluate(() => window.__api.droneInfo()[0]);
+console.log("patrouille lancée (6 segments attendus):", JSON.stringify(patrouille));
 await page.waitForFunction(() => {
-  const d = window.__api.droneInfo();
-  return d.length === 0 || d.some((x) => x.retour);
+  const d = window.__api.droneInfo()[0];
+  return !d || d.phase === "LANDING" || d.leg >= 4;
+}, null, { timeout: 45000 });
+console.log("patrouille en fin de circuit:", await page.evaluate(() => JSON.stringify(window.__api.droneInfo())));
+// posé au spawn = pool vide, OU nouvelle patrouille repartie (leg 0-1) : dans
+// les deux cas le circuit précédent s'est bouclé par une pose unique
+await page.waitForFunction(() => {
+  const l = window.__api.droneInfo();
+  return l.length === 0 || l.every((d) => d.leg <= 1);
 }, null, { timeout: 30000 });
-console.log("drone 16-dir (aller posé, retour engagé):", await page.evaluate(() =>
-  JSON.stringify(window.__api.droneInfo())));
-await page.waitForFunction(() => window.__api.droneInfo().length === 0, null, { timeout: 30000 });
-console.log("drone 16-dir : mission bouclée, retour au pool OK");
+console.log("drone posé au spawn, circuit bouclé OK");
 
 // M2 : menu construire = extracteur seul, construction par tap réel.
 // La cible est recalculée juste avant chaque clic : la caméra peut glisser
