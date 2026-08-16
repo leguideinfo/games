@@ -30,9 +30,10 @@ for (let i = 0; i < 2; i++) DRONES.push({
   ax: 0, ay: 0, bx: 0, by: 0, c1x: 0, c1y: 0, c2x: 0, c2y: 0,
   th: 0, thLeft: 0,
 });
-// point d'attache : la soute, au pied de la balise (retour 16/08 : à +0,85 il
-// se garait visuellement une case SOUS la Source ; à +0,55 + fondu il y RENTRE)
-function drHome() { return [SRC.x + 0.55, SRC.y + 0.55]; }
+// point d'attache : SUR la plateforme de la balise, juste devant le faisceau
+// (retour 17/08 : à +0,55 il se posait sur le bâtiment voisin). Le drone s'y
+// GARE entre deux patrouilles (DR_PAUSE) — visible, posé, comme au hangar.
+function drHome() { return [SRC.x + 0.2, SRC.y + 0.2]; }
 /* LA BOUCLE DE PATROUILLE : courbe fermée et lisse qui longe les quatre côtés
    du plateau — rectangle arrondi paramétrique (squircle). L'exposant k règle
    l'arrondi des coins (plus petit = plus carré, colle mieux aux côtés). */
@@ -67,7 +68,16 @@ function drBez(dr, p) {
   _bz.y = q * q * q * dr.ay + 3 * q * q * p * dr.c1y + 3 * q * p * p * dr.c2y + p * p * p * dr.by;
   return _bz;
 }
-const DR_VMAX = 1.9, DR_ALT = 18;
+/* VITESSE STABLE (retour 17/08) : la vitesse est asservie en PIXELS ÉCRAN
+   (métrique isométrique, à z=1), pas en unités monde — sinon les tronçons
+   « horizontaux » de l'iso paraissent 2× plus rapides (TW=92 vs TH=46) et le
+   drone semble accélérer à chaque côté. Une seule rampe douce au départ, un
+   seul freinage à l'approche finale : constant partout ailleurs. */
+const DR_VPX = 88, DR_ALT = 18;                    // vitesse écran (px/s à z=1)
+const DR_PAUSE = 90;                               // pause au sol entre deux patrouilles (s)
+function drIsoLen(dx, dy) {
+  return Math.hypot((dx - dy) * TW / 2, (dx + dy) * TH / 2);
+}
 function tickDrones(dt, t) {
   if (!DR1.ok) return;
   drTraffic(dt);
@@ -75,16 +85,36 @@ function tickDrones(dt, t) {
     if (!dr.on) continue;
     dr.tp += dt;
     const pwx = dr.wx, pwy = dr.wy;
+    // cible de vitesse : constante, freinée seulement en toute fin de retour
+    let cible = DR_VPX;
+    if (dr.phase === "RETURN" && dr.p > 0.70) cible = DR_VPX * Math.max(0.22, (1 - dr.p) / 0.30);
+    if (dr.phase === "LANDING" || dr.phase === "PARKED") cible = 0;
+    dr.v += (cible - dr.v) * Math.min(1, dt * 2.2); // lissage unique (accel bornée)
     if (dr.phase === "TAKEOFF") {
       dr.alt = Math.min(1, dr.tp / 0.9);
-      dr.fade = Math.min(1, dr.tp / 0.45);       // sort de la soute en fondu
+      dr.fade = Math.max(dr.fade, Math.min(1, dr.tp / 0.45)); // fondu au 1er envol seulement
       if (dr.tp >= 0.9) { dr.phase = "JOIN"; dr.tp = 0; }
     } else if (dr.phase === "JOIN" || dr.phase === "RETURN") {
       const fin = dr.phase === "RETURN";
-      const frein = fin ? (1 - dr.p) / 0.26 : 1;  // vrai ralenti au retour seulement
-      const cible = DR_VMAX * Math.max(0.14, Math.min(dr.p / 0.2 + 0.25, frein, 1));
-      dr.v += (cible - dr.v) * Math.min(1, dt * 3.2);
-      dr.p = Math.min(1, dr.p + dr.v * dt / dr.len);
+      /* avancement à vitesse ÉCRAN constante par BISSECTION : on n'avance un
+         pas que si sa distance réelle tient dans le budget de pixels restant,
+         sinon on divise le pas par deux. Dépassement impossible par
+         construction — c'est ce qui tue les à-coups (retour 17/08 : la
+         vitesse paramétrique des courbes varie trop pour un pas unique). */
+      let budget = dr.v * dt, guard = 0;
+      while (budget > 0.05 && dr.p < 1 && guard++ < 400) {
+        let dp = Math.min(0.03, 1 - dr.p);
+        const a0 = drBez(dr, dr.p); const a0x = a0.x, a0y = a0.y;
+        let d = 0;
+        for (let k = 0; k < 14; k++) {
+          const a1 = drBez(dr, dr.p + dp);
+          d = drIsoLen(a1.x - a0x, a1.y - a0y);
+          if (d <= budget) break;
+          dp /= 2;
+        }
+        if (d > budget) break;
+        dr.p += dp; budget -= Math.max(d, 0.02);
+      }
       const a = drBez(dr, dr.p);
       dr.wx = a.x; dr.wy = a.y;
       if (dr.p >= 1) {
@@ -92,24 +122,41 @@ function tickDrones(dt, t) {
         else { dr.phase = "LANDING"; dr.tp = 0; }
       }
     } else if (dr.phase === "LOOP") {
-      dr.v += (DR_VMAX - dr.v) * Math.min(1, dt * 3.2);
-      // avancer l'angle à VITESSE-MONDE constante : longueur locale numérique
-      const e = 0.02;
-      drLoopPos(dr.th, _lp); drLoopPos(dr.th + e, _lp2);
-      const L = Math.max(0.05, Math.hypot(_lp2.x - _lp.x, _lp2.y - _lp.y) / e);
-      const dth = dr.v * dt / L;
-      dr.th += dth; dr.thLeft -= dth;
+      // même principe le long du squircle : la dérivée du profil |u|^k explose
+      // aux coins — seule la bissection garantit une vitesse écran constante
+      let budget = dr.v * dt, guard = 0;
+      while (budget > 0.05 && dr.thLeft > 0 && guard++ < 400) {
+        let dth = Math.min(0.02, dr.thLeft);
+        drLoopPos(dr.th, _lp);
+        let d = 0;
+        for (let k = 0; k < 14; k++) {
+          drLoopPos(dr.th + dth, _lp2);
+          d = drIsoLen(_lp2.x - _lp.x, _lp2.y - _lp.y);
+          if (d <= budget) break;
+          dth /= 2;
+        }
+        if (d > budget) break;
+        dr.th += dth; dr.thLeft -= dth; budget -= Math.max(d, 0.02);
+      }
       drLoopPos(dr.th, _lp);
       dr.wx = _lp.x; dr.wy = _lp.y;
-      if (dr.thLeft <= 0) {                       // tour bouclé : on rentre
+      if (dr.thLeft <= 0) {                         // tour bouclé : on rentre
         const h = drHome();
         drLaunch(dr, dr.wx, dr.wy, h[0], h[1]);
         dr.phase = "RETURN";
       }
     } else if (dr.phase === "LANDING") {
-      dr.alt = Math.max(0, 1 - dr.tp / 0.9);
-      dr.fade = Math.max(0, 1 - dr.tp / 0.7);     // RENTRE en soute par fondu
-      if (dr.tp >= 0.9) dr.on = false;
+      dr.alt = Math.max(0, 1 - dr.tp / 0.9);        // se POSE sur la balise (visible)
+      if (dr.tp >= 0.9) { dr.phase = "PARKED"; dr.tp = 0; }
+    } else if (dr.phase === "PARKED") {
+      // garé sur la plateforme : il ne repart qu'au bout de DR_PAUSE (retour 17/08)
+      if (dr.tp >= DR_PAUSE) {
+        dr.tp = 0; dr.phase = "TAKEOFF";
+        const h = drHome();
+        dr.wx = h[0]; dr.wy = h[1];
+        dr.th = 0; drLoopPos(dr.th, _lp);
+        drLaunch(dr, h[0], h[1], _lp.x, _lp.y);
+      }
     }
     // une face par sens de déplacement ÉCRAN (hystérésis anti-battement)
     const ddx = (dr.wx - pwx) - (dr.wy - pwy);
@@ -156,7 +203,7 @@ function drawDrone16(dr, t) { // (nom conservé : appelé par la passe triée)
   const py2 = p.y - alt + bob;
   ctx.save();
   if (dr.flip) { ctx.translate(p.x, py2); ctx.scale(-1, 1); ctx.translate(-p.x, -py2); }
-  const gl = 0.14 + 0.07 * Math.sin(t / 220 + dr.seed) + 0.10 * (dr.v / DR_VMAX);
+  const gl = 0.14 + 0.07 * Math.sin(t / 220 + dr.seed) + 0.10 * (dr.v / DR_VPX);
   const g = ctx.createRadialGradient(p.x, py2 + sh * 0.34, 1, p.x, py2 + sh * 0.34, sw * 0.30);
   g.addColorStop(0, "rgba(90,190,255," + gl.toFixed(2) + ")");
   g.addColorStop(1, "rgba(90,190,255,0)");
