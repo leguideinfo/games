@@ -113,6 +113,17 @@ console.log("gisement reformé (kind crystal, stock plein):", await page.evaluat
   kind: window.__api.tileKind(u.x, u.y), ...window.__api.crysAt(u.x, u.y),
 }), u0));
 
+// trafic de drones 16 directions : un aller-retour complet entre deux points
+await page.evaluate(() => window.__api.droneRun(2, 6, 6, 2));
+await page.waitForFunction(() => {
+  const d = window.__api.droneInfo();
+  return d.length === 0 || d.some((x) => x.retour);
+}, null, { timeout: 30000 });
+console.log("drone 16-dir (aller posé, retour engagé):", await page.evaluate(() =>
+  JSON.stringify(window.__api.droneInfo())));
+await page.waitForFunction(() => window.__api.droneInfo().length === 0, null, { timeout: 30000 });
+console.log("drone 16-dir : mission bouclée, retour au pool OK");
+
 // M2 : menu construire = extracteur seul, construction par tap réel.
 // La cible est recalculée juste avant chaque clic : la caméra peut glisser
 // (guide de mission) entre l'évaluation et le tap.
