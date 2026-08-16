@@ -36,7 +36,11 @@
     .sheet h3, .sheet .sub, #placebar .pb-info { cursor: grab; }
     body.sh-drag { user-select: none; cursor: grabbing; }
     body.sh-drag #cv { pointer-events: none; }
-    .sheet:focus-visible, #placebar:focus-visible { outline: 1px solid rgba(78, 242, 224, .5); outline-offset: 2px; }
+    /* Pas de lisere de focus sur les panneaux (retour 16/08) : le focus n'y
+       arrive QUE par la saisie souris (tabIndex -1, jamais par Tab) — le contour
+       n'etait que du bruit pendant le deplacement. Les fleches clavier marchent
+       toujours, sans halo. */
+    .sheet:focus-visible, #placebar:focus-visible { outline: none; }
   }
   #placebar .pb-info { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; }
   #placebar .pb-nm { font-weight: 600; letter-spacing: .02em; }
