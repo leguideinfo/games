@@ -104,9 +104,10 @@ function drawCrystalSprite(x, y) {
 function drawBuilding(b, t) {
   const p = w2s(b.x, b.y), z = cam.z;
   const def = BT[b.t];
-  const ts = TSPR[b.t];
+  const tk = tsprKey(b.t, b.l);
+  const ts = TSPR[tk];
   if (ts && ts.ok) { // tuile-bâtiment : halo centré sur la case, contenu dans la case
-    const img = tsprImg(b.t);
+    const img = tsprImg(tk);
     const sw = ts.w * TW * z, sh = sw * ts.hw;
     ctx.save();
     plateauClipPath(); ctx.clip();

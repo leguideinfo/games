@@ -9,6 +9,14 @@ let ctx = cv.getContext("2d");   // `let` : temporairement redirigé vers le can
 const cvbg = $("#cv-bg");
 const bgctx = cvbg.getContext("2d");
 let sKey = "";
+// TROISIÈME couche, tout au fond : le WALLPAPER (nébuleuse + voile). Il ne dépend
+// que de la taille de la fenêtre — jamais de la caméra — mais il était repeint à
+// chaque pan avec le terrain (22 % du temps de pan, profil 17/08). Il vit ici,
+// peint UNE fois par resize, transparent sous le plateau (#cv-bg est CLIPPÉ au
+// losange du territoire, donc la nébuleuse apparaît tout autour naturellement).
+const cvwall = $("#cv-wall");
+const wallctx = cvwall.getContext("2d");
+let wallKey = "";
 let W = 0, H = 0, DPR = 1;
 function resize() {
   // DPR plafonné à 1.5 (retour profil perf 16/08) : au-delà, le canvas rempli en
@@ -18,7 +26,20 @@ function resize() {
   W = cv.clientWidth; H = cv.clientHeight;
   cv.width = W * DPR; cv.height = H * DPR;
   cvbg.width = W * DPR; cvbg.height = H * DPR;   // le canvas de fond suit la même taille
-  sKey = "";                                     // et doit être redessiné
+  cvwall.width = W * DPR; cvwall.height = H * DPR;
+  sKey = ""; wallKey = "";                       // et doivent être redessinés
   drawHublot();
+}
+// peint le wallpaper sur sa couche, seulement si sa clé (taille + asset + vue) a changé
+function drawWallLayer() {
+  const key = W + "|" + H + "|" + DPR.toFixed(2) + "|" + (WALL.ok ? 1 : 0) + "|" + view;
+  if (key === wallKey) return;
+  wallKey = key;
+  const real = ctx;
+  ctx = wallctx;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  if (view === "col") drawWallpaper();
+  ctx = real;
 }
 

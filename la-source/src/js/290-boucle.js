@@ -26,6 +26,7 @@ function staticKey(){
           S.buildings.map(b => b.id + ":" + b.x + "," + b.y + ":" + b.t).join("_")].join("|");
 }
 function drawStaticLayer(t){
+  drawWallLayer();                    // nébuleuse : sa propre couche, repeinte seulement au resize
   const key = staticKey();
   if (key === sKey && cvbg.width === cv.width && cvbg.height === cv.height){
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -36,8 +37,7 @@ function drawStaticLayer(t){
   const real = ctx;
   ctx = bgctx;                        // dessiner sur le canvas de FOND empilé (pas d'offscreen, pas de copie)
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  ctx.clearRect(0, 0, W, H);
-  drawWallpaper();
+  ctx.clearRect(0, 0, W, H);          // transparent hors du losange : #cv-wall apparaît dessous
   drawTerrainTex();
   drawZone(FERT, FERT_CX, FERT_CY, -0.30, -0.30, 0.50, 0.86);
   drawDunes();
@@ -215,6 +215,7 @@ function frame(t) {
   } else {
     // vue carte : on efface le canvas de fond (le terrain ne doit pas transparaître)
     if (sKey){ bgctx.setTransform(1, 0, 0, 1, 0, 0); bgctx.clearRect(0, 0, cvbg.width, cvbg.height); sKey = ""; }
+    drawWallLayer();   // vue carte : la couche nébuleuse s'efface (clé = view)
     drawMap(t);
   }
   }

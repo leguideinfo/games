@@ -33,7 +33,7 @@ for (let i = 0; i < 2; i++) DRONES.push({
 // point d'attache : SUR la plateforme de la balise, juste devant le faisceau
 // (retour 17/08 : à +0,55 il se posait sur le bâtiment voisin). Le drone s'y
 // GARE entre deux patrouilles (DR_PAUSE) — visible, posé, comme au hangar.
-function drHome() { return [SRC.x + 0.2, SRC.y + 0.2]; }
+function drHome() { return [SRC.x + 0.05, SRC.y + 0.05]; }
 /* LA BOUCLE DE PATROUILLE : courbe fermée et lisse qui longe les quatre côtés
    du plateau — rectangle arrondi paramétrique (squircle). L'exposant k règle
    l'arrondi des coins (plus petit = plus carré, colle mieux aux côtés). */
@@ -312,9 +312,13 @@ function drawPlaceGhost(t) {
       ctx.drawImage(drnImg(), p.x - vw / 2, p.y - 26 * z - vh / 2, vw, vh);
     }
   } else {
-    const ts = TSPR[place.t];
+    // le fantôme montre la tuile du niveau qui sera POSÉ : un ouvrage neuf est
+    // au niveau 1 (en miroir il sort des soutes au niveau du Chantier)
+    const nv = place.kind === "move" && place.mv ? place.mv.l : (MIRROR ? (mirrorStock(place.t) || 1) : 1);
+    const tk = tsprKey(place.t, nv);
+    const ts = TSPR[tk];
     if (ts && ts.ok) {
-      const img = tsprImg(place.t);
+      const img = tsprImg(tk);
       const sw = ts.w * TW * z, sh = sw * ts.hw;
       plateauClipPath(); ctx.clip();
       ctx.drawImage(img, p.x - ts.ax * sw, p.y + TH * ts.oy * z - ts.ay * sh, sw, sh);

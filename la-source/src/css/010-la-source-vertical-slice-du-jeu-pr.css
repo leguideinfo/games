@@ -50,5 +50,5 @@
     overflow: hidden;
     background: var(--bg);
   }
-  #cv, #cv-bg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #cv, #cv-bg, #cv-wall { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
