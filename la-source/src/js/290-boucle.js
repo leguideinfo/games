@@ -197,7 +197,7 @@ function frame(t) {
     for (const q of MIRROR_Q) drawMirrorTimer(q);   // minuterie par-dessus tout (chantier ET amélioration)
     for (const o of orbs) drawOrb(o, t);
     for (const m of mobs) drawMob(m, t);
-    for (const u of S.units) drawUnit(u, t);
+    for (const u of S.units) if (!u.orb) drawUnit(u, t); // la flotte en orbite n'est pas au sol
     drawGuide(t);
     drawCrevasseHint(t);
     for (const f of [...fx]) {
@@ -212,7 +212,8 @@ function frame(t) {
   } else {
     // vue carte : on efface le canvas de fond (le terrain ne doit pas transparaître)
     if (sKey){ bgctx.setTransform(1, 0, 0, 1, 0, 0); bgctx.clearRect(0, 0, cvbg.width, cvbg.height); sKey = ""; }
-    drawMap(t);
+    if (view === "orb") drawOrbit(t);
+    else drawMap(t);
   }
   }
   // Cristaux : monnaie du plateau, TOUJOURS locale (miroir compris) — elle ne

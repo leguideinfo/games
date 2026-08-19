@@ -25,7 +25,14 @@ cv.addEventListener("pointerup", (e) => {
   if (wasDragged) return;
   const r = cv.getBoundingClientRect();
   const sx = e.clientX - r.left, sy = e.clientY - r.top;
+  if (view === "orb") { orbTape(sx, sy); return; }
   if (view === "map") {
+    // sa propre colonie, au centre : ouvre le plan de la flotte en orbite
+    if (Math.hypot(sx - W / 2 / DPR, sy - H / 2 / DPR) < 30 || Math.hypot(sx - W / 2, sy - H / 2) < 30) {
+      view = "orb"; sfx.ui();
+      toast("🛰 <b>Orbite de ta colonie</b> — dispose ta flotte sur les anneaux.");
+      return;
+    }
     for (const n of NEIGH) {
       if (n.sx != null && Math.hypot(sx - n.sx, sy - n.sy) < 26) {
         toast("Colonie voisine <b>« " + n.nm + " »</b> — visites & fédérations : à venir (multi asynchrone).");
@@ -57,7 +64,7 @@ cv.addEventListener("pointerup", (e) => {
   // parasites
   for (const m of mobs) {
     if (m.sx != null && !m.atk && Math.hypot(sx - m.sx, sy - m.sy) < 26) {
-      const u = S.units.find((v) => v.t === "chasseur" && !v.busy);
+      const u = S.units.find((v) => v.t === "chasseur" && !v.busy && !v.orb);
       if (!u) { toast("Il te faut un <b>Chasseur</b> — assemble-le à la Forge."); sfx.deny(); return; }
       u.busy = true;
       m.atk = { u, t0: performance.now() };

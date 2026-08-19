@@ -42,6 +42,13 @@ window.__api = {
   netInfo() { if (netDirty) netRecalc(); return { links: S.links.length, connected: netSet.size }; },
   assemble(k) { const f = S.buildings.find((b) => b.t === "forge"); if (f) assemble(k, f); },
   asmOk() { return ASM.map((sl) => sl.opts.findIndex((o) => o.ok)); },
+  orbOpen() { view = "orb"; },
+  orbDeploy(r, i) { return orbDeploie(r, i); },
+  orbRecall(r, i) { return orbRappelle(r, i); },
+  orbInfo() {
+    return { enOrbite: S.units.filter((u) => u.orb).map((u) => u.orb),
+             libres: orbLibres().length };
+  },
   droneRun() { return !!drSpawn(); }, // lance une patrouille du périmètre
   droneInfo() {
     return DRONES.filter((d) => d.on).map((d) => ({

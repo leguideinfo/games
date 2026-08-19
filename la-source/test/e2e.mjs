@@ -493,6 +493,23 @@ if (!libre.clic) throw new Error("le clic sur le bord d'un module en pose libre 
 // 6. la palette doit être atteignable au doigt (touch-action)
 console.log("palette défilable :", await page.evaluate(() => getComputedStyle(document.querySelector("#buildlist")).touchAction));
 
+// 7. flotte en orbite : déployer, rappeler, persistance portée par l'unité
+const orb = await page.evaluate(() => {
+  window.__LS().units.push({ t: "chasseur", x: 4, y: 5, test: 1 }, { t: "chasseur", x: 5, y: 5, test: 1 });
+  window.__api.orbOpen();
+  const d1 = window.__api.orbDeploy(0, 2), d2 = window.__api.orbDeploy(2, 5);
+  const plein = JSON.parse(JSON.stringify(window.__api.orbInfo()));
+  const r1 = window.__api.orbRecall(0, 2);
+  const apres = JSON.parse(JSON.stringify(window.__api.orbInfo()));
+  // nettoyage : les chasseurs de test disparaissent, la vue revient à la colonie
+  window.__LS().units = window.__LS().units.filter((u) => !u.test);
+  document.querySelector("#tab-col").click();
+  return { d1, d2, plein, r1, apres };
+});
+console.log("flotte en orbite (déploi x2, rappel x1):", JSON.stringify(orb));
+if (!orb.d1 || !orb.d2 || !orb.r1 || orb.plein.enOrbite.length !== 2 || orb.apres.enOrbite.length !== 1)
+  errors.push("flotte en orbite : déploiement/rappel incohérent " + JSON.stringify(orb));
+
 console.log("ERREURS:", errors.length ? errors : "aucune");
 await browser.close();
 process.exit(errors.length ? 1 : 0);

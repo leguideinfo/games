@@ -92,6 +92,17 @@ carte de secteur + emplacements des mini-jeux comme verbes du monde.
   « effets réseaux » de la charte.
 - **Carte du secteur** : starfield, ta colonie au centre, 8 colonies voisines
   (placeholder du multi asynchrone v1 : visites & fédérations à venir).
+- **Flotte en orbite (v1)** : depuis la CARTE, taper sa propre colonie ouvre
+  le **plan de disposition de la flotte** — la planète au centre, trois
+  anneaux (Basse 6 / Moyenne 8 / Haute 10 créneaux) tournant chacun à sa
+  vitesse, vaisseaux orientés le long de leur orbite, moitié arrière
+  atténuée derrière la planète. Taper un créneau libre déploie un Chasseur
+  disponible ; taper un vaisseau le rappelle au sol. L'affectation vit sur
+  l'unité (`u.orb`), donc sauvegardée — et un chasseur en orbite n'est plus
+  disponible au sol (défendre la colonie OU tenir l'orbite : un vrai choix).
+  À venir : effets de la disposition (couverture par anneau, interception),
+  variantes de vaisseaux du Chantier spatial. Hooks : `orbOpen/orbDeploy/
+  orbRecall/orbInfo`.
 - **Surcharge (⚡)** : mini-défi de synchronisation sur les bâtiments → buff
   de production ×2 min. **Mécanique validée telle quelle par le propriétaire
   (2026-08-06)** : elle reste une action native de la colonie. L'intégration
